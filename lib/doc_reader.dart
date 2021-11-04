@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'dart:math' as math;
 import 'package:doc_reader/doc_span/basic/basic_text_span.dart';
 import 'package:doc_reader/doc_span/doc_span_interface.dart';
 import 'package:flutter/material.dart';
@@ -18,7 +19,7 @@ class _DocReaderState extends State<DocReader>
   {
     docSpans.clear();
 
-    for (int i = 1; i < 100; i++)
+    for (int i = 1; i < 1000; i++)
     {
       docSpans.add(DocumentSpanContainer(BasicTextSpan
           (
@@ -54,6 +55,40 @@ class ShapePainter extends CustomPainter
 
   ShapePainter(this.docSpans);
 
+  int topIndex(double yOffset)
+  {
+    int result = 0;
+
+    if (docSpans.length > 1 && yOffset > 0)
+    {
+      int step = docSpans.length ~/ 2;
+      int i = step;
+
+      while (true)
+      {
+        if ((docSpans[i].yPosition < yOffset) && (i >= docSpans.length || docSpans[i + 1].yPosition >= yOffset))
+        {
+          result = i;
+          break;
+        }
+        else
+        {
+          step = (step > 1) ? (step >> 1) : 1;
+          if (docSpans[i].yPosition > yOffset)
+          {
+            i = math.max(i - step, 0);
+          }
+          else
+          {
+            i = math.min(i + step, docSpans.length - 1);
+          }
+        }
+      }
+    }
+
+    return result;
+  }
+
   @override
   void paint(Canvas canvas, Size size)
   {
@@ -67,10 +102,26 @@ class ShapePainter extends CustomPainter
 
     canvas.drawLine(startingPoint, endingPoint, paint);*/
 
-    for (var container in docSpans)
+    double offset = 5;
+    double endOffset = offset + size.height;
+
+    for (int i = topIndex(offset); i < docSpans.length; i++)
+    {
+      final container = docSpans[i];
+      if (container.yPosition > endOffset)
+      {
+        break;
+      }
+      else
+      {
+        container.span.paint(canvas, size, container.xPosition, container.yPosition - offset);
+      }
+    }
+
+    /*for (var container in docSpans)
     {
       container.span.paint(canvas, size, container.xPosition, container.yPosition);
-    }
+    }*/
   }
 
   @override

@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 
 abstract class IDocumentSpan
 {
-  double get height;
-  double get width;
-  void paint(Canvas canvas, Size size, double xOffset, double yOffset);
-  void calcSize(CalcSizeParameters parameters);
+  double height(PaintParameters params);
+  double width(PaintParameters params);
+  void paint(PaintParameters parameters, double xOffset, double yOffset);
+  void calcSize(PaintParameters parameters);
 }
 
 class DocumentSpanContainer
@@ -18,13 +18,11 @@ class DocumentSpanContainer
   DocumentSpanContainer(this.span);
 }
 
-class CalcSizeParameters
+class PaintParameters
 {
-  late BuildContext context;
-  late MediaQueryData media;
+  final Size size;
+  final Canvas canvas;
+  final Key key = UniqueKey();
 
-  CalcSizeParameters(this.context)
-  {
-    media = MediaQuery.of(context);
-  }
+  PaintParameters(this.canvas, this.size);
 }

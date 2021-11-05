@@ -71,7 +71,7 @@ class _MyHomePageState extends State<MyHomePage>
     final document = Document();
     binder.setProperty(documentProperty, document);
 
-    for (int i = 1; i < 100; i++)
+    for (int i = 1; i < 1000000; i++)
     {
       document.docSpans.add(DocumentSpanContainer(BasicTextSpan
           (

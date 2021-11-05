@@ -21,7 +21,7 @@ class _DocReaderState extends State<DocReader>
     @override
     Widget build(BuildContext context)
     {
-        _calcLayout(context);
+        //_calcLayout(context);
 
         return CustomPaint
         (
@@ -33,7 +33,7 @@ class _DocReaderState extends State<DocReader>
     Document document(BuildContext context) =>
     PropertyBinder.of(context).getOrCreateProperty<Document>(widget.documentProperty, (binder) => Document());
 
-    void _calcLayout(BuildContext context)
+    /*void _calcLayout(BuildContext context)
     {
         final param = CalcSizeParameters(context);
 
@@ -46,7 +46,7 @@ class _DocReaderState extends State<DocReader>
             container.span.calcSize(param);
             y += container.span.height;
         }
-    }
+    }*/
 }
 
 class ShapePainter extends CustomPainter
@@ -58,17 +58,19 @@ class ShapePainter extends CustomPainter
     @override
     void paint(Canvas canvas, Size size)
     {
+        final params = PaintParameters(canvas, size);
+
         document.position += 0.2;
         final docSpans = document.docSpans;
 
         int spanIndex = document.position.floor();
-        double offset = -(document.position - document.position.floorToDouble()) * docSpans[spanIndex].span.height;
+        double offset = -(document.position - document.position.floorToDouble()) * docSpans[spanIndex].span.height(params);
 
         for (; spanIndex < docSpans.length && offset < size.height; spanIndex++)
         {
             final container = docSpans[spanIndex];
-            container.span.paint(canvas, size, container.xPosition, offset);
-            offset += container.span.height;
+            container.span.paint(params, container.xPosition, offset);
+            offset += container.span.height(params);
         }
     }
 

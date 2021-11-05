@@ -4,6 +4,7 @@ import 'package:doc_reader/doc_span/doc_span_interface.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
+// ignore_for_file: unnecessary_getters_setters
 class BasicTextSpan implements IDocumentSpan
 {
   double _height = 0.0;
@@ -11,20 +12,17 @@ class BasicTextSpan implements IDocumentSpan
 
   String _text = '';
   final List<_Word> _words = <_Word>[];
+  Key? _layoutKey;
 
   String get text => _text;
   set text(String value)
   {
     _text = value;
-    _updateText();
   }
 
-  BasicTextSpan(this._text)
-  {
-    _updateText();
-  }
+  BasicTextSpan(this._text);
 
-  void _updateText()
+  void _updateText(PaintParameters parameters)
   {
     final wrtList = text.split(' ');
     _words.clear();
@@ -40,16 +38,21 @@ class BasicTextSpan implements IDocumentSpan
           text: TextSpan(text: word + ' ', style: const TextStyle(color: Colors.grey)),
           textDirection: TextDirection.ltr
         );
+        painter.layout();
         _words.add(_Word(painter));
       }
     }
+
+    _layoutKey = parameters.key;
   }
 
   @override
-  void calcSize(CalcSizeParameters parameters)
+  void calcSize(PaintParameters parameters)
   {
-    _height = parameters.media.size.height;
-    _width = parameters.media.size.width;
+    _height = parameters.size.height;
+    _width = parameters.size.width;
+
+    _updateText(parameters);
 
     double x = 0;
     double y = 0;
@@ -57,7 +60,6 @@ class BasicTextSpan implements IDocumentSpan
 
     for (var word in _words)
     {
-      word.painter.layout();
       final tWidth = word.painter.size.width;
       final tHeight = word.painter.size.height;
 
@@ -81,21 +83,39 @@ class BasicTextSpan implements IDocumentSpan
     _height = y + h;
   }
 
-  @override
-  double get height => _height;
-
-  @override
-  void paint(Canvas canvas, Size size, double xOffset, double yOffset)
+  void _updateSize(PaintParameters params)
   {
-    for (var word in _words)
+    if (_layoutKey != params.key)
     {
-      word.painter.layout();
-      word.painter.paint(canvas, Offset(word.xOffset + xOffset, word.yOffset + yOffset));
+      calcSize(params);
     }
   }
 
   @override
-  double get width => _width;
+  void paint(PaintParameters params, double xOffset, double yOffset)
+  {
+    _updateSize(params);
+
+    for (var word in _words)
+    {
+      //word.painter.layout();
+      word.painter.paint(params.canvas, Offset(word.xOffset + xOffset, word.yOffset + yOffset));
+    }
+  }
+
+  @override
+  double height(PaintParameters params)
+  {
+    _updateSize(params);
+    return _height;
+  }
+
+  @override
+  double width(PaintParameters params)
+  {
+    _updateSize(params);
+    return _width;
+  }
 }
 
 class _Word

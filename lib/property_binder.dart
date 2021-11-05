@@ -46,9 +46,9 @@ class PropertyBinder extends InheritedWidget
   {
     if (key == null)
     {
-      if (!this.events.contains(onChange))
+      if (!events.contains(onChange))
       {
-        this.events.add(onChange);
+        events.add(onChange);
       }
     }
     else
@@ -67,6 +67,28 @@ class PropertyBinder extends InheritedWidget
       if (!prop.events.contains(onChange))
       {
         prop.events.add(onChange);
+      }
+    }
+  }
+
+  void _removeOnChange(String? key, PropertyOnChange onChange)
+  {
+    if (key == null)
+    {
+      if (events.contains(onChange))
+      {
+        events.remove(onChange);
+      }
+    }
+    else
+    {
+      if (properties.containsKey(key))
+      {
+        final prop = BindableProperty(key, null);
+        if (prop.events.contains(onChange))
+        {
+          prop.events.remove(onChange);
+        }
       }
     }
   }
@@ -190,6 +212,7 @@ class PropertyBinder extends InheritedWidget
         caller(result);
       }
     }
+    // ignore: empty_catches
     catch ($) {}
   }
 
@@ -269,23 +292,17 @@ class BindableProperty
 
   void forceValue(PropertyBinder binder, dynamic newValue)
   {
-    this.value = newValue;
+    value = newValue;
 
-    events.forEach
-    (
-      (element)
-      {
-        element(binder, this);
-      }
-    );
+    for (var element in events)
+    {
+      element(binder, this);
+    }
 
-    binder.events.forEach
-    (
-      (element)
-      {
-        element(binder, this);
-      }
-    );
+    for (var element in binder.events)
+    {
+      element(binder, this);
+    }
   }
 
   void setValue(PropertyBinder binder, dynamic newValue)
@@ -297,7 +314,7 @@ class BindableProperty
   }
 }
 
-typedef void PropertyOnChange(PropertyBinder binder, BindableProperty property);
+typedef PropertyOnChange = void Function(PropertyBinder binder, BindableProperty property);
 
 /// Stav property binderu slouzi k pripojeni a odpojeni udalosti k jednotlivym property.
 /// Stav je nutne uchovavat na urovni StatefulWidgetu a uvolnit vsechny navazane property ve behem [bind]
@@ -370,21 +387,31 @@ class PropertyBinderState
 
   void setOnChange(String? name, PropertyOnChange onChange)
   {
-    if (!eventList.contains(onChange))
+    if (!eventList.any((e) => e.change == onChange))
     {
+      eventList.add(_PropertyBinderStackItem(name, onChange));
       binder._setOnChange(name, onChange);
+    }
+  }
+
+  void removeOnChange(PropertyOnChange onChange)
+  {
+    var list = eventList.where((e) => e.change == onChange);
+    for (var event in list)
+    {
+      eventList.remove(event);
+      binder._removeOnChange(event.name, event.change);
     }
   }
 
   void dispose()
   {
-    eventList.forEach
-    (
-      (element)
-      {
-        if (element.name == null) {}
-      }
-    );
+    for (var element in eventList)
+    {
+      binder._removeOnChange(element.name, element.change);
+    }
+
+    eventList.clear();
   }
 }
 

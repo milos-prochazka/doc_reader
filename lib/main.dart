@@ -1,4 +1,7 @@
 import 'package:doc_reader/doc_reader.dart';
+import 'package:doc_reader/doc_span/basic/basic_text_span.dart';
+import 'package:doc_reader/doc_span/doc_span_interface.dart';
+import 'package:doc_reader/document.dart';
 import 'package:doc_reader/property_binder.dart';
 import 'package:flutter/material.dart';
 
@@ -39,10 +42,12 @@ class MyHomePage extends StatefulWidget
 
 class _MyHomePageState extends State<MyHomePage>
 {
+  static const documentProperty = 'document';
+
   @override
   Widget build(BuildContext buildContext)
   {
-    return PropertyBinder
+    final binder = PropertyBinder
     (
       context: context,
       builder: (context)
@@ -57,10 +62,23 @@ class _MyHomePageState extends State<MyHomePage>
           ),
           body: Center
           (
-            child: DocReader(),
+            child: DocReader(documentProperty: documentProperty),
           ),
         );
       }
     );
+
+    final document = Document();
+    binder.setProperty(documentProperty, document);
+
+    for (int i = 1; i < 100; i++)
+    {
+      document.docSpans.add(DocumentSpanContainer(BasicTextSpan
+          (
+            ':${i.toString().padLeft(5, '0')}: skkkc sdksdsdksd fdfdfkl dfldfdflk ddfdf kdfkldfkldf dfdfdfl dfdfdfl :$i:'
+          )));
+    }
+
+    return binder;
   }
 }

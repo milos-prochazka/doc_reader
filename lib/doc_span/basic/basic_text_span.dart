@@ -10,7 +10,7 @@ class BasicTextSpan implements IDocumentSpan
   double _width = 0.0;
 
   String _text = '';
-  List<_Word> _words = <_Word>[];
+  final List<_Word> _words = <_Word>[];
 
   String get text => _text;
   set text(String value)
@@ -43,11 +43,6 @@ class BasicTextSpan implements IDocumentSpan
         _words.add(_Word(painter));
       }
     }
-  }
-
-  Paint _createPaint()
-  {
-    return Paint();
   }
 
   @override

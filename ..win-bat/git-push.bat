@@ -3,7 +3,6 @@ if .%1.==.. goto syntax
 
 dart-format .\ 2
 dart-prep --enable-all .\
-del *.bak /q /s
 
 git add --all
 git commit --all -m %1

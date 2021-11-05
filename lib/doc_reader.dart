@@ -2,21 +2,27 @@ import 'dart:ui';
 import 'dart:math' as math;
 import 'package:doc_reader/doc_span/basic/basic_text_span.dart';
 import 'package:doc_reader/doc_span/doc_span_interface.dart';
+import 'package:doc_reader/property_binder.dart';
 import 'package:flutter/material.dart';
 
 class DocReader extends StatefulWidget
 {
+  DocReader({Key? key}) : super(key: key ?? GlobalKey(debugLabel: 'DocReader'));
+
   @override
   State<DocReader> createState() => _DocReaderState();
 }
 
 class _DocReaderState extends State<DocReader>
 {
-  final List<DocumentSpanContainer> docSpans = <DocumentSpanContainer>[];
+  List<DocumentSpanContainer> docSpans = <DocumentSpanContainer>[];
 
   @override
   Widget build(BuildContext context)
   {
+    var binder = PropertyBinder.of(context);
+    docSpans = binder.getOrCreateProperty<List<DocumentSpanContainer>>('document', (binder) => docSpans);
+
     docSpans.clear();
 
     for (int i = 1; i < 1000; i++)

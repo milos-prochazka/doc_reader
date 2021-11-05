@@ -1,4 +1,5 @@
 import 'package:doc_reader/doc_reader.dart';
+import 'package:doc_reader/property_binder.dart';
 import 'package:flutter/material.dart';
 
 void main()
@@ -39,20 +40,27 @@ class MyHomePage extends StatefulWidget
 class _MyHomePageState extends State<MyHomePage>
 {
   @override
-  Widget build(BuildContext context)
+  Widget build(BuildContext buildContext)
   {
-    return Scaffold
+    return PropertyBinder
     (
-      appBar: AppBar
-      (
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center
-      (
-        child: DocReader(),
-      ),
+      context: context,
+      builder: (context)
+      {
+        return Scaffold
+        (
+          appBar: AppBar
+          (
+            // Here we take the value from the MyHomePage object that was created by
+            // the App.build method, and use it to set our appbar title.
+            title: Text(widget.title),
+          ),
+          body: Center
+          (
+            child: DocReader(),
+          ),
+        );
+      }
     );
   }
 }

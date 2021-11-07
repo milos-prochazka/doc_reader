@@ -2,11 +2,24 @@ import 'package:doc_reader/doc_reader.dart';
 import 'package:doc_reader/doc_span/basic/basic_text_span.dart';
 import 'package:doc_reader/doc_span/doc_span_interface.dart';
 import 'package:doc_reader/document.dart';
+import 'package:doc_reader/markdown/markdown.dart';
 import 'package:doc_reader/property_binder.dart';
 import 'package:flutter/material.dart';
 
+import 'doc_span/objects/applog.dart';
+import 'doc_touch.dart';
+
 void main()
 {
+  final md = Markdown();
+  md.writeMarkdownString
+  (
+    r'''
+dddd dddd.
+dsdsdds dffdfddf lokolek
+Mozolek.
+  '''
+  );
   runApp(const MyApp());
 }
 
@@ -62,7 +75,7 @@ class _MyHomePageState extends State<MyHomePage>
           ),
           body: Center
           (
-            child: DocReader(documentProperty: documentProperty),
+            child: DocTouch.build(context: context, documentProperty: documentProperty),
           ),
         );
       }
@@ -75,7 +88,7 @@ class _MyHomePageState extends State<MyHomePage>
     {
       document.docSpans.add(DocumentSpanContainer(BasicTextSpan
           (
-            ':${i.toString().padLeft(5, '0')}: skkkc sdksdsdksd fdfdfkl dfldfdflk ddfdf kdfkldfkldf dfdfdfl dfdfdfl :$i:'
+            ':${i.toString().padLeft(5, '0')}: skkkc sdksdsdksd fdfdfkl dfldf asdsaaskl xcnxcxmbc nsdswdesdbn jksdsdjksdjk jkdssdjksdjk jksdsdjksdjk dflk ddfdf kdfkl dkdk dskdkd dskdkd dfkldf dfdfdfl dfdfdfl :$i:'
           )));
     }
 

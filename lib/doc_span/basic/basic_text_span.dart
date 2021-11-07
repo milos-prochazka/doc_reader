@@ -35,7 +35,7 @@ class BasicTextSpan implements IDocumentSpan
       {
         var painter = TextPainter
         (
-          text: TextSpan(text: word + ' ', style: const TextStyle(color: Colors.grey)),
+          text: TextSpan(text: word + ' ', style: const TextStyle(color: Colors.purple)),
           textDirection: TextDirection.ltr
         );
         painter.layout();

@@ -130,7 +130,7 @@ class PropertyBinder extends InheritedWidget
 
   /// Cte property jako objekt zadaneho typu. Pokud nesoulasi property neexistuje, nebo nesouhlasi jeho typ
   /// vrati defValue.
-  T getProperty<T>(String name, T defValue)
+  T getProperty<T>(String name, T? defValue)
   {
     if (properties.containsKey(name))
     {
@@ -138,16 +138,16 @@ class PropertyBinder extends InheritedWidget
 
       if (prop == null)
       {
-        return defValue;
+        return defValue!;
       }
       else
       {
-        return (prop.value is T) ? prop.value as T : defValue;
+        return (prop.value is T) ? prop.value as T : defValue!;
       }
     }
     else
     {
-      return defValue;
+      return defValue!;
     }
   }
 

@@ -6,7 +6,6 @@ import 'package:doc_reader/markdown/markdown.dart';
 import 'package:doc_reader/property_binder.dart';
 import 'package:flutter/material.dart';
 
-import 'doc_span/objects/applog.dart';
 import 'doc_touch.dart';
 
 void main()

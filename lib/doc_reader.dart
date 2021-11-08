@@ -5,8 +5,7 @@ import 'package:doc_reader/doc_span/doc_span_interface.dart';
 import 'package:doc_reader/document.dart';
 import 'package:doc_reader/property_binder.dart';
 import 'package:flutter/material.dart';
-
-import 'doc_span/objects/applog.dart';
+import 'objects/applog.dart';
 
 class DocReader extends StatefulWidget
 {

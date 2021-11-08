@@ -1,3 +1,5 @@
+import 'package:doc_reader/objects/applog.dart';
+
 final newLineRegex = RegExp(r'[\r\n(\r\n)]', multiLine: true);
 final headRegExp = RegExp(r'^\s*#{1,6}', multiLine: false);
 final listRegExp = RegExp(r'^\s*[\-\+\*]\s', multiLine: false);
@@ -14,15 +16,22 @@ class Markdown
     {
       String line = lines[i];
       var head = headRegExp.firstMatch(line);
-      print('line:"$line"');
+
+      appLog_debug('line:"$line"');
+      var pClass = '';
+
       if (head != null)
       {
-        print('head:${head.end - head.start}');
+        pClass = 'h${(head.end - head.start).toString()}';
+        line = line.substring(head.end);
+        appLog_debug('head:$pClass "$line"');
       }
       var list = listRegExp.firstMatch(line);
       if (list != null)
       {
-        print("list:${list.end}");
+        pClass = 'li#{list.end}';
+        line = line.substring(list.end);
+        appLog_debug("list:$pClass '$line'");
       }
     }
   }
@@ -30,12 +39,21 @@ class Markdown
 
 class MarkdownParagraph
 {
-  String paragraphClass = '';
+  String paragraphClass;
+  final words = <MarkdownWord>[];
+
+  MarkdownParagraph({required String text, this.paragraphClass = ''}) {}
+
+  void writeText(String text) {}
 }
 
 class MarkdownWord
 {
   MarkdownWordStyle style = MarkdownWordStyle.normal;
+  bool stickToNext = false;
+  String text = '';
 }
 
 enum MarkdownWordStyle { normal, italic, bold, italicBold }
+
+// -----------------------------------------------

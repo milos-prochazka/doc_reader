@@ -1,4 +1,6 @@
 final newLineRegex = RegExp(r'[\r\n(\r\n)]', multiLine: true);
+final headRegExp = RegExp(r'^\s*#{1,6}', multiLine: false);
+final listRegExp = RegExp(r'^\s*[\-\+\*]\s', multiLine: false);
 
 class Markdown
 {
@@ -11,29 +13,24 @@ class Markdown
     for (int i = 0; i < lines.length; i++)
     {
       String line = lines[i];
-      while ((i + 1) < lines.length)
+      var head = headRegExp.firstMatch(line);
+      print('line:"$line"');
+      if (head != null)
       {
-        final nextLine = lines[i + 1];
-        final nextLineTrim = nextLine.trim();
-        if (nextLineTrim.isNotEmpty)
-        {
-          line += ' \n' + nextLine;
-          i++;
-        }
-        else
-        {
-          break;
-        }
+        print('head:${head.end - head.start}');
       }
-
-      print(line);
+      var list = listRegExp.firstMatch(line);
+      if (list != null)
+      {
+        print("list:${list.end}");
+      }
     }
   }
 }
 
 class MarkdownParagraph
 {
-  String paraClass = '';
+  String paragraphClass = '';
 }
 
 class MarkdownWord

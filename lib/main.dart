@@ -15,9 +15,13 @@ void main()
   md.writeMarkdownString
   (
     r'''
-dddd dddd.
-dsdsdds dffdfddf lokolek
-Mozolek.
+# dddd dddd.
+###dsdsdds dffdfddf lokolek
+M###ozolek.
+*No list
+*    List 1
+  + List 2
+      - List 3
   '''
   );
   runApp(const MyApp());

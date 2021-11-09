@@ -1,9 +1,10 @@
+import 'dart:html';
+
 import 'package:doc_reader/objects/applog.dart';
 
-final newLineRegex = RegExp(r'[\r\n(\r\n)]', multiLine: true);
-final headRegExp = RegExp(r'^\s*#{1,6}', multiLine: false);
-final listRegExp = RegExp(r'^\s*[\-\+\*]\s', multiLine: false);
-final charClass = RegExp(r'((\_{1,3})|(\*{1,3}))|(\`{3}(@\w+\s))', multiLine: false);
+final _newLineRegex = RegExp(r'[\r\n(\r\n)]', multiLine: true);
+final _headRegExp = RegExp(r'\s*((\>\s*)|([\-\+\*]\s+)|(\#{1,6}\s+)|(\d+\.\s)|([A-Za-z]\.\s))', multiLine: false);
+final _charClassRegExp = RegExp(r'((\_{1,3})|(\*{1,3}))|(\`{3}(@\w+\s))', multiLine: false);
 
 class Markdown
 {
@@ -11,31 +12,85 @@ class Markdown
 
   writeMarkdownString(String text)
   {
-    final lines = text.split(newLineRegex);
+    final lines = text.split(_newLineRegex);
 
     for (int i = 0; i < lines.length; i++)
     {
       String line = lines[i];
-      var head = headRegExp.firstMatch(line);
 
       appLog_debug('line:"$line"');
-      var pClass = '';
+      var pStart = '';
+      var hClass = '';
 
-      if (head != null)
+      int headEnd = 0;
+      Match? head;
+      do
       {
-        pClass = 'h${(head.end - head.start).toString()}';
-        line = line.substring(head.end);
-        appLog_debug('head:$pClass "$line"');
-      }
-      var list = listRegExp.firstMatch(line);
-      if (list != null)
-      {
-        pClass = 'li#{list.end}';
-        line = line.substring(list.end);
-        appLog_debug("list:$pClass '$line'");
-      }
+        head = _headRegExp.matchAsPrefix(line, headEnd);
 
-      paragraphs.add(MarkdownParagraph(text: line));
+        if (head != null && head.start == headEnd)
+        {
+          final t = head.input.substring(head.start, head.end).trim();
+
+          if (t.startsWith('#'))
+          {
+            hClass = t;
+            head = null;
+            pStart = line.substring(0, headEnd);
+          }
+          else
+          {
+            headEnd = head.end;
+          }
+        }
+        else
+        {
+          pStart = line.substring(0, headEnd);
+        }
+      }
+      while (head != null);
+
+      line = line.substring(headEnd);
+      appLog_debug('[$pStart] [$hClass] "$line"');
+
+      paragraphs.add(MarkdownParagraph(text: line, lineDecoration: pStart, headClass: hClass));
+    }
+
+    _doProcess();
+  }
+
+  _doProcess()
+  {
+    // Slouceni odstavcu
+    for (int i = 1; i < paragraphs.length;)
+    {
+      final para = paragraphs[i];
+      final prevPara = paragraphs[i - 1];
+
+      if (para.lineDecoration.isEmpty && para.words.isNotEmpty && prevPara.words.isNotEmpty)
+      {
+        prevPara.copyWords(para);
+        paragraphs.removeAt(i);
+      }
+      else
+      {
+        i++;
+      }
+    }
+
+    // Vypusteni prazdnych odstavcu
+    for (int i = 0; i < paragraphs.length;)
+    {
+      final para = paragraphs[i];
+
+      if (para.lineDecoration.isEmpty && para.words.isEmpty)
+      {
+        paragraphs.removeAt(i);
+      }
+      else
+      {
+        i++;
+      }
     }
   }
 
@@ -54,10 +109,11 @@ class Markdown
 
 class MarkdownParagraph
 {
-  String paragraphClass;
+  String lineDecoration;
+  String headClass;
   final words = <MarkdownWord>[];
 
-  MarkdownParagraph({required String text, this.paragraphClass = ''})
+  MarkdownParagraph({required String text, this.lineDecoration = '', this.headClass = ''})
   {
     writeText(text);
   }
@@ -65,7 +121,7 @@ class MarkdownParagraph
   @override
   String toString()
   {
-    final builder = StringBuffer('Paragraph: ${paragraphClass}\r\n');
+    final builder = StringBuffer("Paragraph: start='$lineDecoration' headClass='$headClass'\r\n");
     for (int i = 0; i < words.length; i++)
     {
       final word = words[i].toString();
@@ -103,6 +159,7 @@ class MarkdownParagraph
       {
         case '': // konec textu
           break;
+
         case ' ': // mezera
           writeWord(wordBuffer, styleStack, false);
           readIndex++;
@@ -114,7 +171,7 @@ class MarkdownParagraph
           break;
 
         default: // Jiny znak
-          final match = charClass.matchAsPrefix(text, readIndex);
+          final match = _charClassRegExp.matchAsPrefix(text, readIndex);
 
           if (match != null && match.start == readIndex)
           {
@@ -162,6 +219,70 @@ class MarkdownParagraph
   {
     return (index < 0 || index >= text.length) ? '' : text[index];
   }
+
+  void copyWords(MarkdownParagraph src)
+  {
+    words.add
+    (
+      MarkdownWord()
+      ..lineBreak = true
+      ..text = '\r'
+    );
+
+    for (var word in src.words)
+    {
+      words.add(word);
+    }
+  }
+}
+
+class MarkdownDecoration
+{
+  String decoration = '';
+  int level = 0;
+  int column = 0;
+
+  MarkdownDecoration(String decor, this.column)
+  {
+    int ch = decor.codeUnitAt(column);
+    if ((ch >= /*$A*/(0x41) && ch <= /*$Z*/(0x5A)) || (ch >= /*$a*/(0x61) && ch <= /*$z*/(0x7A)))
+    {
+      decor = 'a';
+    }
+    else if (ch >= /*$0*/(0x30) && ch <= /*$9*/(0x39))
+    {
+      decor = '1';
+    }
+    else
+    {
+      decor = decor.substring(column, column + 1);
+    }
+
+    decoration = decor;
+  }
+
+  List<MarkdownDecoration> textToList(String text)
+  {
+    final result = <MarkdownDecoration>[];
+
+    for (int i = 0; i < text.length;)
+    {
+      if (text.codeUnitAt(i) != /*$ */(0x20))
+      {
+        result.add(MarkdownDecoration(text, i));
+        while (i < text.length && text.codeUnitAt(i) != /*$ */(0x20))
+        {
+          i++;
+        }
+      }
+      else
+      {
+        i++;
+      }
+    }
+
+    return result;
+  }
 }
 
 class MarkdownWord
@@ -169,12 +290,14 @@ class MarkdownWord
   String style = '';
   bool stickToNext = false;
   String text = '';
+  bool lineBreak = false;
 
   @override
   String toString()
   {
     final s = stickToNext ? '+' : ' ';
-    return '[$style]$s "$text"';
+    final t = lineBreak ? '<break>' : text;
+    return '[$style]$s "$t"';
   }
 }
 

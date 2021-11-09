@@ -5,7 +5,7 @@ import 'package:doc_reader/document.dart';
 import 'package:doc_reader/markdown/markdown.dart';
 import 'package:doc_reader/property_binder.dart';
 import 'package:flutter/material.dart';
-
+import 'package:doc_reader/objects/applog.dart';
 import 'doc_touch.dart';
 
 void main()
@@ -13,16 +13,11 @@ void main()
   final md = Markdown();
   md.writeMarkdownString
   (
-    r'''
-# dddd dddd.
-###dsdsdds dffdfddf lokolek
-M###ozolek.
-*No list
-*    List 1
-  + List 2
-      - List 3
+    r'''**sss**
+aaa **ddd**
   '''
   );
+  print(md.toString());
   runApp(const MyApp());
 }
 

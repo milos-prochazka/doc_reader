@@ -63,7 +63,7 @@ class DocTouch
   {
     appLog_debug
     (
-'onPanDown:'
+      'onPanDown:'
       'lx=${details.localPosition.dx.toStringAsFixed(1)} ly=${details.localPosition.dy.toStringAsFixed(1)} '
       'gx=${details.globalPosition.dx.toStringAsFixed(1)} gy=${details.globalPosition.dy.toStringAsFixed(1)}'
     );
@@ -75,7 +75,7 @@ class DocTouch
   {
     appLog_debug
     (
-'onPanStart:'
+      'onPanStart:'
       'lx=${details.localPosition.dx.toStringAsFixed(1)} ly=${details.localPosition.dy.toStringAsFixed(1)} '
       'gx=${details.globalPosition.dx.toStringAsFixed(1)} gy=${details.globalPosition.dy.toStringAsFixed(1)} '
       'kind=${details.kind ?? 'no kind'} timestamp=${details.sourceTimeStamp}'
@@ -87,7 +87,7 @@ class DocTouch
   {
     appLog_debug
     (
-'onPanUpdate:'
+      'onPanUpdate:'
       'lx=${details.localPosition.dx.toStringAsFixed(1)} ly=${details.localPosition.dy.toStringAsFixed(1)} '
       'gx=${details.globalPosition.dx.toStringAsFixed(1)} gy=${details.globalPosition.dy.toStringAsFixed(1)} '
       'dx=${details.delta.dx.toStringAsFixed(1)} dy=${details.delta.dy.toStringAsFixed(1)} '
@@ -134,7 +134,7 @@ class DocTouch
   {
     appLog_debug
     (
-'onTapDown:'
+      'onTapDown:'
       'lx=${details.localPosition.dx.toStringAsFixed(1)} ly=${details.localPosition.dy.toStringAsFixed(1)} '
       'gx=${details.globalPosition.dx.toStringAsFixed(1)} gy=${details.globalPosition.dy.toStringAsFixed(1)}'
     );
@@ -152,7 +152,7 @@ class DocTouch
   {
     appLog_debug
     (
-'onTapUp:'
+      'onTapUp:'
       'lx=${details.localPosition.dx.toStringAsFixed(1)} ly=${details.localPosition.dy.toStringAsFixed(1)} '
       'gx=${details.globalPosition.dx.toStringAsFixed(1)} gy=${details.globalPosition.dy.toStringAsFixed(1)} '
       'kind=${details.kind}'

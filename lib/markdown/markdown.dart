@@ -1,5 +1,3 @@
-import 'dart:html';
-
 import 'package:doc_reader/objects/applog.dart';
 
 final _newLineRegex = RegExp(r'[\r\n(\r\n)]', multiLine: true);
@@ -35,8 +33,9 @@ class Markdown
           if (t.startsWith('#'))
           {
             hClass = t;
-            head = null;
             pStart = line.substring(0, headEnd);
+            headEnd = head.end;
+            head = null;
           }
           else
           {
@@ -89,6 +88,7 @@ class Markdown
       }
       else
       {
+        para.decorations = MarkdownDecoration.textToList(para.lineDecoration);
         i++;
       }
     }
@@ -98,6 +98,7 @@ class Markdown
   String toString()
   {
     final builder = StringBuffer('Markdown: ${paragraphs.length} paragraphs\r\n');
+
     for (int i = 0; i < paragraphs.length; i++)
     {
       final para = paragraphs[i].toString();
@@ -110,6 +111,7 @@ class Markdown
 class MarkdownParagraph
 {
   String lineDecoration;
+  List<MarkdownDecoration>? decorations;
   String headClass;
   final words = <MarkdownWord>[];
 
@@ -122,6 +124,20 @@ class MarkdownParagraph
   String toString()
   {
     final builder = StringBuffer("Paragraph: start='$lineDecoration' headClass='$headClass'\r\n");
+
+    if (decorations != null && decorations!.isNotEmpty)
+    {
+      builder.write('Decorations:\r\n');
+      for (final dec in decorations!)
+      {
+        builder.write('${dec.toString()}\r\n');
+      }
+      if (words.isNotEmpty)
+      {
+        builder.write('Words:\r\n');
+      }
+    }
+
     for (int i = 0; i < words.length; i++)
     {
       final word = words[i].toString();
@@ -242,6 +258,12 @@ class MarkdownDecoration
   int level = 0;
   int column = 0;
 
+  @override
+  String toString()
+  {
+    return '$decoration $level/$column';
+  }
+
   MarkdownDecoration(String decor, this.column)
   {
     int ch = decor.codeUnitAt(column);
@@ -261,7 +283,7 @@ class MarkdownDecoration
     decoration = decor;
   }
 
-  List<MarkdownDecoration> textToList(String text)
+  static List<MarkdownDecoration> textToList(String text)
   {
     final result = <MarkdownDecoration>[];
 

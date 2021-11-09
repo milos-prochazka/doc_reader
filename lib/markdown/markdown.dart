@@ -114,7 +114,6 @@ class MarkdownParagraph
           break;
 
         default: // Jiny znak
-
           final match = charClass.matchAsPrefix(text, readIndex);
 
           if (match != null && match.start == readIndex)

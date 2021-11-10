@@ -92,6 +92,8 @@ class Markdown
         i++;
       }
     }
+
+    MarkdownDecoration.modify(paragraphs);
   }
 
   @override
@@ -257,11 +259,12 @@ class MarkdownDecoration
   String decoration = '';
   int level = 0;
   int column = 0;
+  int count = 0;
 
   @override
   String toString()
   {
-    return '$decoration $level/$column';
+    return '$decoration level=$level column=$column count=$count';
   }
 
   MarkdownDecoration(String decor, this.column)
@@ -275,12 +278,81 @@ class MarkdownDecoration
     {
       decor = '1';
     }
+    else if (ch == /*$-*/(0x2D) || ch == /*$**/(0x2A) || ch == /*$+*/(0x2B))
+    {
+      decor = '-';
+    }
     else
     {
       decor = decor.substring(column, column + 1);
     }
 
     decoration = decor;
+  }
+
+  static bool compareModify(List<MarkdownDecoration>? current, List<MarkdownDecoration>? prev)
+  {
+    if (current == null || prev == null)
+    {
+      return true;
+    }
+    else
+    {
+      for (int i = 0; i < prev.length; i++)
+      {
+        if (i >= current.length)
+        {
+          return false;
+        }
+        else
+        {
+          final c = current[i];
+          final p = prev[i];
+
+          if (c.decoration != p.decoration)
+          {
+            return true;
+          }
+          else
+          {
+            if (c.decoration != '>')
+            {
+              if ((c.column - p.column).abs() < 2)
+              {
+                c.column = p.column;
+                c.level = p.level;
+                c.count = p.count + 1;
+              }
+              else if (c.column > p.column)
+              {
+                c.level = p.level + 1;
+                return true;
+              }
+              else
+              {
+                return false;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return true;
+  }
+
+  static void modify(List<MarkdownParagraph> para)
+  {
+    for (int index = 1; index < para.length; index++)
+    {
+      final cur = para[index];
+
+      var prev = index - 1;
+      while (prev >= 0 && !compareModify(cur.decorations, para[prev].decorations))
+      {
+        prev--;
+      }
+    }
   }
 
   static List<MarkdownDecoration> textToList(String text)

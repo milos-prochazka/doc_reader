@@ -36,7 +36,6 @@ class MarkdownTextSpan implements IDocumentSpan
   {
     _spans.clear();
 
-    double height = 0;
     double left = 0;
     double x = left;
     double y = 0;

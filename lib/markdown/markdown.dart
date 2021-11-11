@@ -176,34 +176,34 @@ class MarkdownParagraph
       switch (ch)
       {
         case '': // konec textu
-          break;
+        break;
 
         case ' ': // mezera
-          writeWord(wordBuffer, styleStack, false);
-          readIndex++;
-          break;
+        writeWord(wordBuffer, styleStack, false);
+        readIndex++;
+        break;
 
         case '\\': // escape
-          wordBuffer.write(charAT(text, readIndex + 1));
-          readIndex += 2;
-          break;
+        wordBuffer.write(charAT(text, readIndex + 1));
+        readIndex += 2;
+        break;
 
         default: // Jiny znak
-          final match = _charClassRegExp.matchAsPrefix(text, readIndex);
+        final match = _charClassRegExp.matchAsPrefix(text, readIndex);
 
-          if (match != null && match.start == readIndex)
+        if (match != null && match.start == readIndex)
+        {
+          // styl
+          readIndex += match.end - match.start;
+          final mValue = matchVal(match);
+
+          if (styleStack.isNotEmpty && compareClass(styleStack.last, mValue))
           {
-            // styl
-            readIndex += match.end - match.start;
-            final mValue = matchVal(match);
-
-            if (styleStack.isNotEmpty && compareClass(styleStack.last, mValue))
-            {
-              // konec stylu
-              final ch = charAT(text, readIndex);
-              writeWord(wordBuffer, styleStack, ch != ' ' && ch != '');
-              styleStack.removeLast();
-            }
+            // konec stylu
+            final ch = charAT(text, readIndex);
+            writeWord(wordBuffer, styleStack, ch != ' ' && ch != '');
+            styleStack.removeLast();
+          }
           else
           {
             // zacatek stylu

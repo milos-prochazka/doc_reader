@@ -7,22 +7,10 @@ import 'package:doc_reader/property_binder.dart';
 import 'package:flutter/material.dart';
 import 'package:doc_reader/objects/applog.dart';
 import 'doc_touch.dart';
+import 'markdown/markdown_text_span.dart';
 
 void main()
 {
-  final md = Markdown();
-  md.writeMarkdownString
-  (
-    r'''
-- ### _jaja_paja_
-   + weloweoweoweopewoewpoweewpoopwe
-   + dfjdfjkdfjdfjdfjkdfjkdfjdfjkdfdf
-- fdklfdlfdkfdkdfkfdlkfdlkfdklfdlk
-aaa **ddd**
-AASASAS
-  '''
-  );
-  print(md.toString());
   runApp(const MyApp());
 }
 
@@ -87,14 +75,30 @@ class _MyHomePageState extends State<MyHomePage>
     final document = Document();
     binder.setProperty(documentProperty, document);
 
-    for (int i = 1; i < 1000000; i++)
+    /*for (int i = 1; i < 1000000; i++)
     {
       document.docSpans.add(DocumentSpanContainer(BasicTextSpan
           (
             ':${i.toString().padLeft(5, '0')}: skkkc sdksdsdksd fdfdfkl dfldf asdsaaskl xcnxcxmbc nsdswdesdbn jksdsdjksdjk jkdssdjksdjk jksdsdjksdjk dflk ddfdf kdfkl dkdk dskdkd dskdkd dfkldf dfdfdfl dfdfdfl :$i:'
           )));
+    }*/
+    final md = Markdown();
+    md.writeMarkdownString
+    (
+      r'''
+- ### _jaja_paja_
+   + weloweoweoweo pewoe wpoweewpoopwe
+   + dfjdfjk dfjdf jdfjkdfj kdfjdfjkdfdf
+- fdkl fdlf dkfd kdfkf dlkfdl kfdkl fdlk
+aaa **ddd**
+AASASAS
+  '''
+    );
+    final ms = MarkdownTextSpan.create(md);
+    for (final s in ms)
+    {
+      document.docSpans.add(DocumentSpanContainer(s));
     }
-
     return binder;
   }
 }

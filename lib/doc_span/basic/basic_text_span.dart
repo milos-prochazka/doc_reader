@@ -63,7 +63,7 @@ class BasicTextSpan implements IDocumentSpan
       final tWidth = word.painter.size.width;
       final tHeight = word.painter.size.height;
 
-      if ((x + tWidth) <= _width)
+      if (((x + tWidth) <= _width))
       {
         word.xOffset = x;
         word.yOffset = y;

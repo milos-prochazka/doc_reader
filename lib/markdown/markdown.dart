@@ -189,31 +189,33 @@ class MarkdownParagraph
         break;
 
         default: // Jiny znak
-        final match = _charClassRegExp.matchAsPrefix(text, readIndex);
-
-        if (match != null && match.start == readIndex)
         {
-          // styl
-          readIndex += match.end - match.start;
-          final mValue = matchVal(match);
+          final match = _charClassRegExp.matchAsPrefix(text, readIndex);
 
-          if (styleStack.isNotEmpty && compareClass(styleStack.last, mValue))
+          if (match != null && match.start == readIndex)
           {
-            // konec stylu
-            final ch = charAT(text, readIndex);
-            writeWord(wordBuffer, styleStack, ch != ' ' && ch != '');
-            styleStack.removeLast();
+            // styl
+            readIndex += match.end - match.start;
+            final mValue = matchVal(match);
+
+            if (styleStack.isNotEmpty && compareClass(styleStack.last, mValue))
+            {
+              // konec stylu
+              final ch = charAT(text, readIndex);
+              writeWord(wordBuffer, styleStack, ch != ' ' && ch != '');
+              styleStack.removeLast();
+            }
+            else
+            {
+              // zacatek stylu
+              styleStack.add(matchVal(match));
+            }
           }
           else
           {
-            // zacatek stylu
-            styleStack.add(matchVal(match));
+            wordBuffer.write(ch);
+            readIndex++;
           }
-        }
-        else
-        {
-          wordBuffer.write(ch);
-          readIndex++;
         }
         break;
       }

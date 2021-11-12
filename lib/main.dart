@@ -94,7 +94,8 @@ aaa **ddd**
 AASASAS
   '''
     );
-    final ms = MarkdownTextSpan.create(md);
+    final cfg = MarkdownTextConfig();
+    final ms = MarkdownTextSpan.create(md, cfg);
     for (final s in ms)
     {
       document.docSpans.add(DocumentSpanContainer(s));

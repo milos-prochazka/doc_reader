@@ -6,6 +6,7 @@ import 'package:doc_reader/document.dart';
 import 'package:doc_reader/property_binder.dart';
 import 'package:flutter/material.dart';
 import 'objects/applog.dart';
+import 'dart:math' as math;
 
 class DocReader extends StatefulWidget
 {
@@ -140,31 +141,42 @@ class DocumentPainter extends CustomPainter
     @override
     void paint(Canvas canvas, Size size)
     {
-        final params = PaintParameters(canvas, size);
-        document.paintParameters = params;
-
-        if (document.actualWidgetSize != size)
+        try
         {
-            document.actualWidgetSize = size;
+            final params = PaintParameters(canvas, size);
+            document.paintParameters = params;
+
+            if (document.actualWidgetSize != size)
+            {
+                document.actualWidgetSize = size;
+            }
+
+            final docSpans = document.docSpans;
+
+            int spanIndex = math.min(document.position.floor(), docSpans.length - 1);
+            if (spanIndex >= 0)
+            {
+                double offset =
+                -(document.position - document.position.floorToDouble()) * docSpans[spanIndex].span.height(params);
+
+                for (; spanIndex < docSpans.length && offset < size.height; spanIndex++)
+                {
+                    final container = docSpans[spanIndex];
+                    container.span.paint(params, container.xPosition, offset);
+                    offset += container.span.height(params);
+                }
+
+                if (document.markPosition.isFinite)
+                {
+                    final markPaint = Paint()..color = const Color.fromARGB(100, 128, 138, 160);
+                    canvas.drawRect(Rect.fromLTWH(0, document.markPosition, size.width, document.markSize), markPaint);
+                    appLog('MarkSize=${document.markSize}');
+                }
+            }
         }
-
-        final docSpans = document.docSpans;
-
-        int spanIndex = document.position.floor();
-        double offset = -(document.position - document.position.floorToDouble()) * docSpans[spanIndex].span.height(params);
-
-        for (; spanIndex < docSpans.length && offset < size.height; spanIndex++)
+        catch (e)
         {
-            final container = docSpans[spanIndex];
-            container.span.paint(params, container.xPosition, offset);
-            offset += container.span.height(params);
-        }
-
-        if (document.markPosition.isFinite)
-        {
-            final markPaint = Paint()..color = const Color.fromARGB(100, 128, 138, 160);
-            canvas.drawRect(Rect.fromLTWH(0, document.markPosition, size.width, document.markSize), markPaint);
-            appLog('MarkSize=${document.markSize}');
+            appLogEx(e);
         }
     }
 

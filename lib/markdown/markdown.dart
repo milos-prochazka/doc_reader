@@ -66,7 +66,7 @@ class Markdown
       final para = paragraphs[i];
       final prevPara = paragraphs[i - 1];
 
-      if (para.lineDecoration.isEmpty && para.words.isNotEmpty && prevPara.words.isNotEmpty)
+      if (para.lineDecoration.isEmpty && para.headClass.isEmpty && para.words.isNotEmpty && prevPara.words.isNotEmpty)
       {
         prevPara.copyWords(para);
         paragraphs.removeAt(i);

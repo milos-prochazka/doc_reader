@@ -9,6 +9,14 @@ import 'package:doc_reader/objects/applog.dart';
 import 'doc_touch.dart';
 import 'markdown/markdown_text_span.dart';
 
+const testMarkdown = '''# Toto je nadpis 1
+## Toto je nadpis 2
+### Toto je nadpis 3
+#### Toto je nadpis 4
+##### Toto je nadpis 5
+###### Toto je nadpis 6
+Toto je běžný odstavec který se bude muset zalomit protože je příliš dlouhý aby se vešel na displej. Podruhé, toto je  běžný odstavec který se bude muset zalomit protože je příliš dlouhý aby se vešel na displej.
+''';
 void main()
 {
   runApp(const MyApp());
@@ -82,18 +90,9 @@ class _MyHomePageState extends State<MyHomePage>
             ':${i.toString().padLeft(5, '0')}: skkkc sdksdsdksd fdfdfkl dfldf asdsaaskl xcnxcxmbc nsdswdesdbn jksdsdjksdjk jkdssdjksdjk jksdsdjksdjk dflk ddfdf kdfkl dkdk dskdkd dskdkd dfkldf dfdfdfl dfdfdfl :$i:'
           )));
     }*/
+
     final md = Markdown();
-    md.writeMarkdownString
-    (
-      r'''
-- ### _jaja_paja_
-   + weloweoweoweo pewoe wpoweewpoopwe
-   + dfjdfjk dfjdf jdfjkdfj kdfjdfjkdfdf
-- fdkl fdlf dkfd kdfkf dlkfdl kfdkl fdlk
-aaa **ddd**
-AASASAS
-  '''
-    );
+    md.writeMarkdownString(testMarkdown);
     final cfg = MarkdownTextConfig();
     final ms = MarkdownTextSpan.create(md, cfg);
     for (final s in ms)

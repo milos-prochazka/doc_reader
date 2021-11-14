@@ -1,3 +1,4 @@
+import 'package:doc_reader/doc_span/color_text.dart';
 import 'package:doc_reader/doc_span/doc_span_interface.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -6,7 +7,48 @@ import 'dart:math' as math;
 
 final _defaultConfig =
 {
-  "bullets": ["  ● ", "  ○ ", "  ■ ", "  ● ", "  ○ ", "  ■ "]
+  "bullets": ["        ●  ", "        ○  ", "        ■  ", "        ●  ", "        ○  ", "        ■  "],
+  "textStyles":
+  {
+    "":
+    {
+      "fontSize": 20,
+      "fontStyle": "normal", // normal, bold, bold_italic
+    },
+    "h1":
+    {
+      "fontSize": 45,
+      "fontStyle": "italic", // normal, bold, bold_italic
+      "color": "Blue"
+    },
+    "h2":
+    {
+      "fontSize": 40,
+      "fontStyle": "bold_italic", // normal, bold, bold_italic
+      "color": "Dark Green"
+    },
+    "h3":
+    {
+      "fontSize": 35,
+      "fontStyle": "bold", // normal, bold, bold_italic
+    },
+    "h4":
+    {
+      "fontSize": 30,
+      "fontStyle": "normal", // normal, bold, bold_italic
+    },
+    "h5":
+    {
+      "fontSize": 28,
+      "fontStyle": "normal", // normal, bold, bold_italic
+    },
+    "h6":
+    {
+      "fontSize": 25,
+      "fontStyle": "bold", // normal, bold, bold_italic
+      "color": "#345"
+    },
+  }
 };
 
 class MarkdownTextConfig
@@ -15,11 +57,13 @@ class MarkdownTextConfig
   _MarkdownTextConfigState _state = _MarkdownTextConfigState();
   Key? _layoutKey;
 
-  T get<T>(List<dynamic> path, {dynamic defValue, bool lastInArray = true})
+  static final _emptyCfg = <String, dynamic>{};
+
+  T get<T>(List<dynamic> path, {dynamic config, dynamic defValue, bool lastInArray = true})
   {
     try
     {
-      var cfg = config;
+      var cfg = config ?? this.config;
 
       for (var item in path)
       {
@@ -74,12 +118,116 @@ class MarkdownTextConfig
         }
       }
 
-      return cfg as T;
+      if (cfg is T)
+      {
+        return cfg;
+      }
+      else if (T == double)
+      {
+        return cfg.toDouble() as T;
+      }
+      else if (T == String)
+      {
+        return cfg.toString() as T;
+      }
+      else
+      {
+        return defValue as T;
+      }
     }
     catch ($)
     {
       return defValue as T;
     }
+  }
+
+  static final _fontStyleFromStringMap = <String, FontStyle>
+  {
+    'normal': FontStyle.normal,
+    'bold': FontStyle.normal,
+    'italic': FontStyle.italic,
+    'bold_italic': FontStyle.italic,
+  };
+
+  static FontStyle _fontStyleFromString(String text)
+  {
+    return _fontStyleFromStringMap[text.toLowerCase()] ?? FontStyle.normal;
+  }
+
+  static final _fontWeightFromStringMap = <String, FontWeight>
+  {
+    'normal': FontWeight.normal,
+    'bold': FontWeight.bold,
+    'italic': FontWeight.normal,
+    'bold_italic': FontWeight.bold,
+  };
+
+  static FontWeight _fontWeightFromString(String text)
+  {
+    return _fontWeightFromStringMap[text.toLowerCase()] ?? FontWeight.normal;
+  }
+
+  _WordStyle getTextStyle(MarkdownParagraph para, MarkdownWord word, {bool bullet = false})
+  {
+    final fullStyle = para.headClass + word.style;
+    _WordStyle result;
+
+    if (_state.textStyles.containsKey(fullStyle))
+    {
+      result = _state.textStyles[fullStyle]!;
+    }
+    else
+    {
+      var cfg = get<Map<String, dynamic>>(['textStyles', para.headClass], defValue: _emptyCfg);
+
+      var fontSize = get<double>(['fontSize'], defValue: 20.0, config: cfg);
+
+      final styleStr = get<String>(['fontStyle'], defValue: 'normal', config: cfg);
+      var fontStyle = _fontStyleFromString(styleStr);
+      var fontWeight = _fontWeightFromString(styleStr);
+      final colorStr = get<String?>(['color'], config: cfg);
+      final color = colorFormText(colorStr ?? 'Black');
+      var yOffset = 0.0;
+
+      if (bullet)
+      {
+        yOffset = fontSize * 0.5;
+        fontSize *= 0.333;
+      }
+
+      switch (word.style)
+      {
+        case '_':
+        case '*':
+        fontStyle = FontStyle.italic;
+        break;
+
+        case '__':
+        case '**':
+        fontWeight = FontWeight.bold;
+        break;
+
+        case '___':
+        case '***':
+        fontStyle = FontStyle.italic;
+        fontWeight = FontWeight.bold;
+        break;
+      }
+
+      result = _WordStyle
+      (
+        TextStyle
+        (
+          color: color,
+          fontStyle: fontStyle,
+          fontWeight: fontWeight,
+          fontSize: fontSize,
+        ),
+        yOffset,
+      );
+    }
+
+    return result;
   }
 
   void _checkKey(PaintParameters params)
@@ -91,30 +239,32 @@ class MarkdownTextConfig
     }
   }
 
-  double bulletIntent(PaintParameters params)
+  double _bulletIntent(MarkdownParagraph para, MarkdownWord word)
   {
-    _checkKey(params);
-
     if (_state.bulletIntent == null)
     {
-      final bullText = get(["bullets", 0], defValue: '  -');
-      final bullPaint = TextPainter
-      (
-        text: TextSpan(text: bullText, style: const TextStyle(color: Color.fromARGB(255, 0, 0, 160), fontSize: 20.0)),
-        textDirection: TextDirection.ltr
-      );
-
-      bullPaint.layout();
-      _state.bulletIntent = bullPaint.size.width;
+      final style =
+      getTextStyle(para, word, bullet: true); //TextStyle(color: Color.fromARGB(255, 0, 0, 160), fontSize: 10.0);
+      final span = _Span(get(["bullets", 0], defValue: '  -'), style.textStyle).calcMetrics();
+      _state.bulletIntent = span.width;
     }
 
     return _state.bulletIntent!;
   }
 }
 
+class _WordStyle
+{
+  TextStyle textStyle;
+  double yOffseet;
+
+  _WordStyle(this.textStyle, this.yOffseet);
+}
+
 class _MarkdownTextConfigState
 {
   double? bulletIntent;
+  final textStyles = <String, _WordStyle>{};
 }
 
 class MarkdownTextSpan implements IDocumentSpan
@@ -125,6 +275,8 @@ class MarkdownTextSpan implements IDocumentSpan
   final _spans = <_Span>[];
   double _width = 0;
   double _height = 0;
+
+  MarkdownTextSpan(this.paragraph, this.config);
 
   static List<MarkdownTextSpan> create(Markdown markdown, MarkdownTextConfig config)
   {
@@ -138,28 +290,23 @@ class MarkdownTextSpan implements IDocumentSpan
     return result;
   }
 
-  MarkdownTextSpan(this.paragraph, this.config);
-
   void _updateText(PaintParameters parameters)
   {
     _spans.clear();
 
     double left = 0;
 
-    if (paragraph.decorations?.isNotEmpty ?? false)
+    if (paragraph.decorations?.isNotEmpty ?? false && paragraph.words.isNotEmpty)
     {
-      var painter = TextPainter
-      (
-        text: TextSpan
-        (
-          text: config.get(["bullets", 0], defValue: '  -'),
-          style: const TextStyle(color: Color.fromARGB(255, 0, 0, 160), fontSize: 10.0)
-        ),
-        textDirection: TextDirection.ltr
-      );
-      painter.layout();
-      _spans.add(_Span(painter, 0, 5));
-      left = painter.size.width;
+      final style = config.getTextStyle(paragraph, paragraph.words[0],
+        bullet: true); //TextStyle(color: Color.fromARGB(255, 0, 0, 160), fontSize: 10.0);
+      final level = paragraph.decorations!.last.level;
+      final span = _Span(config.get(["bullets", level], defValue: '  -'), style.textStyle).calcMetrics();
+      span.yOffset = style.yOffseet;
+      span.xOffset = level * config._bulletIntent(paragraph, paragraph.words[0]);
+
+      _spans.add(span);
+      left = span.width + span.xOffset;
     }
 
     double x = left;
@@ -168,19 +315,12 @@ class MarkdownTextSpan implements IDocumentSpan
 
     for (final word in paragraph.words)
     {
-      var painter = TextPainter
-      (
-        text: TextSpan
-        (
-          text: word.text + ' ', style: const TextStyle(color: Color.fromARGB(255, 0, 0, 160), fontSize: 20.0)
-        ),
-        textDirection: TextDirection.ltr
-      );
+      //const style = TextStyle(color: Color.fromARGB(255, 0, 0, 160), fontSize: 20.0, fontFamily: "Times New Roman", fontWeight: FontWeight.bold);
+      final style = config.getTextStyle(paragraph, word);
+      final span = _Span(word.text, style.textStyle).calcMetrics();
 
-      painter.layout();
-
-      var pWidth = painter.size.width;
-      var pHeight = painter.size.height;
+      var pWidth = span.width + span.wordSpacing;
+      var pHeight = span.height;
 
       if ((x + pWidth) > parameters.size.width || word.lineBreak)
       {
@@ -190,7 +330,9 @@ class MarkdownTextSpan implements IDocumentSpan
       }
       h = math.max(pHeight, h);
 
-      _spans.add(_Span(painter, x, y));
+      span.xOffset = x;
+      span.yOffset = y;
+      _spans.add(span);
       x += pWidth;
     }
 
@@ -242,9 +384,73 @@ class MarkdownTextSpan implements IDocumentSpan
 
 class _Span
 {
-  TextPainter painter;
-  double xOffset;
-  double yOffset;
+  TextPainter? _painter;
+  late String text;
+  late TextStyle style;
+  double yOffset = 0;
+  double xOffset = 0;
+  double baseLine = 0;
+  double wordSpacing = 0;
+  double left = 0;
+  double height = 0;
+  double width = 0;
 
-  _Span(this.painter, [this.xOffset = 0, this.yOffset = 0]);
+  _Span(this.text, this.style);
+
+  _Span calcMetrics()
+  {
+    final p = painter;
+    return this;
+  }
+
+  TextPainter get painter
+  {
+    if (_painter != null)
+    {
+      return _painter!;
+    }
+    else
+    {
+      final p = TextPainter
+      (
+        text: TextSpan(text: text, style: style),
+        textDirection: TextDirection.ltr,
+      );
+
+      p.layout(minWidth: 0.0, maxWidth: 10000.0);
+      _painter = p;
+
+      final ml = p.computeLineMetrics();
+
+      if (ml.isNotEmpty)
+      {
+        final metrics = ml.first;
+        wordSpacing = style.wordSpacing ?? p.height / 3;
+
+        baseLine = metrics.ascent;
+        height = metrics.height;
+        width = p.size.width; // Mereni s mezerami
+        //width = metrics.width; // Mereni bez mezer
+        left = metrics.left;
+      }
+
+      return p;
+    }
+  }
+
+  void paint(Canvas canvas, double xoffset, double yoffset)
+  {
+    final textPainter = painter;
+
+    final offset = Offset(xOffset - xoffset, yOffset - yoffset);
+
+    textPainter.paint(canvas, offset);
+  }
+}
+
+class _Line
+{
+  final spans = <_Span>[];
+
+  void calcPosition() {}
 }

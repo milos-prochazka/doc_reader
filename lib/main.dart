@@ -1,5 +1,6 @@
 import 'package:doc_reader/doc_reader.dart';
 import 'package:doc_reader/doc_span/basic/basic_text_span.dart';
+import 'doc_span/color_text.dart';
 import 'package:doc_reader/doc_span/doc_span_interface.dart';
 import 'package:doc_reader/document.dart';
 import 'package:doc_reader/markdown/markdown.dart';
@@ -9,7 +10,13 @@ import 'package:doc_reader/objects/applog.dart';
 import 'doc_touch.dart';
 import 'markdown/markdown_text_span.dart';
 
-const testMarkdown = '''# Toto je nadpis 1
+const testMarkdown = r'''
+- xxx
+   - yyyy
+       - zzzz
+
+První *italic* _italic_ **bold** __bold__ ***italic\ bold*** ___italic\ bold___
+# Toto je nadpis 1
 ## Toto je nadpis 2
 ### Toto je nadpis 3
 #### Toto je nadpis 4
@@ -17,8 +24,27 @@ const testMarkdown = '''# Toto je nadpis 1
 ###### Toto je nadpis 6
 Toto je běžný odstavec který se bude muset zalomit protože je příliš dlouhý aby se vešel na displej. Podruhé, toto je  běžný odstavec který se bude muset zalomit protože je příliš dlouhý aby se vešel na displej.
 ''';
+
+void testColor(String text)
+{
+  print('${text.padRight(24)} ${colorFormText(text)}');
+}
+
 void main()
 {
+  testColor('yellow green');
+  testColor('My Pink');
+  registerColorName('my piNk', 0xFFE91E63);
+  testColor('yellow green');
+  testColor('My Pink');
+  testColor('#ABC');
+  testColor('#Abc');
+  testColor('#1789');
+  testColor('#17891');
+  testColor('#2A3C4F');
+  testColor('#30FFA7B3');
+  testColor('#FF00FF00');
+
   runApp(const MyApp());
 }
 

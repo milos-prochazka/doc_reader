@@ -32,7 +32,7 @@ class Markdown
 
           if (t.startsWith('#'))
           {
-            hClass = t;
+            hClass = 'h${t.length}';
             pStart = line.substring(0, headEnd);
             headEnd = head.end;
             head = null;
@@ -58,7 +58,7 @@ class Markdown
     _doProcess();
   }
 
-  _doProcess()
+  void _doProcess()
   {
     // Slouceni odstavcu
     for (int i = 1; i < paragraphs.length;)
@@ -66,7 +66,14 @@ class Markdown
       final para = paragraphs[i];
       final prevPara = paragraphs[i - 1];
 
-      if (para.lineDecoration.isEmpty && para.headClass.isEmpty && para.words.isNotEmpty && prevPara.words.isNotEmpty)
+      if
+      (
+        para.lineDecoration.isEmpty &&
+        para.headClass.isEmpty &&
+        para.words.isNotEmpty &&
+        prevPara.words.isNotEmpty &&
+        prevPara.headClass.isEmpty
+      )
       {
         prevPara.copyWords(para);
         paragraphs.removeAt(i);

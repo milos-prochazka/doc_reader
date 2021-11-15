@@ -1,8 +1,9 @@
 import 'package:doc_reader/objects/applog.dart';
 
-final _newLineRegex = RegExp(r'[\r\n(\r\n)]', multiLine: true);
+final _newLineRegex = RegExp(r'([\r\n])|(\r\n)]', multiLine: true);
 final _headRegExp = RegExp(r'\s*((\>\s*)|([\-\+\*]\s+)|(\#{1,6}\s+)|(\d+\.\s)|([A-Za-z]\.\s))', multiLine: false);
 final _charClassRegExp = RegExp(r'((\_{1,3})|(\*{1,3}))|(\`{3}(@\w+\s))', multiLine: false);
+final _linkRegExp = RegExp(r'\[.*\]\(.+\)', multiLine: false);
 
 class Markdown
 {
@@ -188,6 +189,26 @@ class MarkdownParagraph
         case ' ': // mezera
         writeWord(wordBuffer, styleStack, false);
         readIndex++;
+        break;
+
+        case '!': // Obrazek (mozna)
+        readIndex++;
+        if (charAT(text, readIndex) == '[')
+        {
+          var match = _linkRegExp.matchAsPrefix(text, readIndex);
+
+          if (match != null && match.start == readIndex)
+          {
+            writeWord(wordBuffer, styleStack, false);
+            wordBuffer.write(text.substring(readIndex - 1, match.end));
+            writeWord(wordBuffer, styleStack, false);
+            readIndex = match.end;
+          }
+        }
+        else
+        {
+          wordBuffer.write(ch);
+        }
         break;
 
         case '\\': // escape

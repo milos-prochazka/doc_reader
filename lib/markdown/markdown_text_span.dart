@@ -366,7 +366,7 @@ class MarkdownTextSpan implements IDocumentSpan
   @override
   double height(PaintParameters params)
   {
-    calcSize(params);
+    _updateSize(params);
     return _height;
   }
 

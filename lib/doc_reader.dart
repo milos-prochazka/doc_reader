@@ -143,13 +143,18 @@ class DocumentPainter extends CustomPainter
     {
         try
         {
-            final params = PaintParameters(canvas, size);
-            document.paintParameters = params;
-
-            if (document.actualWidgetSize != size)
+            // TODO predelat ziskavani PaintParameters do document
+            if (document.paintParameters == null || document.actualWidgetSize != size)
             {
                 document.actualWidgetSize = size;
+                document.paintParameters = PaintParameters(canvas, size);
             }
+            else
+            {
+                document.paintParameters!.canvas = canvas;
+            }
+
+            final params = document.paintParameters!;
 
             final docSpans = document.docSpans;
 

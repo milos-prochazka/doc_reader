@@ -21,7 +21,8 @@ class DocumentSpanContainer
 class PaintParameters
 {
   final Size size;
-  final Canvas canvas;
+  Canvas canvas;
+
   final Key key = UniqueKey();
 
   PaintParameters(this.canvas, this.size);

@@ -5,7 +5,7 @@ import 'doc_span/doc_span_interface.dart';
 class Document
 {
   /// Aktualni pozice v dokumentu
-  double position = 1.0;
+  double position = 0.0;
 
   /// Aktualni velikost Widgetu ktery zobrazuje dokument
   Size actualWidgetSize = Size.infinite;

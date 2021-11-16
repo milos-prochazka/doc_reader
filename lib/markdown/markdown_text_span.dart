@@ -1,5 +1,6 @@
 import 'package:doc_reader/doc_span/color_text.dart';
 import 'package:doc_reader/doc_span/doc_span_interface.dart';
+import 'package:doc_reader/objects/applog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'markdown.dart';
@@ -251,8 +252,8 @@ class MarkdownTextConfig
     {
       final style =
       getTextStyle(para, word, bullet: true); //TextStyle(color: Color.fromARGB(255, 0, 0, 160), fontSize: 10.0);
-      final span = _Word(get(["bullets", 0], defValue: '  -'), style.textStyle).calcMetrics();
-      _state.bulletIntent = span.width;
+      final bullet = _Text(get(["bullets", 0], defValue: '  -'), style.textStyle).calcMetrics();
+      _state.bulletIntent = bullet.width;
     }
 
     return _state.bulletIntent!;
@@ -314,12 +315,21 @@ class MarkdownTextSpan implements IDocumentSpan
     _width = 0;
 
     double left = 0;
+    double y = 0;
+
+    if (_Hr.hrStyle(paragraph.headClass))
+    {
+      final hr = _Hr(paragraph.headClass,parameters.size.width).calcMetrics();
+      y = hr.height;
+      _height = y;
+      _word.add(hr);
+    }
 
     if (paragraph.words.isNotEmpty && (paragraph.decorations?.isNotEmpty ?? false))
     {
       final style = config.getTextStyle(paragraph, paragraph.words[0], bullet: true);
       final level = paragraph.decorations!.last.level;
-      final word = _Word(config.get(["bullets", level], defValue: '  -'), style.textStyle).calcMetrics();
+      final word = _Text(config.get(["bullets", level], defValue: '  -'), style.textStyle).calcMetrics();
       word.yOffset = style.yOffseet;
       word.xOffset = level * config._bulletIntent(paragraph, paragraph.words[0]);
 
@@ -329,13 +339,12 @@ class MarkdownTextSpan implements IDocumentSpan
     }
 
     double x = left;
-    double y = 0;
 
     for (final word in paragraph.words)
     {
       //const style = TextStyle(color: Color.fromARGB(255, 0, 0, 160), fontSize: 20.0, fontFamily: "Times New Roman", fontWeight: FontWeight.bold);
       final style = config.getTextStyle(paragraph, word);
-      final wrd = _Word(word.text, style.textStyle).calcMetrics();
+      final wrd = _Text(word.text, style.textStyle).calcMetrics();
 
       var pWidth = wrd.width + wrd.wordSpacing;
 
@@ -386,7 +395,8 @@ class MarkdownTextSpan implements IDocumentSpan
     for (var word in _word)
     {
       //word.painter.layout();
-      word.painter.paint(params.canvas, Offset(word.xOffset + xOffset, word.yOffset + yOffset));
+      //word.painter.paint(params.canvas, Offset(word.xOffset + xOffset, word.yOffset + yOffset));
+      word.paint(params,xOffset,yOffset);
     }
   }
 
@@ -400,9 +410,6 @@ class MarkdownTextSpan implements IDocumentSpan
 
 class _Word
 {
-  TextPainter? _painter;
-  late String text;
-  late TextStyle style;
   double yOffset = 0;
   double xOffset = 0;
   double baseLine = 0;
@@ -411,8 +418,26 @@ class _Word
   double height = 0;
   double width = 0;
 
-  _Word(this.text, this.style);
+  _Word calcMetrics()
+  {
+    return this;
+  }
 
+
+  void paint(PaintParameters params, double xoffset, double yoffset)
+  {
+  }
+}
+
+class _Text extends _Word
+{
+  TextPainter? _painter;
+  late String text;
+  late TextStyle style;
+
+  _Text(this.text, this.style);
+
+  @override
   _Word calcMetrics()
   {
     // ignore: unused_local_variable
@@ -455,13 +480,84 @@ class _Word
     }
   }
 
-  void paint(Canvas canvas, double xoffset, double yoffset)
+  @override
+  void paint(PaintParameters params, double xoffset, double yoffset)
   {
     final textPainter = painter;
 
-    final offset = Offset(xOffset - xoffset, yOffset - yoffset);
+    final offset = Offset(xOffset + xoffset, yOffset + yoffset);
+    final rect = Rect.fromLTWH(offset.dx,offset.dy, width, height);
 
-    textPainter.paint(canvas, offset);
+    if (rect.overlaps(params.rect))
+    {
+      textPainter.paint(params.canvas, offset);
+    }
+  }
+}
+
+
+class _Hr extends _Word
+{
+  String style;
+
+  static bool hrStyle(String style)
+  {
+      switch (style)
+      {
+          case '===':
+          case '***':
+          case '___':
+          case '---':
+            return true;
+
+          default:
+            return false;
+      }
+  }
+
+
+  _Hr(this.style,double width)
+  {
+      this.width = width;
+
+      switch (style)
+      {
+          case '===':
+            height = 8;
+            break;
+
+          case '***':
+            height = 16;
+            break;
+
+          case '___':
+          case '----':
+            height = 4;
+            break;
+      }
+
+      this.left = 4;
+  }
+
+  @override
+  _Hr calcMetrics()
+  {
+    return this;
+  }
+
+  @override
+  void paint(PaintParameters params, double xoffset, double yoffset)
+  {
+    final paint = Paint()
+        ..color = Colors.grey
+        ..strokeWidth = height*0.5
+        ..;
+
+    double y = yoffset+height*0.5;
+
+    params.canvas.drawLine(Offset(xoffset+left,y),
+                           Offset(xoffset+width-2*left,y),
+                           paint);
   }
 }
 

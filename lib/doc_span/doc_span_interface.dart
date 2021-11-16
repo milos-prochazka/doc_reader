@@ -20,10 +20,21 @@ class DocumentSpanContainer
 
 class PaintParameters
 {
-  final Size size;
-  Canvas canvas;
+  final Canvas canvas;
+  late Size size;
+  late Rect rect;
+  late Key key;
 
-  final Key key = UniqueKey();
+  PaintParameters(this.canvas, this.size)
+  {
+    rect = Rect.fromLTWH(0, 0, size.width, size.height);
+    key = UniqueKey();
+  }
 
-  PaintParameters(this.canvas, this.size);
+  PaintParameters.copyFrom(this.canvas, PaintParameters source)
+  {
+    size = source.size;
+    rect = source.rect;
+    key = source.key;
+  }
 }

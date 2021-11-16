@@ -10,7 +10,17 @@ import 'package:doc_reader/objects/applog.dart';
 import 'doc_touch.dart';
 import 'markdown/markdown_text_span.dart';
 
-const testMarkdown = r'''![toto je popis](https://d62-a.sdn.cz/d_62/c_img_gU_g/xuRBp/0-uvod.jpeg)
+const testMarkdown = r'''
+aaaaa
+
+
+------------------------------
+![toto je popis](https://d62-a.sdn.cz/d_62/c_img_gU_g/xuRBp/0-uvod.jpeg)
+  Jakamarus
+  ---------
+
+ ***************
+
 - xxx
    - yyyy
        - zzzz
@@ -22,7 +32,8 @@ První *italic* _italic_ **bold** __bold__ ***italic\ bold*** ___italic\ bold___
 #### Toto je nadpis 4
 ##### Toto je nadpis 5
 ###### Toto je nadpis 6
-Toto je běžný odstavec který se bude muset zalomit protože je příliš dlouhý aby se vešel na displej. Podruhé, toto je  běžný odstavec který se bude muset zalomit protože je příliš dlouhý aby se vešel na displej.
+  [aaaaaa]: (wwww.sss.cz)
+Toto jojo@email.cz je běžný odstavec který se bude muset zalomit protože je příliš dlouhý aby se vešel na displej. Podruhé, toto je  běžný odstavec který se bude muset zalomit protože je příliš dlouhý aby se vešel na displej.
 ''';
 
 void testColor(String text)

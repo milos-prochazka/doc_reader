@@ -1,15 +1,33 @@
-import 'package:doc_reader/objects/applog.dart';
+// ignore_for_file: constant_identifier_names
 
+import 'package:doc_reader/objects/applog.dart';
+import 'package:tuple/tuple.dart';
+
+/// Deleni textu na radky
 final _newLineRegex = RegExp(r'([\r\n])|(\r\n)]', multiLine: true);
+
+/// Detekce nadpisu a odsazeni
 final _headRegExp = RegExp(r'\s*((\>\s*)|([\-\+\*]\s+)|(\#{1,6}\s+)|(\d+\.\s)|([A-Za-z]\.\s))', multiLine: false);
+
+/// Trida znaku (italic,bold a dalsi)
 final _charClassRegExp = RegExp(r'((\_{1,3})|(\*{1,3}))|(\`{3}(@\w+\s))', multiLine: false);
+
+/// Pojmenovany link
 final _namedLinkRegExp = RegExp(r'\[.*\]\(.+\)', multiLine: false);
+
+/// Url link: http://www.any.org nebo <http://www.any.org>
 final _urlRegExp =
 RegExp(r'\<?[a-zA-Z0-9]{2,32}:\/\/[a-zA-Z0-9@:%\._\\+~#?&\/=\u00A0-\uD7FF]{2,256}\>?', multiLine: false);
+
+/// Email link: aaaa@dddd.org nebo <aaaa@dddd.org>
 final _emailRegExp =
 RegExp(r'\<?[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9\u00A0-\uD7FF)]+(?:\.[a-zA-Z0-9-]+)*\>?', multiLine: false);
-final _hrRegExp = RegExp(r'\^\s*(([\*]{3,})|([\-]{3,})|([\_]{3,})|([\=]{3,}))\s*$', multiLine: false);
-final _refLinkLinkRegExp = RegExp(r'^\s{0,3}\[.+\]\s+\S+$', multiLine: false);
+
+/// Horizntalni cara --- , === , ___ , ***
+final _hrRegExp = RegExp(r'^\s*(([\*]{3,})|([\-]{3,})|([\_]{3,})|([\=]{3,}))\s*$', multiLine: false);
+
+/// Radek s formatem [aaa]: http://wwww.seznam.cz
+final _refLinkLinkRegExp = RegExp(r'^\s{0,3}\[.+\]\:\s+\S+$', multiLine: false);
 
 class Markdown
 {
@@ -24,42 +42,68 @@ class Markdown
       String line = lines[i];
 
       appLog_debug('line:"$line"');
-      var pStart = '';
-      var hClass = '';
 
-      int headEnd = 0;
-      Match? head;
-      do
+      if (_hrRegExp.hasMatch(line))
       {
-        head = _headRegExp.matchAsPrefix(line, headEnd);
-
-        if (head != null && head.start == headEnd)
+        final ch = line.trim()[0];
+        switch (ch)
         {
-          final t = head.input.substring(head.start, head.end).trim();
-
-          if (t.startsWith('#'))
+          case '=':
+          case '-':
+          if (paragraphs.isNotEmpty && paragraphs.last.words.isNotEmpty)
           {
-            hClass = 'h${t.length}';
-            pStart = line.substring(0, headEnd);
-            headEnd = head.end;
-            head = null;
+            paragraphs.last.headClass = ch == '=' ? 'h1' : 'h2';
           }
           else
           {
-            headEnd = head.end;
+            paragraphs.add(MarkdownParagraph(text: '', headClass: ''.padLeft(3, ch)));
           }
-        }
-        else
-        {
-          pStart = line.substring(0, headEnd);
+          break;
+
+          default:
+          paragraphs.add(MarkdownParagraph(text: '', headClass: ''.padLeft(3, ch)));
+          break;
         }
       }
-      while (head != null);
+      else
+      {
+        var pStart = '';
+        var hClass = '';
 
-      line = line.substring(headEnd);
-      appLog_debug('[$pStart] [$hClass] "$line"');
+        int headEnd = 0;
+        Match? head;
+        do
+        {
+          head = _headRegExp.matchAsPrefix(line, headEnd);
 
-      paragraphs.add(MarkdownParagraph(text: line, lineDecoration: pStart, headClass: hClass));
+          if (head != null && head.start == headEnd)
+          {
+            final t = head.input.substring(head.start, head.end).trim();
+
+            if (t.startsWith('#'))
+            {
+              hClass = 'h${t.length}';
+              pStart = line.substring(0, headEnd);
+              headEnd = head.end;
+              head = null;
+            }
+            else
+            {
+              headEnd = head.end;
+            }
+          }
+          else
+          {
+            pStart = line.substring(0, headEnd);
+          }
+        }
+        while (head != null);
+
+        line = line.substring(headEnd);
+        appLog_debug('[$pStart] [$hClass] "$line"');
+
+        paragraphs.add(MarkdownParagraph(text: line, lineDecoration: pStart, headClass: hClass));
+      }
     }
 
     _doProcess();
@@ -96,7 +140,7 @@ class Markdown
     {
       final para = paragraphs[i];
 
-      if (para.lineDecoration.isEmpty && para.words.isEmpty)
+      if (para.lineDecoration.isEmpty && para.words.isEmpty && para.headClass.isEmpty)
       {
         paragraphs.removeAt(i);
       }
@@ -179,9 +223,34 @@ class MarkdownParagraph
 
   void writeText(String text)
   {
+    const MATCH_NONE = 0;
+    const NAMED_LINK = 1;
+    const EMAIL_LINK = 2;
+    const URL_LINK = 3;
+
     final wordBuffer = StringBuffer();
     final styleStack = <String>[];
     int readIndex = 0;
+    final List<Match?> lineMatches = List.filled(text.length, null);
+    final List<int> lineMatchType = List.filled(text.length, MATCH_NONE);
+
+    for
+    (
+      final matchInfo in
+      [
+        Tuple2(NAMED_LINK, _namedLinkRegExp),
+        Tuple2(EMAIL_LINK, _emailRegExp),
+        Tuple2(URL_LINK, _urlRegExp),
+      ]
+    )
+    {
+      final matches = matchInfo.item2.allMatches(text);
+      for (final match in matches)
+      {
+        lineMatches[match.start] = match;
+        lineMatchType[match.start] = matchInfo.item1;
+      }
+    }
 
     do
     {

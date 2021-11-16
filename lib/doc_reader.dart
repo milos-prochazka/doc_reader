@@ -151,7 +151,7 @@ class DocumentPainter extends CustomPainter
             }
             else
             {
-                document.paintParameters!.canvas = canvas;
+                document.paintParameters = PaintParameters.copyFrom(canvas, document.paintParameters!);
             }
 
             final params = document.paintParameters!;

@@ -3,7 +3,13 @@ import 'package:doc_reader/objects/applog.dart';
 final _newLineRegex = RegExp(r'([\r\n])|(\r\n)]', multiLine: true);
 final _headRegExp = RegExp(r'\s*((\>\s*)|([\-\+\*]\s+)|(\#{1,6}\s+)|(\d+\.\s)|([A-Za-z]\.\s))', multiLine: false);
 final _charClassRegExp = RegExp(r'((\_{1,3})|(\*{1,3}))|(\`{3}(@\w+\s))', multiLine: false);
-final _linkRegExp = RegExp(r'\[.*\]\(.+\)', multiLine: false);
+final _namedLinkRegExp = RegExp(r'\[.*\]\(.+\)', multiLine: false);
+final _urlRegExp =
+RegExp(r'\<?[a-zA-Z0-9]{2,32}:\/\/[a-zA-Z0-9@:%\._\\+~#?&\/=\u00A0-\uD7FF]{2,256}\>?', multiLine: false);
+final _emailRegExp =
+RegExp(r'\<?[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9\u00A0-\uD7FF)]+(?:\.[a-zA-Z0-9-]+)*\>?', multiLine: false);
+final _hrRegExp = RegExp(r'\^\s*(([\*]{3,})|([\-]{3,})|([\_]{3,})|([\=]{3,}))\s*$', multiLine: false);
+final _refLinkLinkRegExp = RegExp(r'^\s{0,3}\[.+\]\s+\S+$', multiLine: false);
 
 class Markdown
 {
@@ -195,7 +201,7 @@ class MarkdownParagraph
         readIndex++;
         if (charAT(text, readIndex) == '[')
         {
-          var match = _linkRegExp.matchAsPrefix(text, readIndex);
+          var match = _namedLinkRegExp.matchAsPrefix(text, readIndex);
 
           if (match != null && match.start == readIndex)
           {

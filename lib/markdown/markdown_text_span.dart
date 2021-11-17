@@ -1,8 +1,14 @@
+import 'dart:async';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+
 import 'package:doc_reader/doc_span/color_text.dart';
 import 'package:doc_reader/doc_span/doc_span_interface.dart';
 import 'package:doc_reader/objects/applog.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import '../document.dart';
 import 'markdown.dart';
 import 'dart:math' as math;
 
@@ -291,16 +297,17 @@ class MarkdownTextSpan implements IDocumentSpan
   final _word = <_Word>[];
   double _width = 0;
   double _height = 0;
+  final Document document;
 
-  MarkdownTextSpan(this.paragraph, this.config);
+  MarkdownTextSpan(this.paragraph, this.config, this.document);
 
-  static List<MarkdownTextSpan> create(Markdown markdown, MarkdownTextConfig config)
+  static List<MarkdownTextSpan> create(Markdown markdown, MarkdownTextConfig config, Document document)
   {
     final result = <MarkdownTextSpan>[];
 
     for (final para in markdown.paragraphs)
     {
-      result.add(MarkdownTextSpan(para, config));
+      result.add(MarkdownTextSpan(para, config, document));
     }
 
     return result;
@@ -344,7 +351,18 @@ class MarkdownTextSpan implements IDocumentSpan
     {
       //const style = TextStyle(color: Color.fromARGB(255, 0, 0, 160), fontSize: 20.0, fontFamily: "Times New Roman", fontWeight: FontWeight.bold);
       final style = config.getTextStyle(paragraph, word);
-      final wrd = _Text(word.text, style.textStyle).calcMetrics();
+      _Word wrd;
+
+      switch (word.type)
+      {
+        case MarkdownWord_Type.image:
+        wrd = _Image(word.image, document).calcMetrics();
+        break;
+
+        default:
+        wrd = _Text(word.text, style.textStyle).calcMetrics();
+        break;
+      }
 
       var pWidth = wrd.width + wrd.wordSpacing;
 
@@ -553,6 +571,61 @@ class _Hr extends _Word
   }
 }
 
+class _Image extends _Word
+{
+  static bool loaded = false;
+  String imgSource;
+  static ui.Image? image; // fuj
+  Document? document;
+
+  _Image(this.imgSource, this.document);
+
+  // ignore: non_constant_identifier_names
+  static bool _load_started = false;
+  _load() async
+  {
+    print("_load()");
+    if (!_load_started)
+    {
+      _load_started = true;
+
+      image ??= await loadUiImage(imgSource);
+      if (image != null)
+      {
+        width = image!.width.toDouble();
+        height = image!.height.toDouble();
+
+        loaded = true;
+
+        document?.repaint();
+      }
+    }
+    else
+    {
+      width = image!.width.toDouble();
+      height = image!.height.toDouble();
+    }
+  }
+
+  @override
+  _Image calcMetrics()
+  {
+    _load();
+    return this;
+  }
+
+  @override
+  void paint(PaintParameters params, double xoffset, double yoffset)
+  {
+    if (image != null)
+    {
+      final paint = Paint();
+
+      params.canvas.drawImage(image!, Offset(xoffset, yoffset), paint);
+    }
+  }
+}
+
 class _Line
 {
   final _words = <_Word>[];
@@ -587,5 +660,26 @@ class _Line
     }
 
     return span._height;
+  }
+}
+
+Future<ui.Image?> loadUiImage(String imageAssetPath) async
+{
+  try
+  {
+    final ByteData data = await rootBundle.load(imageAssetPath);
+    final Completer<ui.Image> completer = Completer();
+    ui.decodeImageFromList
+    (
+      Uint8List.view(data.buffer), (ui.Image img)
+      {
+        return completer.complete(img);
+      }
+    );
+    return completer.future;
+  }
+  catch (e)
+  {
+    return null;
   }
 }

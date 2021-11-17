@@ -37,4 +37,9 @@ class PaintParameters
     rect = source.rect;
     key = source.key;
   }
+
+  void newKey()
+  {
+    key = UniqueKey();
+  }
 }

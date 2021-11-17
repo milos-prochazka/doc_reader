@@ -20,7 +20,10 @@ class Document
   OnTouchMoveHandler? onTouchMove;
 
   /// Handler polozeni a uvoleni prstu na widggetu
-  OnTouchUpDown? onTouchUpDown;
+  OnTouchUpDownHandler? onTouchUpDown;
+
+  /// Handler prekresleni
+  OnRepaintHandler? onRepaint;
 
   /// Jednotlive casti (spany) dokumentu
   final docSpans = <DocumentSpanContainer>[];
@@ -121,8 +124,15 @@ class Document
 
     return changePosition;
   }
+
+  void repaint()
+  {
+    paintParameters?.newKey();
+    onRepaint?.call();
+  }
 }
 
 typedef OnTapHandler = Function(double relativeX, double relativeY);
-typedef OnTouchUpDown = Function(bool down, double widgetX, double widgetY);
+typedef OnTouchUpDownHandler = Function(bool down, double widgetX, double widgetY);
 typedef OnTouchMoveHandler = Function(double deltaX, double deltaY);
+typedef OnRepaintHandler = Function();

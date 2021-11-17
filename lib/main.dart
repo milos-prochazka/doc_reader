@@ -10,12 +10,14 @@ import 'package:doc_reader/objects/applog.dart';
 import 'doc_touch.dart';
 import 'markdown/markdown_text_span.dart';
 
+// **![toto je popis obrázku](media/pngegg.png)**
 const testMarkdown = r'''
 \* a\*\aaaa
 
+**![toto je popis obrázku](media/pngegg.png)**
 
 ------------------------------
-**![toto je popis obrázku](https://d62-a.sdn.cz/d_62/c_img_gU_g/xuRBp/0-uvod.jpeg)**
+
   Jakamarus
   ---------
 
@@ -43,12 +45,28 @@ void testColor(String text)
 
 void main()
 {
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget
 {
-  const MyApp({Key? key}) : super(key: key);
+  late Markdown markdown;
+  late MarkdownTextConfig textConfig;
+  late Document document;
+
+  MyApp({Key? key}) : super(key: key)
+  {
+    document = Document();
+    markdown = Markdown();
+    markdown.writeMarkdownString(testMarkdown);
+    textConfig = MarkdownTextConfig();
+
+    final ms = MarkdownTextSpan.create(markdown, textConfig, document);
+    for (final s in ms)
+    {
+      document.docSpans.add(DocumentSpanContainer(s));
+    }
+  }
 
   // This widget is the root of your application.
   @override
@@ -61,16 +79,17 @@ class MyApp extends StatelessWidget
       (
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: MyHomePage(title: 'Flutter Demo Home Page', document: document),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget
 {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
+  const MyHomePage({Key? key, required this.title, required this.document}) : super(key: key);
 
   final String title;
+  final Document document;
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -104,8 +123,7 @@ class _MyHomePageState extends State<MyHomePage>
       }
     );
 
-    final document = Document();
-    binder.setProperty(documentProperty, document);
+    binder.setProperty(documentProperty, widget.document);
 
     /*for (int i = 1; i < 1000000; i++)
     {
@@ -115,14 +133,6 @@ class _MyHomePageState extends State<MyHomePage>
           )));
     }*/
 
-    final md = Markdown();
-    md.writeMarkdownString(testMarkdown);
-    final cfg = MarkdownTextConfig();
-    final ms = MarkdownTextSpan.create(md, cfg);
-    for (final s in ms)
-    {
-      document.docSpans.add(DocumentSpanContainer(s));
-    }
     return binder;
   }
 }

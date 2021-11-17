@@ -5,6 +5,7 @@ import 'package:doc_reader/doc_span/doc_span_interface.dart';
 import 'package:doc_reader/document.dart';
 import 'package:doc_reader/property_binder.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'objects/applog.dart';
 import 'dart:math' as math;
 
@@ -36,14 +37,32 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
         document.onTap = onTap;
         document.onTouchMove = onTouchMove;
         document.onTouchUpDown = onTouchUpDown;
+        document.onRepaint = onRepaint;
 
         final painter = DocumentPainter(document);
 
-        return CustomPaint
+        final result = CustomPaint
         (
             painter: painter,
             child: Container(),
         );
+
+        return result;
+    }
+
+    @override
+    void initState()
+    {
+        super.initState();
+        /*WidgetsBinding.instance?.addPostFrameCallback((_)
+        {
+          print("WidgetsBinding");
+        });
+
+        SchedulerBinding.instance?.addPostFrameCallback((_)
+        {
+          print("SchedulerBinding");
+        });*/
     }
 
     @override
@@ -51,6 +70,9 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
     {
         super.dispose();
         document?.onTap = null;
+        /*document?.onTouchMove = null;
+        document?.onTouchUpDown = null;
+        document?.onRepaint = null;*/
     }
 
     /*void _calcLayout(BuildContext context)
@@ -130,7 +152,47 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
             );
         }
     }
+
+    void onRepaint()
+    {
+        try
+        {
+            Future.microtask(() => setState(() {}));
+        }
+        catch (ex)
+        {
+            appLogEx(ex);
+        }
+    }
 }
+
+/*class DocReaderPainter extends StatefulWidget
+{
+    final String documentProperty;
+    DocReaderPainter({Key? key, required this.documentProperty}) : super(key: key ?? GlobalKey(debugLabel: 'DocReader'));
+
+  @override
+  State<DocReaderPainter> createState() => _DocReaderPainterState();
+}
+
+class _DocReaderPainterState extends State<DocReaderPainter> {
+  @override
+  Widget build(BuildContext context)
+  {
+        final document =
+        PropertyBinder.of(context).getOrCreateProperty<Document>(widget.documentProperty, (binder) => Document());
+
+       final painter = DocumentPainter(document);
+
+        final result =   CustomPaint
+        (
+            painter: painter,
+            child: Container(),
+        );
+
+        return result;
+   }
+}*/
 
 class DocumentPainter extends CustomPainter
 {

@@ -319,7 +319,7 @@ class MarkdownTextSpan implements IDocumentSpan
 
     if (_Hr.hrStyle(paragraph.headClass))
     {
-      final hr = _Hr(paragraph.headClass,parameters.size.width).calcMetrics();
+      final hr = _Hr(paragraph.headClass, parameters.size.width).calcMetrics();
       y = hr.height;
       _height = y;
       _word.add(hr);
@@ -396,7 +396,7 @@ class MarkdownTextSpan implements IDocumentSpan
     {
       //word.painter.layout();
       //word.painter.paint(params.canvas, Offset(word.xOffset + xOffset, word.yOffset + yOffset));
-      word.paint(params,xOffset,yOffset);
+      word.paint(params, xOffset, yOffset);
     }
   }
 
@@ -423,10 +423,7 @@ class _Word
     return this;
   }
 
-
-  void paint(PaintParameters params, double xoffset, double yoffset)
-  {
-  }
+  void paint(PaintParameters params, double xoffset, double yoffset) {}
 }
 
 class _Text extends _Word
@@ -486,7 +483,7 @@ class _Text extends _Word
     final textPainter = painter;
 
     final offset = Offset(xOffset + xoffset, yOffset + yoffset);
-    final rect = Rect.fromLTWH(offset.dx,offset.dy, width, height);
+    final rect = Rect.fromLTWH(offset.dx, offset.dy, width, height);
 
     if (rect.overlaps(params.rect))
     {
@@ -495,48 +492,46 @@ class _Text extends _Word
   }
 }
 
-
 class _Hr extends _Word
 {
   String style;
 
   static bool hrStyle(String style)
   {
-      switch (style)
-      {
-          case '===':
-          case '***':
-          case '___':
-          case '---':
-            return true;
+    switch (style)
+    {
+      case '===':
+      case '***':
+      case '___':
+      case '---':
+      return true;
 
-          default:
-            return false;
-      }
+      default:
+      return false;
+    }
   }
 
-
-  _Hr(this.style,double width)
+  _Hr(this.style, double width)
   {
-      this.width = width;
+    this.width = width;
 
-      switch (style)
-      {
-          case '===':
-            height = 8;
-            break;
+    switch (style)
+    {
+      case '===':
+      height = 8;
+      break;
 
-          case '***':
-            height = 16;
-            break;
+      case '***':
+      height = 16;
+      break;
 
-          case '___':
-          case '----':
-            height = 4;
-            break;
-      }
+      case '___':
+      case '----':
+      height = 4;
+      break;
+    }
 
-      this.left = 4;
+    this.left = 4;
   }
 
   @override
@@ -549,15 +544,12 @@ class _Hr extends _Word
   void paint(PaintParameters params, double xoffset, double yoffset)
   {
     final paint = Paint()
-        ..color = Colors.grey
-        ..strokeWidth = height*0.5
-        ..;
+    ..color = Colors.grey
+    ..strokeWidth = height * 0.5;
 
-    double y = yoffset+height*0.5;
+    double y = yoffset + height * 0.5;
 
-    params.canvas.drawLine(Offset(xoffset+left,y),
-                           Offset(xoffset+width-2*left,y),
-                           paint);
+    params.canvas.drawLine(Offset(xoffset + left, y), Offset(xoffset + width - 2 * left, y), paint);
   }
 }
 

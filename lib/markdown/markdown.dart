@@ -13,7 +13,7 @@ final _headRegExp = RegExp(r'\s*((\>\s*)|([\-\+\*]\s+)|(\#{1,6}\s+)|(\d+\.\s)|([
 final _charClassRegExp = RegExp(r'((\_{1,3})|(\*{1,3}))|(\`{3}(@\w+\s))', multiLine: false);
 
 /// Pojmenovany link
-final _namedLinkRegExp = RegExp(r'\[.*\]\(.+\)', multiLine: false);
+final _namedLinkRegExp = RegExp(r'!?(\[.*\])(\(.+\))', multiLine: false);
 
 /// Url link: http://www.any.org nebo <http://www.any.org>
 final _urlRegExp =
@@ -29,13 +29,16 @@ final _hrRegExp = RegExp(r'^\s*(([\*]{3,})|([\-]{3,})|([\_]{3,})|([\=]{3,}))\s*$
 /// Radek s formatem [aaa]: http://wwww.seznam.cz
 final _refLinkLinkRegExp = RegExp(r'^\s{0,3}\[.+\]\:\s+\S+$', multiLine: false);
 
+final _escapeCharRegExp = RegExp(r'\\[\\\`\*\_\{\}\[\]\(\)\#\+\-\.\!\|\s]', multiLine: false);
+final _escapedCharRegExp = RegExp(r'[\uE000-\uE0FF]', multiLine: false);
+
 class Markdown
 {
   final paragraphs = <MarkdownParagraph>[];
 
   writeMarkdownString(String text)
   {
-    final lines = text.split(_newLineRegex);
+    final lines = MarkdownParagraph.escape(text).split(_newLineRegex);
 
     for (int i = 0; i < lines.length; i++)
     {
@@ -180,6 +183,72 @@ class MarkdownParagraph
     writeText(text);
   }
 
+  static String escape(String text)
+  {
+    if (!_escapeCharRegExp.hasMatch(text))
+    {
+      return text;
+    }
+    else
+    {
+      var index = 0;
+      final builder = StringBuffer();
+
+      final matches = _escapeCharRegExp.allMatches(text);
+
+      for (final match in matches)
+      {
+        if (match.start > index)
+        {
+          builder.write(text.substring(index, match.start));
+        }
+
+        builder.writeCharCode(0xE000 + text.codeUnitAt(match.start + 1));
+        index = match.end;
+      }
+
+      if (text.length > index)
+      {
+        builder.write(text.substring(index));
+      }
+
+      return builder.toString();
+    }
+  }
+
+  static String unescape(String text)
+  {
+    if (!_escapedCharRegExp.hasMatch(text))
+    {
+      return text;
+    }
+    else
+    {
+      var index = 0;
+      final builder = StringBuffer();
+
+      final matches = _escapedCharRegExp.allMatches(text);
+
+      for (final match in matches)
+      {
+        if (match.start > index)
+        {
+          builder.write(text.substring(index, match.start));
+        }
+
+        builder.writeCharCode(text.codeUnitAt(match.start) & 0x00FF);
+        index = match.end;
+      }
+
+      if (text.length > index)
+      {
+        builder.write(text.substring(index));
+      }
+
+      return builder.toString();
+    }
+  }
+
   @override
   String toString()
   {
@@ -206,6 +275,28 @@ class MarkdownParagraph
     return builder.toString();
   }
 
+  MarkdownWord makeWord(String text, List<String> styleStack,
+    {MarkdownWord_Type type = MarkdownWord_Type.word, bool stickToNext = false, String? link, String? image})
+  {
+    final result = MarkdownWord()
+    ..type = type
+    ..text = MarkdownParagraph.unescape(text)
+    ..style = styleStack.isEmpty ? '' : styleStack.last
+    ..stickToNext = stickToNext;
+
+    if (link != null)
+    {
+      result.link = MarkdownParagraph.unescape(link);
+    }
+
+    if (image != null)
+    {
+      result.image = MarkdownParagraph.unescape(image);
+    }
+
+    return result;
+  }
+
   void writeWord(StringBuffer wordBuffer, List<String> styleStack, bool stickToNext)
   {
     if (wordBuffer.isNotEmpty)
@@ -213,7 +304,7 @@ class MarkdownParagraph
       words.add
       (
         MarkdownWord()
-        ..text = wordBuffer.toString()
+        ..text = MarkdownParagraph.unescape(wordBuffer.toString())
         ..style = styleStack.isEmpty ? '' : styleStack.last
         ..stickToNext = stickToNext
       );
@@ -221,7 +312,19 @@ class MarkdownParagraph
     }
   }
 
-  void writeText(String text)
+  static String centerSubstring(String text, int prefix, int postfix)
+  {
+    if ((prefix + postfix) >= text.length)
+    {
+      return '';
+    }
+    else
+    {
+      return text.substring(prefix, text.length - postfix);
+    }
+  }
+
+  writeText(String text)
   {
     const MATCH_NONE = 0;
     const NAMED_LINK = 1;
@@ -255,72 +358,102 @@ class MarkdownParagraph
     do
     {
       final ch = charAT(text, readIndex);
+      final type = readIndex < text.length ? lineMatchType[readIndex] : MATCH_NONE;
 
-      switch (ch)
+      try
       {
-        case '': // konec textu
-        break;
-
-        case ' ': // mezera
-        writeWord(wordBuffer, styleStack, false);
-        readIndex++;
-        break;
-
-        case '!': // Obrazek (mozna)
-        readIndex++;
-        if (charAT(text, readIndex) == '[')
+        switch (type)
         {
-          var match = _namedLinkRegExp.matchAsPrefix(text, readIndex);
-
-          if (match != null && match.start == readIndex)
+          case NAMED_LINK:
           {
-            writeWord(wordBuffer, styleStack, false);
-            wordBuffer.write(text.substring(readIndex - 1, match.end));
-            writeWord(wordBuffer, styleStack, false);
-            readIndex = match.end;
-          }
-        }
-        else
-        {
-          wordBuffer.write(ch);
-        }
-        break;
-
-        case '\\': // escape
-        wordBuffer.write(charAT(text, readIndex + 1));
-        readIndex += 2;
-        break;
-
-        default: // Jiny znak
-        {
-          final match = _charClassRegExp.matchAsPrefix(text, readIndex);
-
-          if (match != null && match.start == readIndex)
-          {
-            // styl
-            readIndex += match.end - match.start;
-            final mValue = matchVal(match);
-
-            if (styleStack.isNotEmpty && compareClass(styleStack.last, mValue))
+            final match = lineMatches[readIndex]!;
+            if (match.groupCount >= 2)
             {
-              // konec stylu
-              final ch = charAT(text, readIndex);
-              writeWord(wordBuffer, styleStack, ch != ' ' && ch != '');
-              styleStack.removeLast();
-            }
-            else
-            {
-              // zacatek stylu
-              styleStack.add(matchVal(match));
+              final desc = centerSubstring(match.group(1) ?? '', 1, 1);
+              final link = centerSubstring(match.group(2) ?? '', 1, 1);
+              final word = (ch == '!')
+              ? makeWord(desc, styleStack, type: MarkdownWord_Type.image, image: link)
+              : makeWord(desc, styleStack, type: MarkdownWord_Type.link, link: link);
+              words.add(word);
             }
           }
-          else
+          break;
+
+          default: // MATCH_NONE
           {
-            wordBuffer.write(ch);
-            readIndex++;
+            switch (ch)
+            {
+              case '': // konec textu
+              break;
+
+              case ' ': // mezera
+              writeWord(wordBuffer, styleStack, false);
+              readIndex++;
+              break;
+
+              case '!': // Obrazek (mozna)
+              readIndex++;
+              if (charAT(text, readIndex) == '[')
+              {
+                var match = _namedLinkRegExp.matchAsPrefix(text, readIndex);
+
+                if (match != null && match.start == readIndex)
+                {
+                  writeWord(wordBuffer, styleStack, false);
+                  wordBuffer.write(text.substring(readIndex - 1, match.end));
+                  writeWord(wordBuffer, styleStack, false);
+                  readIndex = match.end;
+                }
+              }
+              else
+              {
+                wordBuffer.write(ch);
+              }
+              break;
+
+              default: // Jiny znak
+              {
+                final match = _charClassRegExp.matchAsPrefix(text, readIndex);
+
+                if (match != null && match.start == readIndex)
+                {
+                  // styl
+                  readIndex += match.end - match.start;
+                  final mValue = matchVal(match);
+
+                  if (styleStack.isNotEmpty && compareClass(styleStack.last, mValue))
+                  {
+                    // konec stylu
+                    final ch = charAT(text, readIndex);
+                    writeWord(wordBuffer, styleStack, ch != ' ' && ch != '');
+                    styleStack.removeLast();
+                  }
+                  else
+                  {
+                    // zacatek stylu
+                    styleStack.add(matchVal(match));
+                  }
+                }
+                else
+                {
+                  readIndex++;
+                  wordBuffer.write(ch);
+                }
+              }
+              break;
+            }
           }
+          break;
         }
-        break;
+
+        if (type != MATCH_NONE)
+        {
+          readIndex = lineMatches[readIndex]?.end ?? readIndex + 1;
+        }
+      }
+      catch (e)
+      {
+        appLogEx(e);
       }
     }
     while (readIndex < text.length);
@@ -486,10 +619,16 @@ class MarkdownDecoration
 
 class MarkdownWord
 {
+  MarkdownWord_Type type = MarkdownWord_Type.word;
   String style = '';
   bool stickToNext = false;
   String text = '';
   bool lineBreak = false;
+  String link = '';
+  String image = '';
+
+  String get params => image;
+  set params(String value) => image = value;
 
   @override
   String toString()
@@ -499,5 +638,7 @@ class MarkdownWord
     return '[$style]$s "$t"';
   }
 }
+
+enum MarkdownWord_Type { word, link, image, link_image }
 
 // -----------------------------------------------

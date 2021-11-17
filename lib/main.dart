@@ -11,11 +11,11 @@ import 'doc_touch.dart';
 import 'markdown/markdown_text_span.dart';
 
 const testMarkdown = r'''
-aaaaa
+\* a\*\aaaa
 
 
 ------------------------------
-![toto je popis](https://d62-a.sdn.cz/d_62/c_img_gU_g/xuRBp/0-uvod.jpeg)
+**![toto je popis obrázku](https://d62-a.sdn.cz/d_62/c_img_gU_g/xuRBp/0-uvod.jpeg)**
   Jakamarus
   ---------
 
@@ -43,19 +43,6 @@ void testColor(String text)
 
 void main()
 {
-  testColor('yellow green');
-  testColor('My Pink');
-  registerColorName('my piNk', 0xFFE91E63);
-  testColor('yellow green');
-  testColor('My Pink');
-  testColor('#ABC');
-  testColor('#Abc');
-  testColor('#1789');
-  testColor('#17891');
-  testColor('#2A3C4F');
-  testColor('#30FFA7B3');
-  testColor('#FF00FF00');
-
   runApp(const MyApp());
 }
 

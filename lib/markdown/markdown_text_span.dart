@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 import 'package:doc_reader/doc_span/color_text.dart';
 import 'package:doc_reader/doc_span/doc_span_interface.dart';
 import 'package:doc_reader/objects/applog.dart';
+import 'package:doc_reader/objects/picture_cache.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -573,44 +574,53 @@ class _Hr extends _Word
 
 class _Image extends _Word
 {
-  static bool loaded = false;
   String imgSource;
-  static ui.Image? image; // fuj
+  ui.Image? image;
+
   Document? document;
 
   _Image(this.imgSource, this.document);
 
-  // ignore: non_constant_identifier_names
-  static bool _load_started = false;
   _load() async
   {
     print("_load()");
-    if (!_load_started)
+
+    final cache = PictureCache();
+    var info = cache.getOrCreateInfo(imgSource);
+    final repaint = info.image == null;
+
+    if (repaint)
     {
-      _load_started = true;
+      await PictureCache().imageAsync(imgSource);
+    }
 
-      image ??= await loadUiImage(imgSource);
-      if (image != null)
+    if (info.hasInfo)
+    {
+      width = info.width;
+      height = info.height;
+      image = info.image;
+
+      if (repaint)
       {
-        width = image!.width.toDouble();
-        height = image!.height.toDouble();
-
-        loaded = true;
-
         document?.repaint();
       }
-    }
-    else
-    {
-      width = image!.width.toDouble();
-      height = image!.height.toDouble();
     }
   }
 
   @override
   _Image calcMetrics()
   {
-    _load();
+    final info = PictureCache().getOrCreateInfo(imgSource);
+    if (info.hasInfo)
+    {
+      width = info.width;
+      height = info.height;
+      image = info.image;
+    }
+    else
+    {
+      _load();
+    }
     return this;
   }
 
@@ -622,6 +632,10 @@ class _Image extends _Word
       final paint = Paint();
 
       params.canvas.drawImage(image!, Offset(xoffset, yoffset), paint);
+    }
+    else
+    {
+      _load();
     }
   }
 }
@@ -660,26 +674,5 @@ class _Line
     }
 
     return span._height;
-  }
-}
-
-Future<ui.Image?> loadUiImage(String imageAssetPath) async
-{
-  try
-  {
-    final ByteData data = await rootBundle.load(imageAssetPath);
-    final Completer<ui.Image> completer = Completer();
-    ui.decodeImageFromList
-    (
-      Uint8List.view(data.buffer), (ui.Image img)
-      {
-        return completer.complete(img);
-      }
-    );
-    return completer.future;
-  }
-  catch (e)
-  {
-    return null;
   }
 }

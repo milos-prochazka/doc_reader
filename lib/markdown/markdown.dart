@@ -15,10 +15,15 @@ final _charClassRegExp = RegExp(r'((\_{1,3})|(\*{1,3}))|(\`{3}(@\w+\s))', multiL
 /// Pojmenovany link
 final _namedLinkRegExp = RegExp(r'!?(\[.*\])(\(.+\))', multiLine: false);
 
+/// Special attributes {.class}  {#anchor} {*name=dddd}
+final _attributeLikRegExp = RegExp(r'\{([\.\#\*])([^}]+)\}');
+
+//  TODO <> <> dvakrat za sebou asi nefunguje
 /// Url link: http://www.any.org nebo <http://www.any.org>
 final _urlRegExp = RegExp(r'\<?[a-zA-Z0-9]{2,32}:\/\/[a-zA-Z0-9@:%\._\\+~#?&\/=\u00A0-\uD7FF\uE000-\uE080]{2,256}\>?',
   multiLine: false);
 
+//  TODO <> <> dvakrat za sebou asi nefunguje
 /// Email link: aaaa@dddd.org nebo <aaaa@dddd.org>
 final _emailRegExp = RegExp
 (
@@ -210,7 +215,10 @@ class MarkdownParagraph
   String lineDecoration;
   List<MarkdownDecoration>? decorations;
   String headClass;
+  String subclass = '';
+  final anchors = <String>[];
   final words = <MarkdownWord>[];
+  final attributes = <String, String>{};
 
   MarkdownParagraph({required String text, this.lineDecoration = '', this.headClass = ''})
   {
@@ -286,19 +294,45 @@ class MarkdownParagraph
   @override
   String toString()
   {
-    final builder = StringBuffer("Paragraph: start='$lineDecoration' headClass='$headClass'\r\n");
+    final builder = StringBuffer("Paragraph: start='$lineDecoration' class='$headClass' '$subclass'\r\n");
+    var label = false;
 
     if (decorations != null && decorations!.isNotEmpty)
     {
-      builder.write('Decorations:\r\n');
+      builder.write('Decorations:');
       for (final dec in decorations!)
       {
-        builder.write('${dec.toString()}\r\n');
+        builder.write(' "${dec.toString()}"');
       }
-      if (words.isNotEmpty)
+
+      builder.write('\r\n');
+      label = words.isNotEmpty;
+    }
+
+    if (anchors.isNotEmpty)
+    {
+      builder.write('Anchors:');
+      for (final dec in anchors)
       {
-        builder.write('Words:\r\n');
+        builder.write(' ${dec.toString()}');
       }
+      builder.write('\r\n');
+      label = words.isNotEmpty;
+    }
+
+    if (attributes.isNotEmpty)
+    {
+      builder.write('Attributes:');
+      for (final dec in attributes.entries)
+      {
+        builder.write(' ${dec.key}=${dec.value}');
+      }
+      builder.write('\r\n');
+    }
+
+    if (label)
+    {
+      builder.write('Words:\r\n');
     }
 
     for (int i = 0; i < words.length; i++)
@@ -364,6 +398,7 @@ class MarkdownParagraph
     const NAMED_LINK = 1;
     const EMAIL_LINK = 2;
     const URL_LINK = 3;
+    const ATTRIBUTE = 4;
 
     final wordBuffer = StringBuffer();
     final styleStack = <String>[];
@@ -378,6 +413,7 @@ class MarkdownParagraph
         Tuple2(NAMED_LINK, _namedLinkRegExp),
         Tuple2(EMAIL_LINK, _emailRegExp),
         Tuple2(URL_LINK, _urlRegExp),
+        Tuple2(ATTRIBUTE, _attributeLikRegExp)
       ]
     )
     {
@@ -409,6 +445,39 @@ class MarkdownParagraph
               ? makeWord(desc, styleStack, type: MarkdownWord_Type.image, image: link)
               : makeWord(desc, styleStack, type: MarkdownWord_Type.link, link: link);
               words.add(word);
+            }
+          }
+          break;
+
+          case ATTRIBUTE:
+          {
+            final match = lineMatches[readIndex]!;
+            if (match.groupCount >= 2)
+            {
+              final type = match.group(1) ?? '';
+              final text = match.group(2) ?? '';
+              switch (type)
+              {
+                case '.':
+                subclass = text;
+                break;
+
+                case '#':
+                anchors.add(text);
+                break;
+
+                case '*':
+                if (text.contains('='))
+                {
+                  final kvi = text.indexOf('=');
+                  attributes[text.substring(0, kvi).trim()] = text.substring(kvi + 1).trim();
+                }
+                else
+                {
+                  final t = text.trim();
+                  attributes[t] = t;
+                }
+              }
             }
           }
           break;

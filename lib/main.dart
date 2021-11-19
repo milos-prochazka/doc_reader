@@ -11,7 +11,7 @@ import 'doc_touch.dart';
 import 'markdown/markdown_text_span.dart';
 
 // **![toto je popis obrázku](media/pngegg.png)**
-const testMarkdown = r'''
+const testMarkdown = r'''## ZACATEK {.trida} {#kotva} {*aaa=123} {*bbb} {*aja = paja }
 \* a\*\aaaa
 [KOLOKOL]: http://ssssss.ddd
 

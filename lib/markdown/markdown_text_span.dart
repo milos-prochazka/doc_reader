@@ -1,13 +1,9 @@
-import 'dart:async';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:doc_reader/doc_span/color_text.dart';
 import 'package:doc_reader/doc_span/doc_span_interface.dart';
-import 'package:doc_reader/objects/applog.dart';
 import 'package:doc_reader/objects/picture_cache.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import '../document.dart';
 import 'markdown.dart';
@@ -253,13 +249,13 @@ class MarkdownTextConfig
     }
   }
 
-  double _bulletIntent(MarkdownParagraph para, MarkdownWord word)
+  double _bulletIntent(PaintParameters parameters, MarkdownParagraph para, MarkdownWord word)
   {
     if (_state.bulletIntent == null)
     {
       final style =
       getTextStyle(para, word, bullet: true); //TextStyle(color: Color.fromARGB(255, 0, 0, 160), fontSize: 10.0);
-      final bullet = _Text(get(["bullets", 0], defValue: '  -'), style.textStyle).calcMetrics();
+      final bullet = _Text(get(["bullets", 0], defValue: '  -'), style.textStyle).calcMetrics(parameters);
       _state.bulletIntent = bullet.width;
     }
 
@@ -327,7 +323,7 @@ class MarkdownTextSpan implements IDocumentSpan
 
     if (_Hr.hrStyle(paragraph.headClass))
     {
-      final hr = _Hr(paragraph.headClass, parameters.size.width).calcMetrics();
+      final hr = _Hr(paragraph.headClass, parameters.size.width).calcMetrics(parameters);
       y = hr.height;
       _height = y;
       _word.add(hr);
@@ -337,9 +333,9 @@ class MarkdownTextSpan implements IDocumentSpan
     {
       final style = config.getTextStyle(paragraph, paragraph.words[0], bullet: true);
       final level = paragraph.decorations!.last.level;
-      final word = _Text(config.get(["bullets", level], defValue: '  -'), style.textStyle).calcMetrics();
+      final word = _Text(config.get(["bullets", level], defValue: '  -'), style.textStyle).calcMetrics(parameters);
       word.yOffset = style.yOffseet;
-      word.xOffset = level * config._bulletIntent(paragraph, paragraph.words[0]);
+      word.xOffset = level * config._bulletIntent(parameters, paragraph, paragraph.words[0]);
 
       _word.add(word);
       line.add(word);
@@ -357,11 +353,11 @@ class MarkdownTextSpan implements IDocumentSpan
       switch (word.type)
       {
         case MarkdownWord_Type.image:
-        wrd = _Image(word.image, document).calcMetrics();
+        wrd = _Image(word.image, document).calcMetrics(parameters);
         break;
 
         default:
-        wrd = _Text(word.text, style.textStyle).calcMetrics();
+        wrd = _Text(word.text, style.textStyle).calcMetrics(parameters);
         break;
       }
 
@@ -437,7 +433,7 @@ class _Word
   double height = 0;
   double width = 0;
 
-  _Word calcMetrics()
+  _Word calcMetrics(PaintParameters parameters)
   {
     return this;
   }
@@ -454,7 +450,7 @@ class _Text extends _Word
   _Text(this.text, this.style);
 
   @override
-  _Word calcMetrics()
+  _Word calcMetrics(PaintParameters parameters)
   {
     // ignore: unused_local_variable
     final p = painter;
@@ -550,11 +546,11 @@ class _Hr extends _Word
       break;
     }
 
-    this.left = 4;
+    left = 4;
   }
 
   @override
-  _Hr calcMetrics()
+  _Hr calcMetrics(PaintParameters parameters)
   {
     return this;
   }
@@ -581,7 +577,29 @@ class _Image extends _Word
 
   _Image(this.imgSource, this.document);
 
-  _load() async
+  _setSize(PaintParameters params, PictureCacheInfo info)
+  {
+    double width = info.width;
+    double height = info.height;
+    double aspectRatio = width / height;
+
+    if (params.size.width < width)
+    {
+      width = params.size.width;
+      height = width / aspectRatio;
+    }
+
+    if (params.size.height < height)
+    {
+      height = params.size.height;
+      width = height * aspectRatio;
+    }
+
+    this.width = width;
+    this.height = height;
+  }
+
+  _load(PaintParameters params) async
   {
     print("_load()");
 
@@ -596,8 +614,7 @@ class _Image extends _Word
 
     if (info.hasInfo)
     {
-      width = info.width;
-      height = info.height;
+      _setSize(params, info);
       image = info.image;
 
       if (repaint)
@@ -608,18 +625,17 @@ class _Image extends _Word
   }
 
   @override
-  _Image calcMetrics()
+  _Image calcMetrics(PaintParameters parameters)
   {
     final info = PictureCache().getOrCreateInfo(imgSource);
     if (info.hasInfo)
     {
-      width = info.width;
-      height = info.height;
+      _setSize(parameters, info);
       image = info.image;
     }
     else
     {
-      _load();
+      _load(parameters);
     }
     return this;
   }
@@ -631,11 +647,13 @@ class _Image extends _Word
     {
       final paint = Paint();
 
-      params.canvas.drawImage(image!, Offset(xoffset, yoffset), paint);
+      //params.canvas.drawImage(image!, Offset(xoffset, yoffset), paint);
+      params.canvas.drawImageRect(image!, Rect.fromLTWH(0, 0, image!.width.toDouble(), image!.height.toDouble()),
+        Rect.fromLTWH(xoffset, yoffset, width, height), paint);
     }
     else
     {
-      _load();
+      _load(params);
     }
   }
 }

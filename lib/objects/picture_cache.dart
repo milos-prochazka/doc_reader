@@ -108,6 +108,7 @@ class PictureCache
         else
         {
           info.image = null;
+          print("CACHE CLEAR");
         }
       }
     }

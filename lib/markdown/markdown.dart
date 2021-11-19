@@ -16,21 +16,45 @@ final _charClassRegExp = RegExp(r'((\_{1,3})|(\*{1,3}))|(\`{3}(@\w+\s))', multiL
 final _namedLinkRegExp = RegExp(r'!?(\[.*\])(\(.+\))', multiLine: false);
 
 /// Url link: http://www.any.org nebo <http://www.any.org>
-final _urlRegExp =
-RegExp(r'\<?[a-zA-Z0-9]{2,32}:\/\/[a-zA-Z0-9@:%\._\\+~#?&\/=\u00A0-\uD7FF]{2,256}\>?', multiLine: false);
+final _urlRegExp = RegExp(r'\<?[a-zA-Z0-9]{2,32}:\/\/[a-zA-Z0-9@:%\._\\+~#?&\/=\u00A0-\uD7FF\uE000-\uE080]{2,256}\>?',
+  multiLine: false);
 
 /// Email link: aaaa@dddd.org nebo <aaaa@dddd.org>
-final _emailRegExp =
-RegExp(r'\<?[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9\u00A0-\uD7FF)]+(?:\.[a-zA-Z0-9-]+)*\>?', multiLine: false);
+final _emailRegExp = RegExp
+(
+  r'\<?[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9\u00A0-\uD7FF\uE000-\uE080)]+(?:\.[a-zA-Z0-9-]+)*\>?',
+  multiLine: false
+);
 
 /// Horizntalni cara --- , === , ___ , ***
 final _hrRegExp = RegExp(r'^\s*(([\*]{3,})|([\-]{3,})|([\_]{3,})|([\=]{3,}))\s*$', multiLine: false);
 
 /// Radek s formatem [aaa]: http://wwww.seznam.cz
-final _refLinkLinkRegExp = RegExp(r'^\s{0,3}\[.+\]\:\s+\S+$', multiLine: false);
+final _refLinkLinkRegExp = RegExp(r'^\s{0,3}(\[.+\])\:\s+(\S+)$', multiLine: false);
 
+/// Vyhledani escape eskvenci ve vstupnim textu
 final _escapeCharRegExp = RegExp(r'\\[\\\`\*\_\{\}\[\]\(\)\#\+\-\.\!\|\s]', multiLine: false);
+
+/// Vyhledani escapovanych znaku
 final _escapedCharRegExp = RegExp(r'[\uE000-\uE0FF]', multiLine: false);
+
+/// Escapovane znaky:
+/// \ E0C0
+/// ` E060
+/// * E02A
+/// _ E05F
+/// { E07B
+/// } E07D
+/// [ E05B
+/// ] E05D
+/// ( E028
+/// ) E029
+/// # E023
+/// + E02B
+/// - E02D
+/// . E02E
+/// ! E021
+/// | E07C
 
 class Markdown
 {
@@ -46,7 +70,17 @@ class Markdown
 
       appLog_debug('line:"$line"');
 
-      if (_hrRegExp.hasMatch(line))
+      if (_refLinkLinkRegExp.hasMatch(line))
+      {
+        final match = _refLinkLinkRegExp.firstMatch(line)!;
+        if (match.groupCount >= 2)
+        {
+          final name = MarkdownParagraph.centerSubstring(match.group(1) ?? '', 1, 1);
+          final link = (match.group(2) ?? '').trim();
+          var brk = 1;
+        }
+      }
+      else if (_hrRegExp.hasMatch(line))
       {
         final ch = line.trim()[0];
         switch (ch)
@@ -639,6 +673,6 @@ class MarkdownWord
   }
 }
 
-enum MarkdownWord_Type { word, link, image, link_image }
+enum MarkdownWord_Type { word, link, image, link_image, reference_definition }
 
 // -----------------------------------------------

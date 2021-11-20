@@ -645,11 +645,12 @@ class _Image extends _Word
   {
     if (image != null)
     {
-      final paint = Paint();
+      final paint = Paint() ..filterQuality = ui.FilterQuality.high ..isAntiAlias = true ;
+     
 
       //params.canvas.drawImage(image!, Offset(xoffset, yoffset), paint);
       params.canvas.drawImageRect(image!, Rect.fromLTWH(0, 0, image!.width.toDouble(), image!.height.toDouble()),
-        Rect.fromLTWH(xoffset, yoffset, width, height), paint);
+        Rect.fromLTWH(xoffset, yoffset, 0.4*width, 0.4*height), paint);
     }
     else
     {

@@ -61,6 +61,7 @@ class MyApp extends StatelessWidget
     markdown = Markdown();
     markdown.writeMarkdownString(testMarkdown);
     textConfig = MarkdownTextConfig();
+    print (markdown.toString());
 
     final ms = MarkdownTextSpan.create(markdown, textConfig, document);
     for (final s in ms)

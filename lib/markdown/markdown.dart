@@ -1,6 +1,7 @@
 // ignore_for_file: constant_identifier_names
 
 import 'package:doc_reader/objects/applog.dart';
+import 'package:doc_reader/objects/utils.dart';
 import 'package:tuple/tuple.dart';
 
 /// Deleni textu na radky
@@ -13,21 +14,19 @@ final _headRegExp = RegExp(r'\s*((\>\s*)|([\-\+\*]\s+)|(\#{1,6}\s+)|(\d+\.\s)|([
 final _charClassRegExp = RegExp(r'((\_{1,3})|(\*{1,3}))|(\`{3}(@\w+\s))', multiLine: false);
 
 /// Pojmenovany link
-final _namedLinkRegExp = RegExp(r'!?(\[.*\])(\(.+\))', multiLine: false);
+final _namedLinkRegExp = RegExp(r'(\!?)\[([^\]]+)\]\(([^\)]+)\)', multiLine: false);
 
 /// Special attributes {.class}  {#anchor} {*name=dddd}
 final _attributeLikRegExp = RegExp(r'\{([\.\#\*])([^}]+)\}');
 
-//  TODO <> <> dvakrat za sebou asi nefunguje
 /// Url link: http://www.any.org nebo <http://www.any.org>
-final _urlRegExp = RegExp(r'\<?[a-zA-Z0-9]{2,32}:\/\/[a-zA-Z0-9@:%\._\\+~#?&\/=\u00A0-\uD7FF\uE000-\uE080]{2,256}\>?',
+final _urlRegExp = RegExp(r'\<?([a-zA-Z0-9]{2,32}:\/\/[a-zA-Z0-9@:%\._\\+~#?&\/=\u00A0-\uD7FF\uE000-\uE080]{2,256})\>?',
   multiLine: false);
 
-//  TODO <> <> dvakrat za sebou asi nefunguje
 /// Email link: aaaa@dddd.org nebo <aaaa@dddd.org>
 final _emailRegExp = RegExp
 (
-  r'\<?[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9\u00A0-\uD7FF\uE000-\uE080)]+(?:\.[a-zA-Z0-9-]+)*\>?',
+  r'\<?([a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9\u00A0-\uD7FF\uE000-\uE080)]+(?:\.[a-zA-Z0-9-]+)*)\>?',
   multiLine: false
 );
 
@@ -82,7 +81,7 @@ class Markdown
         {
           final name = MarkdownParagraph.centerSubstring(match.group(1) ?? '', 1, 1);
           final link = (match.group(2) ?? '').trim();
-          var brk = 1;
+        paragraphs.add(MarkdownParagraph.referenceLink(name, link));
         }
       }
       else if (_hrRegExp.hasMatch(line))
@@ -212,9 +211,10 @@ class Markdown
 
 class MarkdownParagraph
 {
-  String lineDecoration;
+  MarkdownParagraphType type = MarkdownParagraphType.normalParagraph;
+  String lineDecoration = '';
   List<MarkdownDecoration>? decorations;
-  String headClass;
+  String headClass = '';
   String subclass = '';
   final anchors = <String>[];
   final words = <MarkdownWord>[];
@@ -224,6 +224,16 @@ class MarkdownParagraph
   {
     writeText(text);
   }
+
+  MarkdownParagraph.referenceLink(String linkName,String linkUrl) : type = MarkdownParagraphType.linkReferece
+  {
+    headClass = linkName;
+    subclass = linkUrl;
+  }
+
+  String get linkName=>headClass;
+
+  String get linkUrl=>subclass;
 
   static String escape(String text)
   {
@@ -294,7 +304,19 @@ class MarkdownParagraph
   @override
   String toString()
   {
-    final builder = StringBuffer("Paragraph: start='$lineDecoration' class='$headClass' '$subclass'\r\n");
+    final builder = StringBuffer('Paragraph: type=${enum_ToString(type)} ');
+    
+    switch (type)
+    {
+      case MarkdownParagraphType.linkReferece:
+        builder.write("name='$linkName' link='$linkUrl'\r\n");
+        break;
+        
+      default:
+        builder.write("start='$lineDecoration' class='$headClass' '$subclass'\r\n");
+        break;
+
+    }
     var label = false;
 
     if (decorations != null && decorations!.isNotEmpty)
@@ -437,11 +459,12 @@ class MarkdownParagraph
           case NAMED_LINK:
           {
             final match = lineMatches[readIndex]!;
-            if (match.groupCount >= 2)
+            if (match.groupCount >= 3)
             {
-              final desc = centerSubstring(match.group(1) ?? '', 1, 1);
-              final link = centerSubstring(match.group(2) ?? '', 1, 1);
-              final word = (ch == '!')
+              final type = match.group(1) ?? '';
+              final desc = match.group(2) ?? '';
+              final link = match.group(3) ?? '';
+              final word = (type == '!')
               ? makeWord(desc, styleStack, type: MarkdownWord_Type.image, image: link)
               : makeWord(desc, styleStack, type: MarkdownWord_Type.link, link: link);
               words.add(word);
@@ -595,6 +618,10 @@ class MarkdownParagraph
   }
 }
 
+enum MarkdownParagraphType
+{
+  normalParagraph, linkReferece
+}
 class MarkdownDecoration
 {
   String decoration = '';

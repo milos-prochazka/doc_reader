@@ -176,10 +176,24 @@ class Markdown
       }
     }
 
-    // Vypusteni prazdnych odstavcu
+    // Vypusteni prazdnych odstavcu a urceni mezer za odstavci
     for (int i = 0; i < paragraphs.length;)
     {
       final para = paragraphs[i];
+
+      if (i>=1)
+      {
+        final prevPara = paragraphs[i];
+
+        if (prevPara.headClass == para.headClass)
+        {
+          if (prevPara.lineDecoration != '' && para.lineDecoration != '')
+          {
+              prevPara.spaceAfter = false;
+          }
+
+        }
+      }
 
       if (para.lineDecoration.isEmpty && para.words.isEmpty && para.headClass.isEmpty)
       {
@@ -219,6 +233,7 @@ class MarkdownParagraph
   final anchors = <String>[];
   final words = <MarkdownWord>[];
   final attributes = <String, String>{};
+  bool spaceAfter = true;
 
   MarkdownParagraph({required String text, this.lineDecoration = '', this.headClass = ''})
   {
@@ -638,9 +653,13 @@ class MarkdownDecoration
   MarkdownDecoration(String decor, this.column)
   {
     int ch = decor.codeUnitAt(column);
-    if ((ch >= /*$A*/(0x41) && ch <= /*$Z*/(0x5A)) || (ch >= /*$a*/(0x61) && ch <= /*$z*/(0x7A)))
+    if (ch >= /*$a*/(0x61) && ch <= /*$z*/(0x7A))
     {
       decor = 'a';
+    }
+    if (ch >= /*$A*/(0x41) && ch <= /*$Z*/(0x5A)) 
+    {
+      decor = 'A';
     }
     else if (ch >= /*$0*/(0x30) && ch <= /*$9*/(0x39))
     {
@@ -677,11 +696,11 @@ class MarkdownDecoration
           final c = current[i];
           final p = prev[i];
 
-          if (c.decoration != p.decoration)
+          /*if (c.decoration != p.decoration)
           {
             return true;
           }
-          else
+          else*/
           {
             if (c.decoration != '>')
             {

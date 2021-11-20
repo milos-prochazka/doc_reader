@@ -1,5 +1,6 @@
 import 'package:doc_reader/doc_reader.dart';
 import 'package:doc_reader/doc_span/basic/basic_text_span.dart';
+import 'package:doc_reader/objects/utils.dart';
 import 'doc_span/color_text.dart';
 import 'package:doc_reader/doc_span/doc_span_interface.dart';
 import 'package:doc_reader/document.dart';
@@ -23,10 +24,20 @@ const testMarkdown = r'''## ZACATEK {.trida} {#kotva} {*aaa=123} {*bbb} {*aja = 
   ---------
 
  ***************
+A. fkfkff
+B. keddjdjd
+C. dskdkdsjds
+D. xxx
 
-- xxx
-   - yyyy
-       - zzzz
+--------------------
+- dddkddkdk
+   1. yyyy
+       A. zzzz
+       A. dkkdd
+       A. ddskdsksd
+    2. kdkdsdkdkdfk
+    1. treti
+1. kdkdfkfd
 
 První *italic* _italic_ **bold** __bold__ ***italic\ bold*** ___italic\ bold___
 # Toto je nadpis 1
@@ -37,6 +48,9 @@ První *italic* _italic_ **bold** __bold__ ***italic\ bold*** ___italic\ bold___
 ###### Toto je nadpis 6
   [aaaaaa]: (wwww.sss.cz)
 Toto jojo@email.cz je běžný odstavec který se bude muset zalomit protože je příliš dlouhý aby se vešel na displej. Podruhé, toto je  běžný odstavec který se bude muset zalomit protože je příliš dlouhý aby se vešel na displej.
+Pokračování odstavce za přechodem na nový řádek
+
+Další odstavec
 ''';
 
 void testColor(String text)
@@ -46,6 +60,7 @@ void testColor(String text)
 
 void main()
 {
+  var s = numberToCharacters(2503, 'abcdefghijklmnopqrstuvwxyz');
   runApp(MyApp());
 }
 

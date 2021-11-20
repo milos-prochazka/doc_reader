@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:doc_reader/doc_span/color_text.dart';
 import 'package:doc_reader/doc_span/doc_span_interface.dart';
 import 'package:doc_reader/objects/picture_cache.dart';
+import 'package:doc_reader/objects/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import '../document.dart';
@@ -331,11 +332,34 @@ class MarkdownTextSpan implements IDocumentSpan
 
     if (paragraph.words.isNotEmpty && (paragraph.decorations?.isNotEmpty ?? false))
     {
-      final style = config.getTextStyle(paragraph, paragraph.words[0], bullet: true);
-      final level = paragraph.decorations!.last.level;
-      final word = _Text(config.get(["bullets", level], defValue: '  -'), style.textStyle).calcMetrics(parameters);
+      final dec = paragraph.decorations!.last;
+      bool bullet = false;
+      String text;
+
+      switch (dec.decoration)
+      {
+          case 'a':
+            text = '   ${numberToCharacters(dec.count, 'abcdefghijklmnopqrstuvwxyz')}. ';
+            break;
+
+          case 'A':
+            text = '   ${numberToCharacters(dec.count, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ')}. ';
+            break;
+
+          case '1':
+            text = '   ${dec.count+1}. ';
+            break;
+
+          default:
+            bullet = true;
+            text = config.get(["bullets", dec.level], defValue: '  -');
+            break;
+      }
+
+      final style = config.getTextStyle(paragraph, paragraph.words[0], bullet: bullet);
+      final word = _Text(text, style.textStyle).calcMetrics(parameters);
       word.yOffset = style.yOffseet;
-      word.xOffset = level * config._bulletIntent(parameters, paragraph, paragraph.words[0]);
+      word.xOffset = dec.level * config._bulletIntent(parameters, paragraph, paragraph.words[0]);
 
       _word.add(word);
       line.add(word);
@@ -378,6 +402,10 @@ class MarkdownTextSpan implements IDocumentSpan
 
     line.calcPosition(this, parameters);
     _width = parameters.size.width;
+    if (paragraph.spaceAfter)
+    {
+      _height += 10;
+    }
   }
 
   @override
@@ -650,7 +678,7 @@ class _Image extends _Word
 
       //params.canvas.drawImage(image!, Offset(xoffset, yoffset), paint);
       params.canvas.drawImageRect(image!, Rect.fromLTWH(0, 0, image!.width.toDouble(), image!.height.toDouble()),
-        Rect.fromLTWH(xoffset, yoffset, 0.4*width, 0.4*height), paint);
+        Rect.fromLTWH(xoffset, yoffset, width, height), paint);
     }
     else
     {

@@ -18,7 +18,8 @@ final _namedLinkRegExp = RegExp(r'(\!?)\[([^\]]+)\]\(([^\)]+)\)', multiLine: fal
 
 /// Obrazek se zadanou velikosti
 /// img.jpg =1.5%x34em.right  gr2 = 1.5 , gr3 = % , gr8 = 34 , gr9 = em , gr14 = .right
-final _imageSizeRegExp = RegExp (r'\s\=(([\d\.]*)((px)|(em)|(%))?)?[xX](([\d\.]*)((px)|(em)|(%))?)?(\s*(\.\w+))?',multiLine: false, caseSensitive: false);
+final _imageSizeRegExp = RegExp(r'\s\=(([\d\.]*)((px)|(em)|(%))?)?[xX](([\d\.]*)((px)|(em)|(%))?)?(\s*(\.\w+))?',
+  multiLine: false, caseSensitive: false);
 
 /// Special attributes {.class}  {#anchor} {*name=dddd}
 final _attributeLikRegExp = RegExp(r'\{([\.\#\*])([^}]+)\}');
@@ -85,7 +86,7 @@ class Markdown
         {
           final name = MarkdownParagraph.centerSubstring(match.group(1) ?? '', 1, 1);
           final link = (match.group(2) ?? '').trim();
-        paragraphs.add(MarkdownParagraph.referenceLink(name, link));
+          paragraphs.add(MarkdownParagraph.referenceLink(name, link));
         }
       }
       else if (_hrRegExp.hasMatch(line))
@@ -185,7 +186,7 @@ class Markdown
     {
       final para = paragraphs[i];
 
-      if (i>=1)
+      if (i >= 1)
       {
         final prevPara = paragraphs[i];
 
@@ -193,9 +194,8 @@ class Markdown
         {
           if (prevPara.lineDecoration != '' && para.lineDecoration != '')
           {
-              prevPara.spaceAfter = false;
+            prevPara.spaceAfter = false;
           }
-
         }
       }
 
@@ -244,15 +244,15 @@ class MarkdownParagraph
     writeText(text);
   }
 
-  MarkdownParagraph.referenceLink(String linkName,String linkUrl) : type = MarkdownParagraphType.linkReferece
+  MarkdownParagraph.referenceLink(String linkName, String linkUrl) : type = MarkdownParagraphType.linkReferece
   {
     headClass = linkName;
     subclass = linkUrl;
   }
 
-  String get linkName=>headClass;
+  String get linkName => headClass;
 
-  String get linkUrl=>subclass;
+  String get linkUrl => subclass;
 
   static String escape(String text)
   {
@@ -324,17 +324,16 @@ class MarkdownParagraph
   String toString()
   {
     final builder = StringBuffer('Paragraph: type=${enum_ToString(type)} ');
-    
+
     switch (type)
     {
       case MarkdownParagraphType.linkReferece:
-        builder.write("name='$linkName' link='$linkUrl'\r\n");
-        break;
-        
-      default:
-        builder.write("start='$lineDecoration' class='$headClass' '$subclass'\r\n");
-        break;
+      builder.write("name='$linkName' link='$linkUrl'\r\n");
+      break;
 
+      default:
+      builder.write("start='$lineDecoration' class='$headClass' '$subclass'\r\n");
+      break;
     }
     var label = false;
 
@@ -385,7 +384,7 @@ class MarkdownParagraph
   }
 
   MarkdownWord makeWord(String text, List<String> styleStack,
-    {MarkdownWord_Type type = MarkdownWord_Type.word, bool stickToNext = false, String? link, String? image})
+    {MarkdownWord_Type type = MarkdownWord_Type.word, bool stickToNext = false, Map<String, Object?>? attr})
   {
     final result = MarkdownWord()
     ..type = type
@@ -393,14 +392,9 @@ class MarkdownParagraph
     ..style = styleStack.isEmpty ? '' : styleStack.last
     ..stickToNext = stickToNext;
 
-    if (link != null)
+    if (attr != null)
     {
-      result.link = MarkdownParagraph.unescape(link);
-    }
-
-    if (image != null)
-    {
-      result.image = MarkdownParagraph.unescape(image);
+      result.attribs.addAll(attr);
     }
 
     return result;
@@ -484,26 +478,36 @@ class MarkdownParagraph
               final desc = match.group(2) ?? '';
               final link = match.group(3) ?? '';
 
-              if (type=='!')
+              if (type == '!')
               {
                 final info = _imageSizeRegExp.firstMatch(link);
-                if (info!=null)
+                if (info != null)
                 {
-                  final w = info.group(2);
+                  final w = info.group(2) ?? '';
                   final wu = info.group(3);
-                  final h = info.group(8);
+                  final h = info.group(8) ?? '';
                   final hu = info.group(9);
-                  var brk = 1;
-                  words.add(makeWord(desc, styleStack, type: MarkdownWord_Type.image, image: link.substring(0,info.start).trim()));
+                  final al = info.group(14);
+
+                  final attr = <String, Object?>
+                  {
+                    'image': link.substring(0, info.start).trim(),
+                    'width': double.tryParse(w),
+                    'widthUnit': wu,
+                    'height': double.tryParse(h),
+                    'heightUnit': hu,
+                    'align': al
+                  };
+                  words.add(makeWord(desc, styleStack, type: MarkdownWord_Type.image, attr: attr));
                 }
                 else
                 {
-                  words.add(makeWord(desc, styleStack, type: MarkdownWord_Type.image, image: link));
+                  words.add(makeWord(desc, styleStack, type: MarkdownWord_Type.image, attr: {'image': link}));
                 }
               }
               else
               {
-                words.add(makeWord(desc, styleStack, type: MarkdownWord_Type.link, link: link));
+                words.add(makeWord(desc, styleStack, type: MarkdownWord_Type.link, attr: {'link': link}));
               }
             }
           }
@@ -655,10 +659,8 @@ class MarkdownParagraph
   }
 }
 
-enum MarkdownParagraphType
-{
-  normalParagraph, linkReferece
-}
+enum MarkdownParagraphType { normalParagraph, linkReferece }
+
 class MarkdownDecoration
 {
   String decoration = '';
@@ -679,7 +681,7 @@ class MarkdownDecoration
     {
       decor = 'a';
     }
-    if (ch >= /*$A*/(0x41) && ch <= /*$Z*/(0x5A)) 
+    if (ch >= /*$A*/(0x41) && ch <= /*$Z*/(0x5A))
     {
       decor = 'A';
     }
@@ -795,11 +797,7 @@ class MarkdownWord
   bool stickToNext = false;
   String text = '';
   bool lineBreak = false;
-  String link = '';
-  String image = '';
-
-  String get params => image;
-  set params(String value) => image = value;
+  final attribs = <String, Object?>{};
 
   @override
   String toString()

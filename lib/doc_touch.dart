@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:doc_reader/doc_reader.dart';
 import 'package:doc_reader/document.dart';
 import 'package:doc_reader/property_binder.dart';

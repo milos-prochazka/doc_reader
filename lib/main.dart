@@ -16,7 +16,7 @@ const testMarkdown = r'''## ZACATEK {.trida} {#kotva} {*aaa=123} {*bbb} {*aja = 
 \* a\*\aaaa
 [KOLOKOL]: http://ssssss.ddd
 
-**![toto je popis obrázku](media/pngegg.png =1.3emxem)**
+**![toto je popis obrázku](media/pngegg.png =x .left)**
 
 ------------------------------
 
@@ -75,7 +75,7 @@ class MyApp extends StatelessWidget
     markdown = Markdown();
     markdown.writeMarkdownString(testMarkdown);
     textConfig = MarkdownTextConfig();
-    print (markdown.toString());
+    print(markdown.toString());
 
     final ms = MarkdownTextSpan.create(markdown, textConfig, document);
     for (final s in ms)

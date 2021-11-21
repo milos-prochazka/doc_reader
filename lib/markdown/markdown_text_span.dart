@@ -338,22 +338,22 @@ class MarkdownTextSpan implements IDocumentSpan
 
       switch (dec.decoration)
       {
-          case 'a':
-            text = '   ${numberToCharacters(dec.count, 'abcdefghijklmnopqrstuvwxyz')}. ';
-            break;
+        case 'a':
+        text = '   ${numberToCharacters(dec.count, 'abcdefghijklmnopqrstuvwxyz')}. ';
+        break;
 
-          case 'A':
-            text = '   ${numberToCharacters(dec.count, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ')}. ';
-            break;
+        case 'A':
+        text = '   ${numberToCharacters(dec.count, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ')}. ';
+        break;
 
-          case '1':
-            text = '   ${dec.count+1}. ';
-            break;
+        case '1':
+        text = '   ${dec.count + 1}. ';
+        break;
 
-          default:
-            bullet = true;
-            text = config.get(["bullets", dec.level], defValue: '  -');
-            break;
+        default:
+        bullet = true;
+        text = config.get(["bullets", dec.level], defValue: '  -');
+        break;
       }
 
       final style = config.getTextStyle(paragraph, paragraph.words[0], bullet: bullet);
@@ -377,7 +377,7 @@ class MarkdownTextSpan implements IDocumentSpan
       switch (word.type)
       {
         case MarkdownWord_Type.image:
-        wrd = _Image(word.image, document).calcMetrics(parameters);
+        wrd = _Image(word.attribs['image'] as String, document).calcMetrics(parameters);
         break;
 
         default:
@@ -673,8 +673,9 @@ class _Image extends _Word
   {
     if (image != null)
     {
-      final paint = Paint() ..filterQuality = ui.FilterQuality.high ..isAntiAlias = true ;
-     
+      final paint = Paint()
+      ..filterQuality = ui.FilterQuality.high
+      ..isAntiAlias = true;
 
       //params.canvas.drawImage(image!, Offset(xoffset, yoffset), paint);
       params.canvas.drawImageRect(image!, Rect.fromLTWH(0, 0, image!.width.toDouble(), image!.height.toDouble()),

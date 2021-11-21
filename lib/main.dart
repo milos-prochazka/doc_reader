@@ -16,7 +16,7 @@ const testMarkdown = r'''## ZACATEK {.trida} {#kotva} {*aaa=123} {*bbb} {*aja = 
 \* a\*\aaaa
 [KOLOKOL]: http://ssssss.ddd
 
-**![toto je popis obrázku](media/pngegg.png)**
+**![toto je popis obrázku](media/pngegg.png =1.3emxem)**
 
 ------------------------------
 
@@ -60,7 +60,6 @@ void testColor(String text)
 
 void main()
 {
-  var s = numberToCharacters(2503, 'abcdefghijklmnopqrstuvwxyz');
   runApp(MyApp());
 }
 

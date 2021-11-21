@@ -16,6 +16,10 @@ final _charClassRegExp = RegExp(r'((\_{1,3})|(\*{1,3}))|(\`{3}(@\w+\s))', multiL
 /// Pojmenovany link
 final _namedLinkRegExp = RegExp(r'(\!?)\[([^\]]+)\]\(([^\)]+)\)', multiLine: false);
 
+/// Obrazek se zadanou velikosti
+/// img.jpg =1.5%x34em.right  gr2 = 1.5 , gr3 = % , gr8 = 34 , gr9 = em , gr14 = .right
+final _imageSizeRegExp = RegExp (r'\s\=(([\d\.]*)((px)|(em)|(%))?)?[xX](([\d\.]*)((px)|(em)|(%))?)?(\s*(\.\w+))?',multiLine: false, caseSensitive: false);
+
 /// Special attributes {.class}  {#anchor} {*name=dddd}
 final _attributeLikRegExp = RegExp(r'\{([\.\#\*])([^}]+)\}');
 
@@ -479,10 +483,28 @@ class MarkdownParagraph
               final type = match.group(1) ?? '';
               final desc = match.group(2) ?? '';
               final link = match.group(3) ?? '';
-              final word = (type == '!')
-              ? makeWord(desc, styleStack, type: MarkdownWord_Type.image, image: link)
-              : makeWord(desc, styleStack, type: MarkdownWord_Type.link, link: link);
-              words.add(word);
+
+              if (type=='!')
+              {
+                final info = _imageSizeRegExp.firstMatch(link);
+                if (info!=null)
+                {
+                  final w = info.group(2);
+                  final wu = info.group(3);
+                  final h = info.group(8);
+                  final hu = info.group(9);
+                  var brk = 1;
+                  words.add(makeWord(desc, styleStack, type: MarkdownWord_Type.image, image: link.substring(0,info.start).trim()));
+                }
+                else
+                {
+                  words.add(makeWord(desc, styleStack, type: MarkdownWord_Type.image, image: link));
+                }
+              }
+              else
+              {
+                words.add(makeWord(desc, styleStack, type: MarkdownWord_Type.link, link: link));
+              }
             }
           }
           break;

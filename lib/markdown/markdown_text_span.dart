@@ -377,7 +377,7 @@ class MarkdownTextSpan implements IDocumentSpan
       switch (word.type)
       {
         case MarkdownWord_Type.image:
-        wrd = _Image(word.attribs['image'] as String, document).calcMetrics(parameters);
+        wrd = _Image(word.attribs, document).calcMetrics(parameters);
         break;
 
         default:
@@ -598,18 +598,64 @@ class _Hr extends _Word
 
 class _Image extends _Word
 {
-  String imgSource;
+  Map<String, Object?> attribs;
   ui.Image? image;
+  double em;
 
   Document? document;
 
-  _Image(this.imgSource, this.document);
+  _Image(this.attribs, this.document, {this.em = 20});
+
+  String get imgSource => attribs['image'] as String;
+
+  double? _decodeSize(double? value, String? unit, double screenSize)
+  {
+    double? result;
+
+    if (value != null)
+    {
+      result = value;
+      switch (unit)
+      {
+        case 'em':
+        result *= em;
+        break;
+        case '%':
+        result *= 0.01 * screenSize;
+      }
+    }
+
+    return result;
+  }
 
   _setSize(PaintParameters params, PictureCacheInfo info)
   {
     double width = info.width;
     double height = info.height;
     double aspectRatio = width / height;
+
+    double? reqWidth = _decodeSize(attribs['width'] as double?, attribs['widthUnit'] as String?, params.size.width);
+    double? reqHeight = _decodeSize(attribs['height'] as double?, attribs['heightUnit'] as String?, params.size.width);
+
+    if (reqWidth != null)
+    {
+      width = reqWidth;
+      if (reqHeight == null)
+      {
+        height = width / aspectRatio;
+      }
+    }
+
+    if (reqHeight != null)
+    {
+      height = reqHeight;
+      if (reqWidth == null)
+      {
+        width = height * aspectRatio;
+      }
+    }
+
+    aspectRatio = width / height;
 
     if (params.size.width < width)
     {

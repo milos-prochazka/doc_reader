@@ -17,8 +17,8 @@ final _charClassRegExp = RegExp(r'((\_{1,3})|(\*{1,3}))|(\`{3}(@\w+\s))', multiL
 final _namedLinkRegExp = RegExp(r'(\!?)\[([^\]]+)\]\(([^\)]+)\)', multiLine: false);
 
 /// Obrazek se zadanou velikosti
-/// img.jpg =1.5%x34em.right  gr2 = 1.5 , gr3 = % , gr8 = 34 , gr9 = em , gr14 = .right
-final _imageSizeRegExp = RegExp(r'\s\=(([\d\.]*)((px)|(em)|(%))?)?[xX](([\d\.]*)((px)|(em)|(%))?)?(\s*(\.\w+))?',
+/// img.jpg =1.5%x34em#right  gr2 = 1.5 , gr3 = % , gr8 = 34 , gr9 = em , gr14 = #right
+final _imageSizeRegExp = RegExp(r'\s\=(([\d\.]*)((px)|(em)|(%))?)?[xX](([\d\.]*)((px)|(em)|(%))?)?(\s*([\.\#]?\w+))?',
   multiLine: false, caseSensitive: false);
 
 /// Special attributes {.class}  {#anchor} {*name=dddd}

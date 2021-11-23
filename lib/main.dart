@@ -16,7 +16,7 @@ const testMarkdown = r'''## ZACATEK {.trida} {#kotva} {*aaa=123} {*bbb} {*aja = 
 \* a\*\aaaa
 [KOLOKOL]: http://ssssss.ddd
 
-**![toto je popis obrázku](media/pngegg.png = 3em x  center_line)**
+**![toto je popis obrázku](media/pngegg.png = 3em x  line)**
 
 ------------------------------
 

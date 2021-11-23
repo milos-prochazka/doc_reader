@@ -292,7 +292,7 @@ class MarkdownTextSpan implements IDocumentSpan
   Key? _layoutKey;
   final MarkdownParagraph paragraph;
   final MarkdownTextConfig config;
-  final _word = <_Word>[];
+  final _spans = <_Span>[];
   double _width = 0;
   double _height = 0;
   final Document document;
@@ -315,7 +315,7 @@ class MarkdownTextSpan implements IDocumentSpan
   {
     final line = _Line();
 
-    _word.clear();
+    _spans.clear();
     _height = 0;
     _width = 0;
 
@@ -327,9 +327,10 @@ class MarkdownTextSpan implements IDocumentSpan
       final hr = _Hr(paragraph.headClass, parameters.size.width).calcMetrics(parameters);
       y = hr.height;
       _height = y;
-      _word.add(hr);
+      _spans.add(hr);
     }
 
+    // Odsazeni a decorace zleva
     if (paragraph.words.isNotEmpty && (paragraph.decorations?.isNotEmpty ?? false))
     {
       final dec = paragraph.decorations!.last;
@@ -357,47 +358,58 @@ class MarkdownTextSpan implements IDocumentSpan
       }
 
       final style = config.getTextStyle(paragraph, paragraph.words[0], bullet: bullet);
-      final word = _Text(text, style.textStyle).calcMetrics(parameters);
-      word.yOffset = style.yOffseet;
-      word.xOffset = dec.level * config._bulletIntent(parameters, paragraph, paragraph.words[0]);
+      final span = _Text(text, style.textStyle).calcMetrics(parameters);
+      span.yOffset = style.yOffseet;
+      span.xOffset = dec.level * config._bulletIntent(parameters, paragraph, paragraph.words[0]);
 
-      _word.add(word);
-      line.add(word);
-      left = word.width + word.xOffset;
+      _spans.add(span);
+      line.add(span);
+      left = span.width + span.xOffset;
     }
 
-    double x = left;
-
+    // Vytvoreni seznamu spanu k zalomeni ----------------------------------------------------------------------------
+    final prepSpans = <_Span>{};
     for (final word in paragraph.words)
     {
       //const style = TextStyle(color: Color.fromARGB(255, 0, 0, 160), fontSize: 20.0, fontFamily: "Times New Roman", fontWeight: FontWeight.bold);
       final style = config.getTextStyle(paragraph, word);
-      _Word wrd;
+      _Span span;
 
       switch (word.type)
       {
         case MarkdownWord_Type.image:
-        wrd = _Image(word.attribs, document).calcMetrics(parameters);
+        span = _Image(word.attribs, document).calcMetrics(parameters);
         break;
 
         default:
-        wrd = _Text(word.text, style.textStyle).calcMetrics(parameters);
+        span = _Text(word.text, style.textStyle).calcMetrics(parameters);
         break;
       }
 
-      var pWidth = wrd.width + wrd.wordSpacing;
+      span.lineBreak = word.lineBreak;
 
-      if ((x + pWidth) > parameters.size.width || word.lineBreak)
+      prepSpans.add(span);
+    }
+
+    // Zalomeni textu -----------------------------------------------------------------------------------------------
+    double x = left;
+    for (final span in prepSpans)
+    {
+      var spanWidth = span.width;
+      var wordSpace = span.wordSpacing;
+
+      if ((x + spanWidth) > parameters.size.width && span.lineBreak)
       {
         x = left;
         y = line.calcPosition(this, parameters);
+        wordSpace = 0;
       }
 
-      wrd.xOffset = x;
-      wrd.yOffset = y;
-      _word.add(wrd);
-      line.add(wrd);
-      x += pWidth;
+      span.xOffset = x;
+      span.yOffset = y;
+      _spans.add(span);
+      line.add(span);
+      x += spanWidth + wordSpace;
     }
 
     line.calcPosition(this, parameters);
@@ -435,7 +447,7 @@ class MarkdownTextSpan implements IDocumentSpan
   {
     _updateSize(params);
 
-    for (var word in _word)
+    for (var word in _spans)
     {
       //word.painter.layout();
       //word.painter.paint(params.canvas, Offset(word.xOffset + xOffset, word.yOffset + yOffset));
@@ -451,7 +463,7 @@ class MarkdownTextSpan implements IDocumentSpan
   }
 }
 
-class _Word
+class _Span
 {
   double yOffset = 0;
   double xOffset = 0;
@@ -460,8 +472,9 @@ class _Word
   double left = 0;
   double height = 0;
   double width = 0;
+  bool lineBreak = false;
 
-  _Word calcMetrics(PaintParameters parameters)
+  _Span calcMetrics(PaintParameters parameters)
   {
     return this;
   }
@@ -469,7 +482,7 @@ class _Word
   void paint(PaintParameters params, double xoffset, double yoffset) {}
 }
 
-class _Text extends _Word
+class _Text extends _Span
 {
   TextPainter? _painter;
   late String text;
@@ -478,7 +491,7 @@ class _Text extends _Word
   _Text(this.text, this.style);
 
   @override
-  _Word calcMetrics(PaintParameters parameters)
+  _Span calcMetrics(PaintParameters parameters)
   {
     // ignore: unused_local_variable
     final p = painter;
@@ -535,7 +548,7 @@ class _Text extends _Word
   }
 }
 
-class _Hr extends _Word
+class _Hr extends _Span
 {
   String style;
 
@@ -596,7 +609,7 @@ class _Hr extends _Word
   }
 }
 
-class _Image extends _Word
+class _Image extends _Span
 {
   Map<String, Object?> attribs;
   ui.Image? image;
@@ -785,9 +798,9 @@ class _Image extends _Word
 
 class _Line
 {
-  final _words = <_Word>[];
+  final _words = <_Span>[];
 
-  void add(_Word word) => _words.add(word);
+  void add(_Span word) => _words.add(word);
 
   double calcPosition(MarkdownTextSpan span, PaintParameters parameters)
   {

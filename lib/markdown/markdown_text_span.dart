@@ -601,6 +601,10 @@ class _Image extends _Word
   Map<String, Object?> attribs;
   ui.Image? image;
   double em;
+  int count = 0;
+  double imgWidth = double.nan;
+  double imgOffset = double.nan;
+  double lineOffset = 0;
 
   Document? document;
 
@@ -657,16 +661,49 @@ class _Image extends _Word
 
     aspectRatio = width / height;
 
+    if (params.size.height < height)
+    {
+      height = params.size.height;
+      width = height * aspectRatio;
+    }
+
     if (params.size.width < width)
     {
       width = params.size.width;
       height = width / aspectRatio;
     }
 
-    if (params.size.height < height)
+    final attr = attribs['align'];
+    switch (attr)
     {
-      height = params.size.height;
-      width = height * aspectRatio;
+      case 'line':
+      case 'center_line':
+      count = params.size.width ~/ width;
+      imgWidth = width;
+      width = params.size.width;
+
+      if (attr == 'center_line')
+      {
+        imgOffset = width / count;
+        lineOffset = 0.5 * (imgOffset - imgWidth);
+      }
+      else
+      {
+        imgOffset = width / count;
+        imgOffset += (count > 1) ? (imgOffset - imgWidth) / (count - 1) : 0.5 * ((imgOffset - imgWidth));
+      }
+      break;
+
+      case 'fill_line':
+      count = params.size.width ~/ width;
+      imgWidth = params.size.width / count;
+      imgOffset = imgWidth;
+      if (reqHeight == null)
+      {
+        height = imgWidth / aspectRatio;
+      }
+      width = params.size.width;
+      break;
     }
 
     this.width = width;
@@ -723,9 +760,21 @@ class _Image extends _Word
       ..filterQuality = ui.FilterQuality.high
       ..isAntiAlias = true;
 
-      //params.canvas.drawImage(image!, Offset(xoffset, yoffset), paint);
-      params.canvas.drawImageRect(image!, Rect.fromLTWH(0, 0, image!.width.toDouble(), image!.height.toDouble()),
-        Rect.fromLTWH(xoffset, yoffset, width, height), paint);
+      final imageRect = Rect.fromLTWH(0, 0, image!.width.toDouble(), image!.height.toDouble());
+
+      if (count > 0)
+      {
+        var x = xoffset + lineOffset;
+        for (int i = 0; i < count; i++)
+        {
+          params.canvas.drawImageRect(image!, imageRect, Rect.fromLTWH(x, yoffset, imgWidth, height), paint);
+          x += imgOffset;
+        }
+      }
+      else
+      {
+        params.canvas.drawImageRect(image!, imageRect, Rect.fromLTWH(xoffset, yoffset, width, height), paint);
+      }
     }
     else
     {

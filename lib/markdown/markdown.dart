@@ -18,8 +18,12 @@ final _namedLinkRegExp = RegExp(r'(\!?)\[([^\]]+)\]\(([^\)]+)\)', multiLine: fal
 
 /// Obrazek se zadanou velikosti
 /// img.jpg =1.5%x34em#right  gr2 = 1.5 , gr3 = % , gr8 = 34 , gr9 = em , gr14 = #right
-final _imageSizeRegExp = RegExp(r'\s\=(([\d\.]*)((px)|(em)|(%))?)?[xX](([\d\.]*)((px)|(em)|(%))?)?(\s*([\.\#]?\w+))?',
-  multiLine: false, caseSensitive: false);
+final _imageSizeRegExp = RegExp
+(
+  r'\s\=\s*(([\d\.]*)((px)|(em)|(%))?)?\s*[xX]\s*(([\d\.]*)((px)|(em)|(%))?)?(\s*([\.\#]?\w+))?',
+  multiLine: false,
+  caseSensitive: false
+);
 
 /// Special attributes {.class}  {#anchor} {*name=dddd}
 final _attributeLikRegExp = RegExp(r'\{([\.\#\*])([^}]+)\}');

@@ -12,11 +12,13 @@ import 'doc_touch.dart';
 import 'markdown/markdown_text_span.dart';
 
 // **![toto je popis obrázku](media/pngegg.png)**
-const testMarkdown = r'''## ZACATEK {.trida} {#kotva} {*aaa=123} {*bbb} {*aja = paja }
+const testMarkdown =
+r'''Dlouhy odstacec na zacatku textu. Dlouhy odstacec na zacatku textu. Dlouhy odstacec na zacatku textu.
+## ZACATEK {.trida} {#kotva} {*aaa=123} {*bbb} {*aja = paja }
 \* a\*\aaaa
 [KOLOKOL]: http://ssssss.ddd
 
-**![toto je popis obrázku](media/pngegg.png = 3em x  line)**
+Text ![toto je popis obrázku](media/pngegg.png = 30em x  center)aasjkaskjasas jakokoles mikrosek jarosek marosek doloker
 
 ------------------------------
 

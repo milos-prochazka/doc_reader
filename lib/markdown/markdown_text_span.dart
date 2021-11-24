@@ -1,3 +1,5 @@
+// ignore_for_file: constant_identifier_names
+
 import 'dart:ui' as ui;
 
 import 'package:doc_reader/doc_span/color_text.dart';
@@ -369,6 +371,9 @@ class MarkdownTextSpan implements IDocumentSpan
 
     // Vytvoreni seznamu spanu k zalomeni ----------------------------------------------------------------------------
     final prepSpans = <_Span>{};
+    final leftSpans = <_Span>{};
+    final rightSpans = <_Span>{};
+
     for (final word in paragraph.words)
     {
       //const style = TextStyle(color: Color.fromARGB(255, 0, 0, 160), fontSize: 20.0, fontFamily: "Times New Roman", fontWeight: FontWeight.bold);
@@ -388,17 +393,43 @@ class MarkdownTextSpan implements IDocumentSpan
 
       span.lineBreak = word.lineBreak;
 
-      prepSpans.add(span);
+      switch (span.align)
+      {
+        case _Span.ALIGN_LEFT:
+        leftSpans.add(span);
+        break;
+
+        case _Span.ALIGN_RIGHT:
+        rightSpans.add(span);
+        break;
+
+        default:
+        prepSpans.add(span);
+        break;
+      }
     }
 
     // Zalomeni textu -----------------------------------------------------------------------------------------------
     double x = left;
+    double lrHeight = 0;
+    double sizeWidth = parameters.size.width;
+
+    for (final span in rightSpans)
+    {
+      span.xOffset = parameters.size.width - span.width;
+      sizeWidth = math.min(span.xOffset, sizeWidth);
+      span.yOffset = y;
+      lrHeight = math.max(lrHeight, span.yOffset + span.height);
+      _spans.add(span);
+    }
+
+    // inline spany
     for (final span in prepSpans)
     {
       var spanWidth = span.width;
       var wordSpace = span.wordSpacing;
 
-      if ((x + spanWidth) > parameters.size.width && span.lineBreak)
+      if ((x + spanWidth) > sizeWidth || span.lineBreak)
       {
         x = left;
         y = line.calcPosition(this, parameters);
@@ -414,6 +445,8 @@ class MarkdownTextSpan implements IDocumentSpan
 
     line.calcPosition(this, parameters);
     _width = parameters.size.width;
+    _height = math.max(_height, lrHeight);
+
     if (paragraph.spaceAfter)
     {
       _height += 10;
@@ -465,6 +498,10 @@ class MarkdownTextSpan implements IDocumentSpan
 
 class _Span
 {
+  static const ALIGN_INLINE = 0;
+  static const ALIGN_LEFT = 1;
+  static const ALIGN_RIGHT = 2;
+
   double yOffset = 0;
   double xOffset = 0;
   double baseLine = 0;
@@ -473,6 +510,7 @@ class _Span
   double height = 0;
   double width = 0;
   bool lineBreak = false;
+  int align = _Span.ALIGN_INLINE;
 
   _Span calcMetrics(PaintParameters parameters)
   {
@@ -717,6 +755,21 @@ class _Image extends _Span
       }
       width = params.size.width;
       break;
+
+      case 'center':
+      count = 1;
+      lineOffset = 0.5 * (params.size.width - width);
+      imgWidth = width;
+      width = params.size.width;
+      break;
+
+      case 'left':
+      align = _Span.ALIGN_LEFT;
+      break;
+
+      case 'right':
+      align = _Span.ALIGN_RIGHT;
+      break;
     }
 
     this.width = width;
@@ -780,13 +833,16 @@ class _Image extends _Span
         var x = xoffset + lineOffset;
         for (int i = 0; i < count; i++)
         {
-          params.canvas.drawImageRect(image!, imageRect, Rect.fromLTWH(x, yoffset, imgWidth, height), paint);
+          params.canvas.drawImageRect(image!, imageRect, Rect.fromLTWH(x, yoffset + yOffset, imgWidth, height), paint);
           x += imgOffset;
         }
       }
       else
       {
-        params.canvas.drawImageRect(image!, imageRect, Rect.fromLTWH(xoffset, yoffset, width, height), paint);
+        params.canvas.drawImageRect
+        (
+          image!, imageRect, Rect.fromLTWH(xoffset + xOffset, yoffset + yOffset, width, height), paint
+        );
       }
     }
     else

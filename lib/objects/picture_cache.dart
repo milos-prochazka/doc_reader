@@ -4,6 +4,9 @@ import 'dart:ui' as ui;
 
 import 'package:doc_reader/objects/applog.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:path/path.dart' as path;
+import 'package:flutter_svg/flutter_svg.dart';
 
 class PictureCache
 {
@@ -83,23 +86,28 @@ class PictureCache
     return imageInfo(imageSource).image;
   }
 
-  Future<ui.Image?> imageAsync(String imageSource) async
+  Future<PictureCacheInfo?> imageAsync(String imageSource) async
   {
     final imgInfo = getOrCreateInfo(imageSource);
 
-    if (imgInfo.image == null)
+    if (!imgInfo.hasPicture)
     {
       imgInfo.setImage(await _provider(imageSource).loadSourceAsync(imageSource));
+
+      if (!imgInfo.hasPicture)
+      {
+        throw ImageCacheException('Picture $imageSource is not loaded');
+      }
     }
 
-    return imgInfo.image;
+    return imgInfo;
   }
 
   void _timerCallback(Timer timer)
   {
     for (var info in cache.values)
     {
-      if (info.image != null)
+      if (info.hasPicture)
       {
         if (info.use)
         {
@@ -124,18 +132,29 @@ class PictureCacheInfo
 
   bool get hasInfo => !width.isNaN && !height.isNaN;
 
-  void setImage(ui.Image? image)
+  bool get hasPicture => image != null;
+  bool get hasImage => image != null;
+  bool get hasDrawable => false;
+
+  void setImage(Object? image)
   {
-    this.image = image;
-    if (image == null)
+    if (image is ui.Image)
     {
-      width = double.nan;
-      height = double.nan;
+      this.image = image;
+      width = image.width.toDouble();
+      height = image.height.toDouble();
+    }
+    else if (image is DrawableRoot)
+    {
+      final drw = image as DrawableRoot;
+
+      width = image.viewport.viewBox.width;
+      height = image.viewport.viewBox.height;
     }
     else
     {
-      width = image.width.toDouble();
-      height = image.height.toDouble();
+      width = double.nan;
+      height = double.nan;
     }
   }
 }
@@ -144,8 +163,8 @@ abstract class IPictureProvider
 {
   bool usableSource(String imageSource);
   bool asyncSource(String imageSource);
-  ui.Image? loadSource(String imageSource);
-  Future<ui.Image?> loadSourceAsync(String imageSource);
+  Object? loadSource(String imageSource);
+  Future<Object?> loadSourceAsync(String imageSource);
 }
 
 class DefaultPictureProvider extends IPictureProvider
@@ -157,27 +176,40 @@ class DefaultPictureProvider extends IPictureProvider
   }
 
   @override
-  ui.Image? loadSource(String imageSource)
+  Object? loadSource(String imageSource)
   {
     throw UnimplementedError();
   }
 
   @override
-  Future<ui.Image?> loadSourceAsync(String imageSource) async
+  Future<Object?> loadSourceAsync(String imageSource) async
   {
     try
     {
-      final ByteData data = await rootBundle.load(imageSource);
-
-      final Completer<ui.Image> completer = Completer();
-      ui.decodeImageFromList
-      (
-        Uint8List.view(data.buffer), (ui.Image img)
+      switch (path.extension(imageSource))
+      {
+        case '.svg':
+        case '.xml':
         {
-          return completer.complete(img);
+          final svgText = await rootBundle.loadString(imageSource);
+          return svg.fromSvgString(svgText, imageSource);
         }
-      );
-      return completer.future;
+
+        default:
+        {
+          final ByteData data = await rootBundle.load(imageSource);
+
+          final Completer<ui.Image> completer = Completer();
+          ui.decodeImageFromList
+          (
+            Uint8List.view(data.buffer), (ui.Image img)
+            {
+              return completer.complete(img);
+            }
+          );
+          return completer.future;
+        }
+      }
     }
     catch (e)
     {
@@ -190,5 +222,20 @@ class DefaultPictureProvider extends IPictureProvider
   bool usableSource(String imageSource)
   {
     return true;
+  }
+}
+
+class ImageCacheException implements Exception
+{
+  final dynamic message;
+
+  ImageCacheException([this.message]);
+
+  @override
+  String toString()
+  {
+    Object? message = this.message;
+    if (message == null) return "ImageCacheException";
+    return "ImageCacheException: $message";
   }
 }

@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 
 import 'package:doc_reader/doc_span/color_text.dart';
 import 'package:doc_reader/doc_span/doc_span_interface.dart';
+import 'package:doc_reader/objects/applog.dart';
 import 'package:doc_reader/objects/picture_cache.dart';
 import 'package:doc_reader/objects/utils.dart';
 import 'package:flutter/material.dart';
@@ -780,24 +781,31 @@ class _Image extends _Span
   {
     print("_load()");
 
-    final cache = PictureCache();
-    var info = cache.getOrCreateInfo(imgSource);
-    final repaint = info.image == null;
-
-    if (repaint)
+    try
     {
-      await PictureCache().imageAsync(imgSource);
-    }
-
-    if (info.hasInfo)
-    {
-      _setSize(params, info);
-      image = info.image;
+      final cache = PictureCache();
+      var info = cache.getOrCreateInfo(imgSource);
+      final repaint = info.image == null;
 
       if (repaint)
       {
-        document?.repaint();
+        await PictureCache().imageAsync(imgSource);
       }
+
+      if (info.hasInfo)
+      {
+        _setSize(params, info);
+        image = info.image;
+
+        if (repaint)
+        {
+          document?.repaint();
+        }
+      }
+    }
+    catch (ex)
+    {
+      appLogEx(ex);
     }
   }
 

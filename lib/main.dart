@@ -18,7 +18,7 @@ r'''Dlouhy odstacec na zacatku textu. Dlouhy odstacec na zacatku textu. Dlouhy o
 \* a\*\aaaa
 [KOLOKOL]: http://ssssss.ddd
 
-Text ![toto je popis obrázku](media/pngegg.png = 30em x  center)aasjkaskjasas jakokoles mikrosek jarosek marosek doloker
+Text ![toto je popis obrázku](media/vector.svg = 30em x  center)aasjkaskjasas jakokoles mikrosek jarosek marosek doloker
 
 ------------------------------
 

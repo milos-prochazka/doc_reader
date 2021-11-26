@@ -50,7 +50,8 @@ void appLog_debug([Object? msg])
   log(msg?.toString() ?? "", name: getLocation());
 }
 
-void appLogEx(Object ex, {String? msg})
+void appLogEx(Object ex, {String? msg, Object? stackTrace})
 {
-  log((msg != null ? msg + '\r\n' : '') + ex.toString() + '\r\n' + StackTrace.current.toString(), name: 'EXCEPTION');
+  final strStack = stackTrace?.toString() ?? StackTrace.current.toString();
+  log((msg != null ? msg + '\r\n' : '') + ex.toString() + '\r\n' + strStack, name: 'EXCEPTION');
 }

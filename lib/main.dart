@@ -11,6 +11,38 @@ import 'package:doc_reader/objects/applog.dart';
 import 'doc_touch.dart';
 import 'markdown/markdown_text_span.dart';
 
+
+
+//////////////////////////////////////////////////////////
+{
+	// Place your snippets for dart here. Each snippet is defined under a snippet name and has a prefix, body and
+	// description. The prefix is what is used to trigger the snippet and the body will be expanded and inserted. Possible variables are:
+	// $1, $2 for tab stops, $0 for the final cursor position, and ${1:label}, ${2:another} for placeholders. Placeholders with the
+	// same ids are connected.
+	// Example:
+	// "Print to console": {
+	// 	"prefix": "log",
+	// 	"body": [
+	// 		"console.log('$1');",
+	// 		"$2"
+	// 	],
+	// 	"description": "Log output to console"
+	// }
+
+	"Catch exception":
+	{
+		"prefix": "catch",
+		"body" :
+		[
+			"catch(ex,stackTrace)",
+			"{",
+			"   appLogEx(ex,stackTrace:stackTrace);",
+			"}"
+		]
+	}
+}
+//////////////////////////////////////////////////////////
+
 // **![toto je popis obrázku](media/pngegg.png)**
 const testMarkdown =
 r'''Text ![toto je popis obrázku](media/vector.svg =  x  center_line)aasjkaskjasas jakokoles mikrosek jarosek marosek doloker

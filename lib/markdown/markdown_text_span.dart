@@ -781,6 +781,7 @@ class _Image extends _Span
         }
         width = params.size.width;
       }
+
       break;
 
       case 'center':

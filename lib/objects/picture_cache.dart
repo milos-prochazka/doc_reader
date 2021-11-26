@@ -1,3 +1,5 @@
+// ignore_for_file: unnecessary_this
+
 import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -6,7 +8,6 @@ import 'package:doc_reader/objects/applog.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:path/path.dart' as path;
-import 'package:flutter_svg/flutter_svg.dart';
 
 class PictureCache
 {
@@ -86,7 +87,7 @@ class PictureCache
     return imageInfo(imageSource).image;
   }
 
-  Future<PictureCacheInfo?> imageAsync(String imageSource) async
+  Future<PictureCacheInfo> imageAsync(String imageSource) async
   {
     final imgInfo = getOrCreateInfo(imageSource);
 
@@ -116,6 +117,7 @@ class PictureCache
         else
         {
           info.image = null;
+          info.drawableRoot = null;
           print("CACHE CLEAR");
         }
       }
@@ -126,15 +128,16 @@ class PictureCache
 class PictureCacheInfo
 {
   ui.Image? image;
+  DrawableRoot? drawableRoot;
   double width = double.nan;
   double height = double.nan;
   bool use = true;
 
   bool get hasInfo => !width.isNaN && !height.isNaN;
 
-  bool get hasPicture => image != null;
+  bool get hasPicture => hasImage | hasDrawable;
   bool get hasImage => image != null;
-  bool get hasDrawable => false;
+  bool get hasDrawable => drawableRoot != null;
 
   void setImage(Object? image)
   {
@@ -146,8 +149,7 @@ class PictureCacheInfo
     }
     else if (image is DrawableRoot)
     {
-      final drw = image as DrawableRoot;
-
+      this.drawableRoot = image;
       width = image.viewport.viewBox.width;
       height = image.viewport.viewBox.height;
     }

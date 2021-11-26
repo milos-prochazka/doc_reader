@@ -9,6 +9,7 @@ import 'package:doc_reader/objects/picture_cache.dart';
 import 'package:doc_reader/objects/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../document.dart';
 import 'markdown.dart';
 import 'dart:math' as math;
@@ -411,30 +412,47 @@ class MarkdownTextSpan implements IDocumentSpan
     }
 
     // Zalomeni textu -----------------------------------------------------------------------------------------------
-    double x = left;
-    double lrHeight = 0;
+    double rightHeight = 0;
     double sizeWidth = parameters.size.width;
 
     for (final span in rightSpans)
     {
       span.xOffset = parameters.size.width - span.width;
       sizeWidth = math.min(span.xOffset, sizeWidth);
-      span.yOffset = y;
-      lrHeight = math.max(lrHeight, span.yOffset + span.height);
+      span.yOffset = rightHeight;
+      rightHeight = math.max(rightHeight, span.yOffset + span.height);
       _spans.add(span);
     }
+
+    double leftLeft = left;
+    double leftHeight = 0;
+    for (final span in leftSpans)
+    {
+      span.xOffset = left;
+      leftLeft = math.max(leftLeft, left + span.width);
+      span.yOffset = leftHeight;
+      leftHeight += span.height;
+      _spans.add(span);
+    }
+
+    double x = leftLeft;
 
     // inline spany
     for (final span in prepSpans)
     {
-      var spanWidth = span.width;
-      var wordSpace = span.wordSpacing;
+      final spanWidth = span.width;
+      final lineWidth = y > rightHeight ? parameters.size.width : sizeWidth;
+      var wordSpace = span.wordSpace;
 
-      if ((x + spanWidth) > sizeWidth || span.lineBreak)
+      if ((x + spanWidth) > lineWidth || span.lineBreak)
       {
-        x = left;
         y = line.calcPosition(this, parameters);
-        wordSpace = 0;
+        x = y > leftHeight ? left : leftLeft;
+      }
+
+      if (span is _Image)
+      {
+        print(" ------------------------------- $y ------------------------");
       }
 
       span.xOffset = x;
@@ -446,7 +464,7 @@ class MarkdownTextSpan implements IDocumentSpan
 
     line.calcPosition(this, parameters);
     _width = parameters.size.width;
-    _height = math.max(_height, lrHeight);
+    _height = math.max(leftHeight, math.max(_height, rightHeight));
 
     if (paragraph.spaceAfter)
     {
@@ -506,12 +524,14 @@ class _Span
   double yOffset = 0;
   double xOffset = 0;
   double baseLine = 0;
-  double wordSpacing = 0;
+  double wordSpace = 0;
   double left = 0;
   double height = 0;
   double width = 0;
   bool lineBreak = false;
   int align = _Span.ALIGN_INLINE;
+
+  bool get textBaseLine => false;
 
   _Span calcMetrics(PaintParameters parameters)
   {
@@ -528,6 +548,9 @@ class _Text extends _Span
   late TextStyle style;
 
   _Text(this.text, this.style);
+
+  @override
+  bool get textBaseLine => true;
 
   @override
   _Span calcMetrics(PaintParameters parameters)
@@ -559,7 +582,7 @@ class _Text extends _Span
       if (ml.isNotEmpty)
       {
         final metrics = ml.first;
-        wordSpacing = style.wordSpacing ?? p.height / 3;
+        wordSpace = style.wordSpacing ?? p.height / 3;
 
         baseLine = metrics.ascent;
         height = metrics.height;
@@ -652,6 +675,7 @@ class _Image extends _Span
 {
   Map<String, Object?> attribs;
   ui.Image? image;
+  DrawableRoot? drawableRoot;
   double em;
   int count = 0;
   double imgWidth = double.nan;
@@ -661,6 +685,9 @@ class _Image extends _Span
   Document? document;
 
   _Image(this.attribs, this.document, {this.em = 20});
+
+  @override
+  bool get textBaseLine => baseLine > 0;
 
   String get imgSource => attribs['image'] as String;
 
@@ -775,37 +802,58 @@ class _Image extends _Span
 
     this.width = width;
     this.height = height;
+    this.baseLine = height;
   }
 
+  bool _loadLock = false;
   _load(PaintParameters params) async
   {
     print("_load()");
 
-    try
+    if (!_loadLock)
     {
-      final cache = PictureCache();
-      var info = cache.getOrCreateInfo(imgSource);
-      final repaint = info.image == null;
-
-      if (repaint)
+      try
       {
-        await PictureCache().imageAsync(imgSource);
-      }
+        _loadLock = true;
+        final cache = PictureCache();
+        var info = cache.getOrCreateInfo(imgSource);
+        var repaint = true; //!info.hasPicture;
 
-      if (info.hasInfo)
-      {
-        _setSize(params, info);
-        image = info.image;
-
-        if (repaint)
+        //if (repaint)
         {
-          document?.repaint();
+          info = await PictureCache().imageAsync(imgSource);
+        }
+
+        if (info.hasInfo)
+        {
+          _setSize(params, info);
+          if (info.hasImage)
+          {
+            image = info.image;
+          }
+          else if (info.hasDrawable)
+          {
+            drawableRoot = info.drawableRoot;
+          }
+          else
+          {
+            repaint = false;
+          }
+
+          if (repaint)
+          {
+            document?.repaint();
+          }
         }
       }
-    }
-    catch (ex)
-    {
-      appLogEx(ex);
+      catch (ex)
+      {
+        appLogEx(ex);
+      }
+      finally
+      {
+        _loadLock = false;
+      }
     }
   }
 
@@ -817,6 +865,7 @@ class _Image extends _Span
     {
       _setSize(parameters, info);
       image = info.image;
+      drawableRoot = info.drawableRoot;
     }
     else
     {
@@ -853,6 +902,27 @@ class _Image extends _Span
         );
       }
     }
+    else if (drawableRoot != null)
+    {
+      // -----
+      DrawableRoot drw = drawableRoot!;
+      double imageWidth = drw.viewport.viewBox.width;
+      double imageHeight = drw.viewport.viewBox.height;
+
+      params.canvas.save();
+      if (count > 0)
+      {
+        drawableRoot!.draw(params.canvas, Rect.fromLTWH(xoffset + xOffset, yoffset + yOffset, width, height));
+      }
+      else
+      {
+        params.canvas.translate(xoffset + xOffset, yoffset + yOffset);
+        params.canvas.scale(width / imageWidth, height / imageHeight);
+        drawableRoot!.draw(params.canvas, Rect.zero);
+      }
+
+      params.canvas.restore(); // TODO pres cely paint try finally
+    }
     else
     {
       _load(params);
@@ -877,15 +947,21 @@ class _Line
       for (var word in _words)
       {
         //y = math.max(y,word.yOffset);
-        asc = math.max(asc, word.baseLine);
-        desc = math.max(desc, word.height - word.baseLine);
+        if (word.textBaseLine)
+        {
+          asc = math.max(asc, word.baseLine);
+          desc = math.max(desc, word.height - word.baseLine);
+        }
       }
 
       final double height = asc + desc;
 
       for (var word in _words)
       {
-        word.yOffset += asc - word.baseLine;
+        if (word.textBaseLine)
+        {
+          word.yOffset += asc - word.baseLine;
+        }
       }
 
       span._height += height;

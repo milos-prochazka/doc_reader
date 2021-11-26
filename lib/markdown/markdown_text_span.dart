@@ -1,4 +1,4 @@
-// ignore_for_file: constant_identifier_names
+// ignore_for_file: constant_identifier_names, unnecessary_this
 
 import 'dart:ui' as ui;
 
@@ -450,11 +450,6 @@ class MarkdownTextSpan implements IDocumentSpan
         x = y > leftHeight ? left : leftLeft;
       }
 
-      if (span is _Image)
-      {
-        print(" ------------------------------- $y ------------------------");
-      }
-
       span.xOffset = x;
       span.yOffset = y;
       _spans.add(span);
@@ -757,31 +752,35 @@ class _Image extends _Span
     {
       case 'line':
       case 'center_line':
-      count = params.size.width ~/ width;
-      imgWidth = width;
-      width = params.size.width;
+      {
+        count = params.size.width ~/ width;
+        imgWidth = width;
+        width = params.size.width;
 
-      if (attr == 'center_line')
-      {
-        imgOffset = width / count;
-        lineOffset = 0.5 * (imgOffset - imgWidth);
-      }
-      else
-      {
-        imgOffset = width / count;
-        imgOffset += (count > 1) ? (imgOffset - imgWidth) / (count - 1) : 0.5 * ((imgOffset - imgWidth));
+        if (attr == 'center_line')
+        {
+          imgOffset = width / count;
+          lineOffset = 0.5 * (imgOffset - imgWidth);
+        }
+        else
+        {
+          imgOffset = width / count;
+          imgOffset += (count > 1) ? (imgOffset - imgWidth) / (count - 1) : 0.5 * ((imgOffset - imgWidth));
+        }
       }
       break;
 
       case 'fill_line':
-      count = params.size.width ~/ width;
-      imgWidth = params.size.width / count;
-      imgOffset = imgWidth;
-      if (reqHeight == null)
       {
-        height = imgWidth / aspectRatio;
+        count = params.size.width ~/ width;
+        imgWidth = params.size.width / count;
+        imgOffset = imgWidth;
+        if (reqHeight == null)
+        {
+          height = imgWidth / aspectRatio;
+        }
+        width = params.size.width;
       }
-      width = params.size.width;
       break;
 
       case 'center':
@@ -874,58 +873,77 @@ class _Image extends _Span
     return this;
   }
 
+  _paintDrawable(Canvas canvas, double left, double top, double width, double height)
+  {
+    try
+    {
+      canvas.save();
+
+      canvas.translate(left, top);
+      canvas.scale(width / drawableRoot!.viewport.viewBox.width, height / drawableRoot!.viewport.viewBox.height);
+      drawableRoot!.draw(canvas, Rect.zero);
+    }
+    finally
+    {
+      canvas.restore();
+    }
+  }
+
   @override
   void paint(PaintParameters params, double xoffset, double yoffset)
   {
-    if (image != null)
+    try
     {
-      final paint = Paint()
-      ..filterQuality = ui.FilterQuality.high
-      ..isAntiAlias = true;
-
-      final imageRect = Rect.fromLTWH(0, 0, image!.width.toDouble(), image!.height.toDouble());
-
-      if (count > 0)
+      if (image != null)
       {
-        var x = xoffset + lineOffset;
-        for (int i = 0; i < count; i++)
+        final paint = Paint()
+        ..filterQuality = ui.FilterQuality.high
+        ..isAntiAlias = true;
+
+        final imageRect = Rect.fromLTWH(0, 0, image!.width.toDouble(), image!.height.toDouble());
+
+        if (count > 0)
         {
-          params.canvas.drawImageRect(image!, imageRect, Rect.fromLTWH(x, yoffset + yOffset, imgWidth, height), paint);
-          x += imgOffset;
+          var x = xoffset + lineOffset;
+          for (int i = 0; i < count; i++)
+          {
+            params.canvas
+            .drawImageRect(image!, imageRect, Rect.fromLTWH(x, yoffset + yOffset, imgWidth, height), paint);
+            x += imgOffset;
+          }
+        }
+        else
+        {
+          params.canvas.drawImageRect
+          (
+            image!, imageRect, Rect.fromLTWH(xoffset + xOffset, yoffset + yOffset, width, height), paint
+          );
+        }
+      }
+      else if (drawableRoot != null)
+      {
+        if (count > 0)
+        {
+          var x = xoffset + lineOffset;
+          for (int i = 0; i < count; i++)
+          {
+            _paintDrawable(params.canvas, x, yoffset + yOffset, imgWidth, height);
+            x += imgOffset;
+          }
+        }
+        else
+        {
+          _paintDrawable(params.canvas, xoffset + xOffset, yoffset + yOffset, width, height);
         }
       }
       else
       {
-        params.canvas.drawImageRect
-        (
-          image!, imageRect, Rect.fromLTWH(xoffset + xOffset, yoffset + yOffset, width, height), paint
-        );
+        _load(params);
       }
     }
-    else if (drawableRoot != null)
+    catch (ex)
     {
-      // -----
-      DrawableRoot drw = drawableRoot!;
-      double imageWidth = drw.viewport.viewBox.width;
-      double imageHeight = drw.viewport.viewBox.height;
-
-      params.canvas.save();
-      if (count > 0)
-      {
-        drawableRoot!.draw(params.canvas, Rect.fromLTWH(xoffset + xOffset, yoffset + yOffset, width, height));
-      }
-      else
-      {
-        params.canvas.translate(xoffset + xOffset, yoffset + yOffset);
-        params.canvas.scale(width / imageWidth, height / imageHeight);
-        drawableRoot!.draw(params.canvas, Rect.zero);
-      }
-
-      params.canvas.restore(); // TODO pres cely paint try finally
-    }
-    else
-    {
-      _load(params);
+      appLogEx(ex);
     }
   }
 }

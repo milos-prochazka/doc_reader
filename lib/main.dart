@@ -13,7 +13,7 @@ import 'markdown/markdown_text_span.dart';
 
 // **![toto je popis obrázku](media/pngegg.png)**
 const testMarkdown =
-r'''Text ![toto je popis obrázku](media/vector.svg = 30 x 15 )aasjkaskjasas jakokoles mikrosek jarosek marosek doloker
+r'''Text ![toto je popis obrázku](media/vector.svg =  x  center_line)aasjkaskjasas jakokoles mikrosek jarosek marosek doloker
 Dlouhy odstacec na zacatku textu. Dlouhy odstacec na zacatku textu. Dlouhy odstacec na zacatku textu.
 ## ZACATEK {.trida} {#kotva} {*aaa=123} {*bbb} {*aja = paja }
 \* a\*\aaaa

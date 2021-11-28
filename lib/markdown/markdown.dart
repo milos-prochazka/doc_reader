@@ -29,6 +29,9 @@ final _imageSizeRegExp = RegExp
   caseSensitive: false
 );
 
+/// Dekodovani hodnoty a jednotky (px,em nebo %). 12.34em => gr1= 12.34 gr3=>em
+final _valueUnitRegExp = RegExp(r'(\d+(\.d+)?)((px)|(em)|(%))', multiLine: false, caseSensitive: false);
+
 /// Special attributes {.class}  {#anchor} {*name=dddd}
 final _attributeLikRegExp = RegExp(r'\{([\.\#\*])([^}]+)\}');
 
@@ -114,7 +117,20 @@ class Markdown
             for (final attr in attributes)
             {
               //print ((attr.group(1)??'<>') + '=' + (attr.group(2)??'<>'));
-              clsAttr[attr.group(1) ?? '?'] = attr.group(2) ?? '?';
+              final name = attr.group(1) ?? '?';
+              final value = attr.group(2) ?? '?';
+              final match = _valueUnitRegExp.firstMatch(value);
+
+              if (match != null)
+              {
+                // Hodnota s jednotkou (12.34em)
+                clsAttr[name] = match.group(1) ?? '';
+                clsAttr[name + 'Unit'] = match.group(3) ?? '';
+              }
+              else
+              {
+                clsAttr[name] = value;
+              }
             }
 
             classes[name] = clsAttr;

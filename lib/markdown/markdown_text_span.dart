@@ -756,9 +756,10 @@ class _Image extends _Span
     {
       case 'tight-line':
       {
-        imgWidth = width;
-        imgOffset = width;
         count = (params.size.width + width) ~/ width;
+        imgWidth = params.size.width / count;
+        height = imgWidth / aspectRatio;
+        imgOffset = imgWidth;
         width = params.size.width;
       }
       break;

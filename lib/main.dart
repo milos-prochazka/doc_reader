@@ -20,7 +20,7 @@ Dlouhy odstacec na zacatku textu. Dlouhy odstacec na zacatku textu. Dlouhy odsta
 \* a\*\aaaa
 ![KOLOKOL]
 
-[KOLOKOL]: media/vector.svg = 5em x  tight-center-line
+[KOLOKOL]: media/vector.svg = 5em x  tight-line
 
 
 

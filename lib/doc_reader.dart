@@ -159,9 +159,9 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
         {
             Future.microtask(() => setState(() {}));
         }
-        catch (ex)
+        catch (ex, stackTrace)
         {
-            appLogEx(ex);
+            appLogEx(ex, stackTrace: stackTrace);
         }
     }
 }
@@ -241,9 +241,9 @@ class DocumentPainter extends CustomPainter
                 }
             }
         }
-        catch (e)
+        catch (ex, stackTrace)
         {
-            appLogEx(e);
+            appLogEx(ex, stackTrace: stackTrace);
         }
     }
 

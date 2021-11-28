@@ -213,9 +213,9 @@ class DefaultPictureProvider extends IPictureProvider
         }
       }
     }
-    catch (e)
+    catch (ex, stackTrace)
     {
-      appLogEx(e);
+      appLogEx(ex, stackTrace: stackTrace);
       return null;
     }
   }

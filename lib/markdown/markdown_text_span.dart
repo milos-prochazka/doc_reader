@@ -260,7 +260,7 @@ class MarkdownTextConfig
     {
       final style =
       getTextStyle(para, word, bullet: true); //TextStyle(color: Color.fromARGB(255, 0, 0, 160), fontSize: 10.0);
-      final bullet = _Text(get(["bullets", 0], defValue: '  -'), style.textStyle).calcMetrics(parameters);
+      final bullet = _Text(get(["bullets", 0], defValue: '  -'), style.textStyle, false).calcMetrics(parameters);
       _state.bulletIntent = bullet.width;
     }
 
@@ -362,7 +362,7 @@ class MarkdownTextSpan implements IDocumentSpan
       }
 
       final style = config.getTextStyle(paragraph, paragraph.words[0], bullet: bullet);
-      final span = _Text(text, style.textStyle).calcMetrics(parameters);
+      final span = _Text(text, style.textStyle, false).calcMetrics(parameters);
       span.yOffset = style.yOffseet;
       span.xOffset = dec.level * config._bulletIntent(parameters, paragraph, paragraph.words[0]);
 
@@ -385,11 +385,11 @@ class MarkdownTextSpan implements IDocumentSpan
       switch (word.type)
       {
         case MarkdownWord_Type.image:
-        span = _Image(word.attribs, document).calcMetrics(parameters);
+        span = _Image(word.attribs, document, style.textStyle, word.stickToNext).calcMetrics(parameters);
         break;
 
         default:
-        span = _Text(word.text, style.textStyle).calcMetrics(parameters);
+        span = _Text(word.text, style.textStyle, word.stickToNext).calcMetrics(parameters);
         break;
       }
 
@@ -539,10 +539,11 @@ class _Span
 class _Text extends _Span
 {
   TextPainter? _painter;
-  late String text;
-  late TextStyle style;
+  final String text;
+  final TextStyle style;
+  final bool stickToText;
 
-  _Text(this.text, this.style);
+  _Text(this.text, this.style, this.stickToText);
 
   @override
   bool get textBaseLine => true;
@@ -577,7 +578,7 @@ class _Text extends _Span
       if (ml.isNotEmpty)
       {
         final metrics = ml.first;
-        wordSpace = style.wordSpacing ?? p.height / 3;
+        wordSpace = stickToText ? 0 : (style.wordSpacing ?? p.height / 3);
 
         baseLine = metrics.ascent;
         height = metrics.height;
@@ -668,10 +669,11 @@ class _Hr extends _Span
 
 class _Image extends _Span
 {
-  Map<String, Object?> attribs;
+  final Map<String, Object?> attribs;
+  final TextStyle style;
+  final bool stickToNext;
   ui.Image? image;
   DrawableRoot? drawableRoot;
-  double em;
   int count = 0;
   double imgWidth = double.nan;
   double imgOffset = double.nan;
@@ -679,7 +681,9 @@ class _Image extends _Span
 
   Document? document;
 
-  _Image(this.attribs, this.document, {this.em = 20});
+  _Image(this.attribs, this.document, this.style, this.stickToNext);
+
+  double get _fontSize => style.fontSize ?? 20;
 
   @override
   bool get textBaseLine => baseLine > 0;
@@ -696,7 +700,7 @@ class _Image extends _Span
       switch (unit)
       {
         case 'em':
-        result *= em;
+        result *= _fontSize;
         break;
         case '%':
         result *= 0.01 * screenSize;
@@ -750,14 +754,33 @@ class _Image extends _Span
     final attr = attribs['align'];
     switch (attr)
     {
+      case 'tight-line':
+      {
+        imgWidth = width;
+        imgOffset = width;
+        count = (params.size.width + width) ~/ width;
+        width = params.size.width;
+      }
+      break;
+
+      case 'tight-center-line':
+      {
+        imgWidth = width;
+        imgOffset = width;
+        count = (params.size.width) ~/ width;
+        width = params.size.width;
+        lineOffset = 0.5 * (width - count * imgWidth);
+      }
+      break;
+
       case 'line':
-      case 'center_line':
+      case 'center-line':
       {
         count = params.size.width ~/ width;
         imgWidth = width;
         width = params.size.width;
 
-        if (attr == 'center_line')
+        if (attr == 'center-line')
         {
           imgOffset = width / count;
           lineOffset = 0.5 * (imgOffset - imgWidth);
@@ -770,7 +793,7 @@ class _Image extends _Span
       }
       break;
 
-      case 'fill_line':
+      case 'fill-line':
       {
         count = params.size.width ~/ width;
         imgWidth = params.size.width / count;
@@ -800,6 +823,7 @@ class _Image extends _Span
       break;
     }
 
+    this.wordSpace = this.stickToNext ? 0 : _fontSize / 3;
     this.width = width;
     this.height = height;
     this.baseLine = height;
@@ -846,9 +870,9 @@ class _Image extends _Span
           }
         }
       }
-      catch (ex)
+      catch (ex, stackTrace)
       {
-        appLogEx(ex);
+        appLogEx(ex, stackTrace: stackTrace);
       }
       finally
       {
@@ -942,9 +966,9 @@ class _Image extends _Span
         _load(params);
       }
     }
-    catch (ex)
+    catch (ex, stackTrace)
     {
-      appLogEx(ex);
+      appLogEx(ex, stackTrace: stackTrace);
     }
   }
 }

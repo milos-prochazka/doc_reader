@@ -18,6 +18,7 @@ final _defaultConfig =
 {
   // ••●○■ □▪▫◌○●◦ꓸ
   "bullets": ["        ●  ", "        □  ", "        ■  ", "        ●  ", "        □  ", "        ■  "],
+  "blockquotesColor": "silver",
   "textStyles":
   {
     "":
@@ -300,6 +301,7 @@ class MarkdownTextSpan implements IDocumentSpan
   double _width = 0;
   double _height = 0;
   final Document document;
+  Paint? _blockquotesPaint;
 
   MarkdownTextSpan(this.paragraph, this.config, this.document);
 
@@ -355,20 +357,35 @@ class MarkdownTextSpan implements IDocumentSpan
         text = '   ${dec.count + 1}. ';
         break;
 
+        case '>':
+        text = '>';
+        break;
+
         default:
         bullet = true;
         text = config.get(["bullets", dec.level], defValue: '  -');
         break;
       }
 
-      final style = config.getTextStyle(paragraph, paragraph.words[0], bullet: bullet);
-      final span = _Text(text, style.textStyle, false).calcMetrics(parameters);
-      span.yOffset = style.yOffseet;
-      span.xOffset = dec.level * config._bulletIntent(parameters, paragraph, paragraph.words[0]);
+      if (text == '>')
+      {
+        if (_blockquotesPaint == null)
+        {
+          _blockquotesPaint = Paint()..color = colorFormText(config.get(['blockquotesColor'], defValue: 'black'));
+          left += 15;
+        }
+      }
+      else
+      {
+        final style = config.getTextStyle(paragraph, paragraph.words[0], bullet: bullet);
+        final span = _Text(text, style.textStyle, false).calcMetrics(parameters);
+        span.yOffset = style.yOffseet;
+        span.xOffset = dec.level * config._bulletIntent(parameters, paragraph, paragraph.words[0]);
 
-      _spans.add(span);
-      line.add(span);
-      left = span.width + span.xOffset;
+        _spans.add(span);
+        line.add(span);
+        left = span.width + span.xOffset;
+      }
     }
 
     // Vytvoreni seznamu spanu k zalomeni ----------------------------------------------------------------------------
@@ -493,6 +510,11 @@ class MarkdownTextSpan implements IDocumentSpan
   void paint(PaintParameters params, double xOffset, double yOffset)
   {
     _updateSize(params);
+
+    if (_blockquotesPaint != null)
+    {
+      params.canvas.drawRect(Rect.fromLTWH(5, yOffset, 5, _height), _blockquotesPaint!);
+    }
 
     for (var word in _spans)
     {

@@ -12,8 +12,13 @@ import 'doc_touch.dart';
 import 'markdown/markdown_text_span.dart';
 
 // **![toto je popis obrázku](media/pngegg.png)**
-const testMarkdown =
-r'''a**h**oj ![toto je popis obrázku](media/vector.svg = 5em x  tight-center-line) aasjkaskjasas jakokoles mikrosek jarosek marosek doloker
+const testMarkdown = r'''
+# Nadpis
+> odsazeno 1
+> odsazeno 2
+''';
+const test = r'''
+a**h**oj ![toto je popis obrázku](media/vector.svg = 5em x  tight-center-line) aasjkaskjasas jakokoles mikrosek jarosek marosek doloker
 Dlouhy odstacec na zacatku textu. Dlouhy odstacec na zacatku textu. Dlouhy odstavec na zacatku textu.
 [.myclass]: width=10em height=50em
 ## ZACATEK {.trida} {#kotva} {*aaa=123} {*bbb} {*aja = paja }

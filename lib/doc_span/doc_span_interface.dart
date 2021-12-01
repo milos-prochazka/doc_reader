@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
-abstract class IDocumentSpan
+abstract class IDocumentSpan 
 {
   double height(PaintParameters params);
   double width(PaintParameters params);
@@ -9,7 +9,7 @@ abstract class IDocumentSpan
   void calcSize(PaintParameters parameters);
 }
 
-class DocumentSpanContainer
+class DocumentSpanContainer 
 {
   IDocumentSpan span;
   double yPosition = 0.0;
@@ -18,27 +18,27 @@ class DocumentSpanContainer
   DocumentSpanContainer(this.span);
 }
 
-class PaintParameters
+class PaintParameters 
 {
   final Canvas canvas;
   late Size size;
   late Rect rect;
   late Key key;
 
-  PaintParameters(this.canvas, this.size)
+  PaintParameters(this.canvas, this.size) 
   {
     rect = Rect.fromLTWH(0, 0, size.width, size.height);
     key = UniqueKey();
   }
 
-  PaintParameters.copyFrom(this.canvas, PaintParameters source)
+  PaintParameters.copyFrom(this.canvas, PaintParameters source) 
   {
     size = source.size;
     rect = source.rect;
     key = source.key;
   }
 
-  void newKey()
+  void newKey() 
   {
     key = UniqueKey();
   }

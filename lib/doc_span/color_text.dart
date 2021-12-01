@@ -154,23 +154,23 @@ Map<String, int>? _colorRegister;
 
 final RegExp _numColor = RegExp(r'\#[0-9A-Fa-f]{3,8}');
 
-void registerColorName(String name, int value)
+void registerColorName(String name, int value) 
 {
   (_colorRegister ??= <String, int>{})[name.trim().toLowerCase()] = value;
 }
 
-int intColorFromText(String text, [int defColor = 0xff000000])
+int intColorFromText(String text, [int defColor = 0xff000000]) 
 {
   text = text.trim().toLowerCase();
 
   final found = _colorRegister?[text] ?? colorsNames[text];
-  if (found != null)
+  if (found != null) 
   {
     return found;
-  }
-  else if (_numColor.hasMatch(text))
+  } 
+  else if (_numColor.hasMatch(text)) 
   {
-    switch (text.length)
+    switch (text.length) 
     {
       case 4:
       return int.parse("ff" + text[1] + text[1] + text[2] + text[2] + text[3] + text[3], radix: 16);
@@ -183,14 +183,14 @@ int intColorFromText(String text, [int defColor = 0xff000000])
       default:
       return defColor;
     }
-  }
-  else
+  } 
+  else 
   {
     return defColor;
   }
 }
 
-Color colorFormText(String text, [Color defColor = Colors.black])
+Color colorFormText(String text, [Color defColor = Colors.black]) 
 {
   return Color(intColorFromText(text, defColor.value));
 }

@@ -10,6 +10,12 @@ final _newLineRegex = RegExp(r'([\r\n])|(\r\n)]', multiLine: true);
 /// Detekce nadpisu a odsazeni
 final _headRegExp = RegExp(r'\s*((\>+\s*)|([\-\+\*]\s+)|(\#{1,6}\s+)|(\d+\.\s)|([A-Za-z]\.\s))', multiLine: false);
 
+/// Detekce odsazeneho bloku (mezery na zacatku)
+final _indentBlockRegExp = RegExp(r'^\s{3,}', multiLine: false);
+
+/// Detekce uvodu/konce bloku ```name => g1=``` g2=name
+final _blockRegExp = RegExp(r'^\s*(\`{3,})(\w*)\s*$', multiLine: false);
+
 /// Trida znaku (italic,bold a dalsi)
 final _charClassRegExp = RegExp(r'((\_{1,3})|(\*{1,3}))|(\`{3}(@\w+\s))', multiLine: false);
 
@@ -93,6 +99,7 @@ class Markdown
 
   writeMarkdownString(String text)
   {
+    var blockClass = '';
     final lines = MarkdownParagraph.escape(text).split(_newLineRegex);
 
     for (int i = 0; i < lines.length; i++)
@@ -165,6 +172,19 @@ class Markdown
           break;
         }
       }
+      else if ((match = _blockRegExp.firstMatch(line)) != null)
+      {
+        final cls = match?.group(2) ?? '';
+
+        if (cls.isEmpty)
+        {
+          blockClass = (blockClass.isEmpty) ? 'indent' : '';
+        }
+        else
+        {
+          blockClass = cls;
+        }
+      }
       else
       {
         var pStart = '';
@@ -198,6 +218,17 @@ class Markdown
           }
         }
         while (head != null);
+
+        final indent = _indentBlockRegExp.firstMatch(line);
+        if (indent != null)
+        {
+          hClass = 'indent';
+        }
+
+        if (blockClass.isNotEmpty)
+        {
+          hClass = blockClass;
+        }
 
         line = line.substring(headEnd);
         appLog_debug('[$pStart] [$hClass] "$line"');
@@ -248,7 +279,7 @@ class Markdown
         {
           if (prevPara.lineDecoration != '' && para.lineDecoration != '')
           {
-            prevPara.spaceAfter = false;
+            prevPara.lastInClass = false;
           }
         }
       }
@@ -330,6 +361,39 @@ class Markdown
     }
   }
 
+  static String detab(String text, int tabSize)
+  {
+    if (!text.contains("\t"))
+    {
+      return text;
+    }
+    else
+    {
+      final builder = StringBuffer();
+
+      for (final ch in text.codeUnits)
+      {
+        if (ch == /*$\t*/(0x9))
+        {
+          final l = builder.length;
+          var n = tabSize - (l % tabSize);
+
+          while (n > 0)
+          {
+            builder.writeCharCode(/*$ */(0x20));
+            n--;
+          }
+        }
+        else
+        {
+          builder.writeCharCode(ch);
+        }
+      }
+
+      return builder.toString();
+    }
+  }
+
   @override
   String toString()
   {
@@ -354,7 +418,8 @@ class MarkdownParagraph
   final anchors = <String>[];
   final words = <MarkdownWord>[];
   final attributes = <String, String>{};
-  bool spaceAfter = true;
+  bool lastInClass = true;
+  bool firstInClass = true;
 
   MarkdownParagraph({required String text, this.lineDecoration = '', this.headClass = ''})
   {

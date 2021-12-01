@@ -48,12 +48,21 @@ class MarkdownTextSpan implements IDocumentSpan
     _height = 0;
     _width = 0;
 
-    double left = 0;
+    var paraStyle = config.getTextStyle(paragraph);
+
+    double left = paraStyle.leftMargin;
+    double right = parameters.size.width - paraStyle.rightMargin;
+    if ((right - left) < 0.6 * parameters.size.width)
+    {
+      left = 0.2 * parameters.size.width;
+      right = 0.8 * parameters.size.width;
+    }
+
     double y = 0;
 
     if (_Hr.hrStyle(paragraph.headClass))
     {
-      final hr = _Hr(paragraph.headClass, parameters.size.width).calcMetrics(parameters);
+      final hr = _Hr(paragraph.headClass, right).calcMetrics(parameters);
       y = hr.height;
       _height = y;
       _spans.add(hr);
@@ -97,7 +106,7 @@ class MarkdownTextSpan implements IDocumentSpan
       }
       else
       {
-        final style = config.getTextStyle(paragraph, paragraph.words[0], bullet: bullet);
+        final style = config.getTextStyle(paragraph, word: paragraph.words[0], bullet: bullet);
         final span = _Text(text, style.textStyle, false).calcMetrics(parameters);
         span.yOffset = style.yOffseet;
         span.xOffset = dec.level * config._bulletIntent(parameters, paragraph, paragraph.words[0]);
@@ -116,7 +125,7 @@ class MarkdownTextSpan implements IDocumentSpan
     for (final word in paragraph.words)
     {
       //const style = TextStyle(color: Color.fromARGB(255, 0, 0, 160), fontSize: 20.0, fontFamily: "Times New Roman", fontWeight: FontWeight.bold);
-      final style = config.getTextStyle(paragraph, word);
+      final style = config.getTextStyle(paragraph, word: word);
       _Span span;
 
       switch (word.type)
@@ -150,11 +159,11 @@ class MarkdownTextSpan implements IDocumentSpan
 
     // Zalomeni textu -----------------------------------------------------------------------------------------------
     double rightHeight = 0;
-    double sizeWidth = parameters.size.width;
+    double sizeWidth = right;
 
     for (final span in rightSpans)
     {
-      span.xOffset = parameters.size.width - span.width;
+      span.xOffset = right - span.width;
       sizeWidth = math.min(span.xOffset, sizeWidth);
       span.yOffset = rightHeight;
       rightHeight = math.max(rightHeight, span.yOffset + span.height);
@@ -178,7 +187,7 @@ class MarkdownTextSpan implements IDocumentSpan
     for (final span in prepSpans)
     {
       final spanWidth = span.width;
-      final lineWidth = y > rightHeight ? parameters.size.width : sizeWidth;
+      final lineWidth = y > rightHeight ? right : sizeWidth;
       var wordSpace = span.wordSpace;
 
       if ((x + spanWidth) > lineWidth || span.lineBreak)
@@ -198,7 +207,7 @@ class MarkdownTextSpan implements IDocumentSpan
     _width = parameters.size.width;
     _height = math.max(leftHeight, math.max(_height, rightHeight));
 
-    if (paragraph.spaceAfter)
+    if (paragraph.lastInClass)
     {
       _height += 10;
     }
@@ -249,7 +258,7 @@ class MarkdownTextSpan implements IDocumentSpan
   }
 }
 
-final _defaultConfig =
+const _defaultConfig =
 {
   // ••●○■ □▪▫◌○●◦ꓸ
   "bullets": ["        ●  ", "        □  ", "        ■  ", "        ●  ", "        □  ", "        ■  "],
@@ -264,6 +273,13 @@ final _defaultConfig =
   {
     "":
     {
+      "fontSize": 20,
+      "fontStyle": "normal", // normal, bold, bold_italic
+    },
+    "indent":
+    {
+      "marginLeft": 80,
+      "marginRight": 80,
       "fontSize": 20,
       "fontStyle": "normal", // normal, bold, bold_italic
     },
@@ -419,9 +435,9 @@ class MarkdownTextConfig
     return _fontWeightFromStringMap[text.toLowerCase()] ?? FontWeight.normal;
   }
 
-  _WordStyle getTextStyle(MarkdownParagraph para, MarkdownWord word, {bool bullet = false})
+  _WordStyle getTextStyle(MarkdownParagraph para, {MarkdownWord? word, bool bullet = false})
   {
-    final fullStyle = para.headClass + word.style;
+    final fullStyle = para.headClass + (word?.style ?? '');
     _WordStyle result;
 
     if (_state.textStyles.containsKey(fullStyle))
@@ -444,6 +460,9 @@ class MarkdownTextConfig
       styleInfo.color = colorFormText(colorStr ?? 'Black');
       var yOffset = 0.0;
 
+      styleInfo.leftMargin = get<double>(['marginLeft'], defValue: 0.0, config: cfg);
+      styleInfo.rightMargin = get<double>(['marginRight'], defValue: 0.0, config: cfg);
+
       if (bullet)
       {
         //yOffset = fontSize * 0.5;
@@ -451,7 +470,7 @@ class MarkdownTextConfig
         yOffset = -styleInfo.fontSize * 0.3333;
       }
 
-      switch (word.style)
+      switch (word?.style)
       {
         case '_':
         case '*':
@@ -481,6 +500,7 @@ class MarkdownTextConfig
           //fontFamily: styleInfo.fontFamily,
         ),
         yOffset,
+        styleInfo
       );
     }
 
@@ -500,8 +520,8 @@ class MarkdownTextConfig
   {
     if (_state.bulletIntent == null)
     {
-      final style =
-      getTextStyle(para, word, bullet: true); //TextStyle(color: Color.fromARGB(255, 0, 0, 160), fontSize: 10.0);
+      final style = getTextStyle(para,
+        word: word, bullet: true); //TextStyle(color: Color.fromARGB(255, 0, 0, 160), fontSize: 10.0);
       final bullet = _Text(get(["bullets", 0], defValue: '  -'), style.textStyle, false).calcMetrics(parameters);
       _state.bulletIntent = bullet.width;
     }
@@ -517,14 +537,20 @@ class _WordStyleInfo
   FontWeight? fontWeight;
   Color color = Colors.black;
   double yOffset = 0.0;
+  double leftMargin = 0.0;
+  double rightMargin = 0.0;
 }
 
 class _WordStyle
 {
   TextStyle textStyle;
   double yOffseet;
+  double leftMargin;
+  double rightMargin;
 
-  _WordStyle(this.textStyle, this.yOffseet);
+  _WordStyle(this.textStyle, this.yOffseet, _WordStyleInfo wsInfo)
+  : leftMargin = wsInfo.leftMargin,
+  rightMargin = wsInfo.rightMargin;
 }
 
 class _MarkdownTextConfigState

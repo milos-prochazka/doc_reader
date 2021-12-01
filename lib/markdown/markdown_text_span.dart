@@ -25,6 +25,7 @@ class MarkdownTextSpan implements IDocumentSpan
   double _height = 0;
   final Document document;
   _Blockquotes? _blockquotes;
+  
 
   MarkdownTextSpan(this.paragraph, this.config, this.document);
 
@@ -57,6 +58,16 @@ class MarkdownTextSpan implements IDocumentSpan
       left = 0.2 * parameters.size.width;
       right = 0.8 * parameters.size.width;
     }
+
+    final borderPadding = paraStyle.borderPadding;
+
+    if (borderPadding>0)
+    {
+      left += borderPadding;
+      right -= borderPadding;
+    }
+
+
 
     double y = 0;
 
@@ -207,6 +218,13 @@ class MarkdownTextSpan implements IDocumentSpan
     _width = parameters.size.width;
     _height = math.max(leftHeight, math.max(_height, rightHeight));
 
+    if (borderPadding > 0.0)
+    {
+        final rect = ui.RRect.fromLTRBAndCorners(left, 0, right, _height);
+        final box = _Box(paraStyle.borderColor,rect);
+        _spans.insert(0, box);
+    }
+
     if (paragraph.lastInClass) 
     {
       _height += 10;
@@ -280,6 +298,8 @@ const _defaultConfig =
     {
       "marginLeft": 80,
       "marginRight": 80,
+      "borderPadding": 10,
+      "borderColor": "#8edd",
       "fontSize": 20,
       "fontStyle": "normal", // normal, bold, bold_italic
     },
@@ -462,6 +482,8 @@ class MarkdownTextConfig
 
       styleInfo.leftMargin = get<double>(['marginLeft'], defValue: 0.0, config: cfg);
       styleInfo.rightMargin = get<double>(['marginRight'], defValue: 0.0, config: cfg);
+      styleInfo.borderPadding = get<double>(['borderPadding'],defValue:   0.0, config: cfg);
+      styleInfo.borderColor = colorFormText(get<String?>(['color'], config: cfg) ?? 'Silver');
 
       if (bullet) 
       {
@@ -539,6 +561,8 @@ class _WordStyleInfo
   double yOffset = 0.0;
   double leftMargin = 0.0;
   double rightMargin = 0.0;
+  double borderPadding = 0.0;
+  Color borderColor = Colors.black;
 }
 
 class _WordStyle 
@@ -547,10 +571,15 @@ class _WordStyle
   double yOffseet;
   double leftMargin;
   double rightMargin;
+  double borderPadding;
+  Color borderColor;
 
   _WordStyle(this.textStyle, this.yOffseet, _WordStyleInfo wsInfo)
   : leftMargin = wsInfo.leftMargin,
-  rightMargin = wsInfo.rightMargin;
+  rightMargin = wsInfo.rightMargin,
+  borderColor = wsInfo.borderColor,
+  borderPadding = wsInfo.borderPadding;
+
 }
 
 class _MarkdownTextConfigState 
@@ -713,6 +742,27 @@ class _Hr extends _Span
     double y = yoffset + height * 0.5;
 
     params.canvas.drawLine(Offset(xoffset + left, y), Offset(xoffset + width - 2 * left, y), paint);
+  }
+}
+
+class _Box extends _Span 
+{
+  Paint boxPaint;
+  ui.RRect rect;
+
+  _Box(Color color, this.rect) :
+      boxPaint = Paint()..color=color; 
+
+  @override
+  _Box calcMetrics(PaintParameters parameters) 
+  {
+    return this;
+  }
+
+  @override
+  void paint(PaintParameters params, double xoffset, double yoffset) 
+  {
+    params.canvas.drawRRect(rect.shift(Offset(xoffset,yoffset)), boxPaint);
   }
 }
 
@@ -1065,6 +1115,7 @@ class _Line
     return span._height;
   }
 }
+
 
 class _Blockquotes 
 {

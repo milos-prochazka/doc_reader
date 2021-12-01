@@ -6,6 +6,7 @@ import 'dart:ui' as ui;
 
 import 'package:doc_reader/objects/applog.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/avd.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:path/path.dart' as path;
 
@@ -191,10 +192,15 @@ class DefaultPictureProvider extends IPictureProvider
       switch (path.extension(imageSource))
       {
         case '.svg':
-        case '.xml':
         {
           final svgText = await rootBundle.loadString(imageSource);
           return svg.fromSvgString(svgText, imageSource);
+        }
+
+        case '.xml':
+        {
+          final avdText = await rootBundle.loadString(imageSource);
+          return avd.fromAvdString(avdText, imageSource);
         }
 
         default:
@@ -213,9 +219,9 @@ class DefaultPictureProvider extends IPictureProvider
         }
       }
     }
-    catch (e)
+    catch (ex, stackTrace)
     {
-      appLogEx(e);
+      appLogEx(ex, stackTrace: stackTrace);
       return null;
     }
   }

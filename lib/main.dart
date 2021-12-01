@@ -11,45 +11,22 @@ import 'package:doc_reader/objects/applog.dart';
 import 'doc_touch.dart';
 import 'markdown/markdown_text_span.dart';
 
-
-
-//////////////////////////////////////////////////////////
-{
-	// Place your snippets for dart here. Each snippet is defined under a snippet name and has a prefix, body and
-	// description. The prefix is what is used to trigger the snippet and the body will be expanded and inserted. Possible variables are:
-	// $1, $2 for tab stops, $0 for the final cursor position, and ${1:label}, ${2:another} for placeholders. Placeholders with the
-	// same ids are connected.
-	// Example:
-	// "Print to console": {
-	// 	"prefix": "log",
-	// 	"body": [
-	// 		"console.log('$1');",
-	// 		"$2"
-	// 	],
-	// 	"description": "Log output to console"
-	// }
-
-	"Catch exception":
-	{
-		"prefix": "catch",
-		"body" :
-		[
-			"catch(ex,stackTrace)",
-			"{",
-			"   appLogEx(ex,stackTrace:stackTrace);",
-			"}"
-		]
-	}
-}
-//////////////////////////////////////////////////////////
-
 // **![toto je popis obrázku](media/pngegg.png)**
-const testMarkdown =
-r'''Text ![toto je popis obrázku](media/vector.svg =  x  center_line)aasjkaskjasas jakokoles mikrosek jarosek marosek doloker
-Dlouhy odstacec na zacatku textu. Dlouhy odstacec na zacatku textu. Dlouhy odstacec na zacatku textu.
+const testMarkdown = r'''
+> odsazeno dsdsdjkdjk jksdsdjksdjksdjk ksdjsdjksdjksd sdjsdjsd 1
+>> ffkfkfk sdsdsdkl sddkssdklsdkl sdksdklsdlsdklsdkdsksdsdk klsdklsdklsdkl1
+>> ddssdsdjksdj dsd sdsd sdsd dsd sd dsd sdsd sdsd dsd sd dsd sdsd sdsd dsd sd dsd sdsd sdsd dsd sd dsd sdsd sdsd dsd sd
+> sdksklsdsdkl
+''';
+const test = r'''
+a**h**oj ![toto je popis obrázku](media/vector.svg = 5em x  tight-center-line) aasjkaskjasas jakokoles mikrosek jarosek marosek doloker
+Dlouhy odstacec na zacatku textu. Dlouhy odstacec na zacatku textu. Dlouhy odstavec na zacatku textu.
+[.myclass]: width=10em height=50em
 ## ZACATEK {.trida} {#kotva} {*aaa=123} {*bbb} {*aja = paja }
 \* a\*\aaaa
-[KOLOKOL]: http://ssssss.ddd
+![KOLOKOL]
+
+[KOLOKOL]: media/vector.svg = 5em x  tight-line
 
 
 
@@ -75,12 +52,12 @@ D. xxx
 1. kdkdfkfd
 
 První *italic* _italic_ **bold** __bold__ ***italic\ bold*** ___italic\ bold___
-# Toto je nadpis 1
-## Toto je nadpis 2
-### Toto je nadpis 3
-#### Toto je nadpis 4
-##### Toto je nadpis 5
-###### Toto je nadpis 6
+# Toto je nadpis 1  ![c](media/vector.svg =  x 1em  left)
+## Toto je nadpis 2 ![c](media/vector.svg =  x 1em left)
+### Toto je nadpis 3 ![c](media/vector.svg =  x 1em left)
+#### Toto je nadpis 4 ![c](media/vector.svg =  x 1em left)
+##### Toto je nadpis 5 ![c](media/vector.svg =  x 1em left)
+###### Toto je nadpis 6 ![c](media/vector.svg =  x 1em left)
   [aaaaaa]: (wwww.sss.cz)
 Toto jojo@email.cz je běžný odstavec který se bude muset zalomit protože je příliš dlouhý aby se vešel na displej. Podruhé, toto je  běžný odstavec který se bude muset zalomit protože je příliš dlouhý aby se vešel na displej.
 Pokračování odstavce za přechodem na nový řádek
@@ -95,6 +72,7 @@ void testColor(String text)
 
 void main()
 {
+  appLog("Testovaci log");
   runApp(MyApp());
 }
 

@@ -14,10 +14,252 @@ import '../document.dart';
 import 'markdown.dart';
 import 'dart:math' as math;
 
+/// Jeden odstavec markdown
+class MarkdownTextSpan implements IDocumentSpan
+{
+  Key? _layoutKey;
+  final MarkdownParagraph paragraph;
+  final MarkdownTextConfig config;
+  final _spans = <_Span>[];
+  double _width = 0;
+  double _height = 0;
+  final Document document;
+  _Blockquotes? _blockquotes;
+
+  MarkdownTextSpan(this.paragraph, this.config, this.document);
+
+  static List<MarkdownTextSpan> create(Markdown markdown, MarkdownTextConfig config, Document document)
+  {
+    final result = <MarkdownTextSpan>[];
+
+    for (final para in markdown.paragraphs)
+    {
+      result.add(MarkdownTextSpan(para, config, document));
+    }
+
+    return result;
+  }
+
+  void _updateText(PaintParameters parameters)
+  {
+    final line = _Line();
+
+    _spans.clear();
+    _height = 0;
+    _width = 0;
+
+    double left = 0;
+    double y = 0;
+
+    if (_Hr.hrStyle(paragraph.headClass))
+    {
+      final hr = _Hr(paragraph.headClass, parameters.size.width).calcMetrics(parameters);
+      y = hr.height;
+      _height = y;
+      _spans.add(hr);
+    }
+
+    // Odsazeni a decorace zleva
+    if (paragraph.words.isNotEmpty && (paragraph.decorations?.isNotEmpty ?? false))
+    {
+      final dec = paragraph.decorations!.last;
+      bool bullet = false;
+      String text;
+
+      switch (dec.decoration)
+      {
+        case 'a':
+        text = '   ${numberToCharacters(dec.count, 'abcdefghijklmnopqrstuvwxyz')}. ';
+        break;
+
+        case 'A':
+        text = '   ${numberToCharacters(dec.count, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ')}. ';
+        break;
+
+        case '1':
+        text = '   ${dec.count + 1}. ';
+        break;
+
+        case '>':
+        text = '>';
+        break;
+
+        default:
+        bullet = true;
+        text = config.get(["bullets", dec.level], defValue: '  -');
+        break;
+      }
+
+      if (text == '>')
+      {
+        _blockquotes ??= _Blockquotes(config, dec.level + 1);
+        left += _blockquotes?.intent ?? 0;
+      }
+      else
+      {
+        final style = config.getTextStyle(paragraph, paragraph.words[0], bullet: bullet);
+        final span = _Text(text, style.textStyle, false).calcMetrics(parameters);
+        span.yOffset = style.yOffseet;
+        span.xOffset = dec.level * config._bulletIntent(parameters, paragraph, paragraph.words[0]);
+
+        _spans.add(span);
+        line.add(span);
+        left = span.width + span.xOffset;
+      }
+    }
+
+    // Vytvoreni seznamu spanu k zalomeni ----------------------------------------------------------------------------
+    final prepSpans = <_Span>{};
+    final leftSpans = <_Span>{};
+    final rightSpans = <_Span>{};
+
+    for (final word in paragraph.words)
+    {
+      //const style = TextStyle(color: Color.fromARGB(255, 0, 0, 160), fontSize: 20.0, fontFamily: "Times New Roman", fontWeight: FontWeight.bold);
+      final style = config.getTextStyle(paragraph, word);
+      _Span span;
+
+      switch (word.type)
+      {
+        case MarkdownWord_Type.image:
+        span = _Image(word.attribs, document, style.textStyle, word.stickToNext).calcMetrics(parameters);
+        break;
+
+        default:
+        span = _Text(word.text, style.textStyle, word.stickToNext).calcMetrics(parameters);
+        break;
+      }
+
+      span.lineBreak = word.lineBreak;
+
+      switch (span.align)
+      {
+        case _Span.ALIGN_LEFT:
+        leftSpans.add(span);
+        break;
+
+        case _Span.ALIGN_RIGHT:
+        rightSpans.add(span);
+        break;
+
+        default:
+        prepSpans.add(span);
+        break;
+      }
+    }
+
+    // Zalomeni textu -----------------------------------------------------------------------------------------------
+    double rightHeight = 0;
+    double sizeWidth = parameters.size.width;
+
+    for (final span in rightSpans)
+    {
+      span.xOffset = parameters.size.width - span.width;
+      sizeWidth = math.min(span.xOffset, sizeWidth);
+      span.yOffset = rightHeight;
+      rightHeight = math.max(rightHeight, span.yOffset + span.height);
+      _spans.add(span);
+    }
+
+    double leftLeft = left;
+    double leftHeight = 0;
+    for (final span in leftSpans)
+    {
+      span.xOffset = left;
+      leftLeft = math.max(leftLeft, left + span.width);
+      span.yOffset = leftHeight;
+      leftHeight += span.height;
+      _spans.add(span);
+    }
+
+    double x = leftLeft;
+
+    // inline spany
+    for (final span in prepSpans)
+    {
+      final spanWidth = span.width;
+      final lineWidth = y > rightHeight ? parameters.size.width : sizeWidth;
+      var wordSpace = span.wordSpace;
+
+      if ((x + spanWidth) > lineWidth || span.lineBreak)
+      {
+        y = line.calcPosition(this, parameters);
+        x = y > leftHeight ? left : leftLeft;
+      }
+
+      span.xOffset = x;
+      span.yOffset = y;
+      _spans.add(span);
+      line.add(span);
+      x += spanWidth + wordSpace;
+    }
+
+    line.calcPosition(this, parameters);
+    _width = parameters.size.width;
+    _height = math.max(leftHeight, math.max(_height, rightHeight));
+
+    if (paragraph.spaceAfter)
+    {
+      _height += 10;
+    }
+  }
+
+  @override
+  void calcSize(PaintParameters parameters)
+  {
+    _layoutKey = parameters.key;
+    _updateText(parameters);
+  }
+
+  @override
+  double height(PaintParameters params)
+  {
+    _updateSize(params);
+    return _height;
+  }
+
+  void _updateSize(PaintParameters params)
+  {
+    if (_layoutKey != params.key)
+    {
+      calcSize(params);
+    }
+  }
+
+  @override
+  void paint(PaintParameters params, double xOffset, double yOffset)
+  {
+    _updateSize(params);
+
+    _blockquotes?.paint(params.canvas, yOffset, _height);
+
+    for (var word in _spans)
+    {
+      //word.painter.layout();
+      //word.painter.paint(params.canvas, Offset(word.xOffset + xOffset, word.yOffset + yOffset));
+      word.paint(params, xOffset, yOffset);
+    }
+  }
+
+  @override
+  double width(PaintParameters params)
+  {
+    calcSize(params);
+    return _width;
+  }
+}
+
 final _defaultConfig =
 {
   // ••●○■ □▪▫◌○●◦ꓸ
   "bullets": ["        ●  ", "        □  ", "        ■  ", "        ●  ", "        □  ", "        ■  "],
+  "blockquotes":
+  {
+    "color": "silver",
+    "width": 5,
+    "paddingLeft": 5,
+    "paddingRight": 5,
+  },
   "textStyles":
   {
     "":
@@ -236,7 +478,7 @@ class MarkdownTextConfig
           fontStyle: styleInfo.fontStyle,
           fontWeight: styleInfo.fontWeight,
           fontSize: styleInfo.fontSize,
-          fontFamily: "Agency Fb"
+          //fontFamily: styleInfo.fontFamily,
         ),
         yOffset,
       );
@@ -260,7 +502,7 @@ class MarkdownTextConfig
     {
       final style =
       getTextStyle(para, word, bullet: true); //TextStyle(color: Color.fromARGB(255, 0, 0, 160), fontSize: 10.0);
-      final bullet = _Text(get(["bullets", 0], defValue: '  -'), style.textStyle).calcMetrics(parameters);
+      final bullet = _Text(get(["bullets", 0], defValue: '  -'), style.textStyle, false).calcMetrics(parameters);
       _state.bulletIntent = bullet.width;
     }
 
@@ -289,225 +531,6 @@ class _MarkdownTextConfigState
 {
   double? bulletIntent;
   final textStyles = <String, _WordStyle>{};
-}
-
-class MarkdownTextSpan implements IDocumentSpan
-{
-  Key? _layoutKey;
-  final MarkdownParagraph paragraph;
-  final MarkdownTextConfig config;
-  final _spans = <_Span>[];
-  double _width = 0;
-  double _height = 0;
-  final Document document;
-
-  MarkdownTextSpan(this.paragraph, this.config, this.document);
-
-  static List<MarkdownTextSpan> create(Markdown markdown, MarkdownTextConfig config, Document document)
-  {
-    final result = <MarkdownTextSpan>[];
-
-    for (final para in markdown.paragraphs)
-    {
-      result.add(MarkdownTextSpan(para, config, document));
-    }
-
-    return result;
-  }
-
-  void _updateText(PaintParameters parameters)
-  {
-    final line = _Line();
-
-    _spans.clear();
-    _height = 0;
-    _width = 0;
-
-    double left = 0;
-    double y = 0;
-
-    if (_Hr.hrStyle(paragraph.headClass))
-    {
-      final hr = _Hr(paragraph.headClass, parameters.size.width).calcMetrics(parameters);
-      y = hr.height;
-      _height = y;
-      _spans.add(hr);
-    }
-
-    // Odsazeni a decorace zleva
-    if (paragraph.words.isNotEmpty && (paragraph.decorations?.isNotEmpty ?? false))
-    {
-      final dec = paragraph.decorations!.last;
-      bool bullet = false;
-      String text;
-
-      switch (dec.decoration)
-      {
-        case 'a':
-        text = '   ${numberToCharacters(dec.count, 'abcdefghijklmnopqrstuvwxyz')}. ';
-        break;
-
-        case 'A':
-        text = '   ${numberToCharacters(dec.count, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ')}. ';
-        break;
-
-        case '1':
-        text = '   ${dec.count + 1}. ';
-        break;
-
-        default:
-        bullet = true;
-        text = config.get(["bullets", dec.level], defValue: '  -');
-        break;
-      }
-
-      final style = config.getTextStyle(paragraph, paragraph.words[0], bullet: bullet);
-      final span = _Text(text, style.textStyle).calcMetrics(parameters);
-      span.yOffset = style.yOffseet;
-      span.xOffset = dec.level * config._bulletIntent(parameters, paragraph, paragraph.words[0]);
-
-      _spans.add(span);
-      line.add(span);
-      left = span.width + span.xOffset;
-    }
-
-    // Vytvoreni seznamu spanu k zalomeni ----------------------------------------------------------------------------
-    final prepSpans = <_Span>{};
-    final leftSpans = <_Span>{};
-    final rightSpans = <_Span>{};
-
-    for (final word in paragraph.words)
-    {
-      //const style = TextStyle(color: Color.fromARGB(255, 0, 0, 160), fontSize: 20.0, fontFamily: "Times New Roman", fontWeight: FontWeight.bold);
-      final style = config.getTextStyle(paragraph, word);
-      _Span span;
-
-      switch (word.type)
-      {
-        case MarkdownWord_Type.image:
-        span = _Image(word.attribs, document).calcMetrics(parameters);
-        break;
-
-        default:
-        span = _Text(word.text, style.textStyle).calcMetrics(parameters);
-        break;
-      }
-
-      span.lineBreak = word.lineBreak;
-
-      switch (span.align)
-      {
-        case _Span.ALIGN_LEFT:
-        leftSpans.add(span);
-        break;
-
-        case _Span.ALIGN_RIGHT:
-        rightSpans.add(span);
-        break;
-
-        default:
-        prepSpans.add(span);
-        break;
-      }
-    }
-
-    // Zalomeni textu -----------------------------------------------------------------------------------------------
-    double rightHeight = 0;
-    double sizeWidth = parameters.size.width;
-
-    for (final span in rightSpans)
-    {
-      span.xOffset = parameters.size.width - span.width;
-      sizeWidth = math.min(span.xOffset, sizeWidth);
-      span.yOffset = rightHeight;
-      rightHeight = math.max(rightHeight, span.yOffset + span.height);
-      _spans.add(span);
-    }
-
-    double leftLeft = left;
-    double leftHeight = 0;
-    for (final span in leftSpans)
-    {
-      span.xOffset = left;
-      leftLeft = math.max(leftLeft, left + span.width);
-      span.yOffset = leftHeight;
-      leftHeight += span.height;
-      _spans.add(span);
-    }
-
-    double x = leftLeft;
-
-    // inline spany
-    for (final span in prepSpans)
-    {
-      final spanWidth = span.width;
-      final lineWidth = y > rightHeight ? parameters.size.width : sizeWidth;
-      var wordSpace = span.wordSpace;
-
-      if ((x + spanWidth) > lineWidth || span.lineBreak)
-      {
-        y = line.calcPosition(this, parameters);
-        x = y > leftHeight ? left : leftLeft;
-      }
-
-      span.xOffset = x;
-      span.yOffset = y;
-      _spans.add(span);
-      line.add(span);
-      x += spanWidth + wordSpace;
-    }
-
-    line.calcPosition(this, parameters);
-    _width = parameters.size.width;
-    _height = math.max(leftHeight, math.max(_height, rightHeight));
-
-    if (paragraph.spaceAfter)
-    {
-      _height += 10;
-    }
-  }
-
-  @override
-  void calcSize(PaintParameters parameters)
-  {
-    _layoutKey = parameters.key;
-    _updateText(parameters);
-  }
-
-  @override
-  double height(PaintParameters params)
-  {
-    _updateSize(params);
-    return _height;
-  }
-
-  void _updateSize(PaintParameters params)
-  {
-    if (_layoutKey != params.key)
-    {
-      calcSize(params);
-    }
-  }
-
-  @override
-  void paint(PaintParameters params, double xOffset, double yOffset)
-  {
-    _updateSize(params);
-
-    for (var word in _spans)
-    {
-      //word.painter.layout();
-      //word.painter.paint(params.canvas, Offset(word.xOffset + xOffset, word.yOffset + yOffset));
-      word.paint(params, xOffset, yOffset);
-    }
-  }
-
-  @override
-  double width(PaintParameters params)
-  {
-    calcSize(params);
-    return _width;
-  }
 }
 
 class _Span
@@ -539,10 +562,11 @@ class _Span
 class _Text extends _Span
 {
   TextPainter? _painter;
-  late String text;
-  late TextStyle style;
+  final String text;
+  final TextStyle style;
+  final bool stickToText;
 
-  _Text(this.text, this.style);
+  _Text(this.text, this.style, this.stickToText);
 
   @override
   bool get textBaseLine => true;
@@ -577,7 +601,7 @@ class _Text extends _Span
       if (ml.isNotEmpty)
       {
         final metrics = ml.first;
-        wordSpace = style.wordSpacing ?? p.height / 3;
+        wordSpace = stickToText ? 0 : (style.wordSpacing ?? p.height / 3);
 
         baseLine = metrics.ascent;
         height = metrics.height;
@@ -668,10 +692,11 @@ class _Hr extends _Span
 
 class _Image extends _Span
 {
-  Map<String, Object?> attribs;
+  final Map<String, Object?> attribs;
+  final TextStyle style;
+  final bool stickToNext;
   ui.Image? image;
   DrawableRoot? drawableRoot;
-  double em;
   int count = 0;
   double imgWidth = double.nan;
   double imgOffset = double.nan;
@@ -679,7 +704,9 @@ class _Image extends _Span
 
   Document? document;
 
-  _Image(this.attribs, this.document, {this.em = 20});
+  _Image(this.attribs, this.document, this.style, this.stickToNext);
+
+  double get _fontSize => style.fontSize ?? 20;
 
   @override
   bool get textBaseLine => baseLine > 0;
@@ -696,7 +723,7 @@ class _Image extends _Span
       switch (unit)
       {
         case 'em':
-        result *= em;
+        result *= _fontSize;
         break;
         case '%':
         result *= 0.01 * screenSize;
@@ -750,14 +777,34 @@ class _Image extends _Span
     final attr = attribs['align'];
     switch (attr)
     {
+      case 'tight-line':
+      {
+        count = (params.size.width + width) ~/ width;
+        imgWidth = params.size.width / count;
+        height = imgWidth / aspectRatio;
+        imgOffset = imgWidth;
+        width = params.size.width;
+      }
+      break;
+
+      case 'tight-center-line':
+      {
+        imgWidth = width;
+        imgOffset = width;
+        count = (params.size.width) ~/ width;
+        width = params.size.width;
+        lineOffset = 0.5 * (width - count * imgWidth);
+      }
+      break;
+
       case 'line':
-      case 'center_line':
+      case 'center-line':
       {
         count = params.size.width ~/ width;
         imgWidth = width;
         width = params.size.width;
 
-        if (attr == 'center_line')
+        if (attr == 'center-line')
         {
           imgOffset = width / count;
           lineOffset = 0.5 * (imgOffset - imgWidth);
@@ -770,7 +817,7 @@ class _Image extends _Span
       }
       break;
 
-      case 'fill_line':
+      case 'fill-line':
       {
         count = params.size.width ~/ width;
         imgWidth = params.size.width / count;
@@ -800,6 +847,7 @@ class _Image extends _Span
       break;
     }
 
+    this.wordSpace = this.stickToNext ? 0 : _fontSize / 3;
     this.width = width;
     this.height = height;
     this.baseLine = height;
@@ -846,9 +894,9 @@ class _Image extends _Span
           }
         }
       }
-      catch (ex)
+      catch (ex, stackTrace)
       {
-        appLogEx(ex);
+        appLogEx(ex, stackTrace: stackTrace);
       }
       finally
       {
@@ -942,9 +990,9 @@ class _Image extends _Span
         _load(params);
       }
     }
-    catch (ex)
+    catch (ex, stackTrace)
     {
-      appLogEx(ex);
+      appLogEx(ex, stackTrace: stackTrace);
     }
   }
 }
@@ -989,5 +1037,36 @@ class _Line
     }
 
     return span._height;
+  }
+}
+
+class _Blockquotes
+{
+  late Paint _paint;
+  late double _left, _right, _width;
+  final int _count;
+
+  _Blockquotes(MarkdownTextConfig config, this._count)
+  {
+    _paint = Paint()..color = colorFormText(config.get(['blockquotes', 'color'], defValue: 'silver'));
+    _left = config.get(['blockquotes', 'paddingLeft'], defValue: 5.0);
+    _right = config.get(['blockquotes', 'paddingRight'], defValue: 5.0);
+    _width = config.get(['blockquotes', 'width'], defValue: 5.0);
+  }
+
+  double get intent
+  {
+    return _count * (_left + _width) + _right;
+  }
+
+  void paint(Canvas canvas, double yoffset, double height)
+  {
+    double x = 0.0;
+
+    for (int i = 0; i < _count; i++)
+    {
+      canvas.drawRect(Rect.fromLTWH(x + _left, yoffset, _width, height), _paint!);
+      x += _left + _width;
+    }
   }
 }

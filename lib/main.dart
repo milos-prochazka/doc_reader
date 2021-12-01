@@ -13,9 +13,17 @@ import 'markdown/markdown_text_span.dart';
 
 // **![toto je popis obrázku](media/pngegg.png)**
 const testMarkdown = r'''
+<<<<<<< HEAD
 # Nadpis
 > odsazeno 1
 > odsazeno 2
+=======
+```
+prvni druhy
+treti  ctvrty
+````
+paty
+>>>>>>> 42a33fda126b3f0e59f3bcb9f5618fc391ae2bcd
 ''';
 const test = r'''
 a**h**oj ![toto je popis obrázku](media/vector.svg = 5em x  tight-center-line) aasjkaskjasas jakokoles mikrosek jarosek marosek doloker

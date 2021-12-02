@@ -14,9 +14,9 @@ import 'markdown/markdown_text_span.dart';
 // **![toto je popis obrázku](media/pngegg.png)**
 const testMarkdown = r'''
 ```
-* prvni druhy ŘÝŠČŠĚÁĚÍÁÚŮ
-* BOFOD DSSOSDO
-* treti  ctvrty
+prvni druhy ŘÝŠČŠĚÁĚÍÁÚŮ
+BOFOD DSSOSDO
+treti  ctvrty
 ````
 paty
 ''';

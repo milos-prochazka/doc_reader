@@ -243,7 +243,7 @@ class Markdown
   void _doProcess()
   {
     // Slouceni odstavcu
-    for (int i = 1; i < paragraphs.length;)
+    /*for (int i = 1; i < paragraphs.length;)
     {
       final para = paragraphs[i];
       final prevPara = paragraphs[i - 1];
@@ -263,6 +263,22 @@ class Markdown
       else
       {
         i++;
+      }
+    }*/
+
+    // Nalezeni odstavcu tesne za sebou (zobrazene bez mezery)
+    for (int i = 1; i < paragraphs.length; i++)
+    {
+      final para = paragraphs[i];
+      final prevPara = paragraphs[i - 1];
+
+      if (para.lineDecoration.isEmpty &&
+          prevPara.lineDecoration.isEmpty &&
+          para.masterClass == prevPara.masterClass &&
+          (const ['p','indent']).contains(para.masterClass))
+      {
+          prevPara.lastInClass = false;
+          para.firstInClass = false;
       }
     }
 

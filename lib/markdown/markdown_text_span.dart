@@ -66,15 +66,16 @@ class MarkdownTextSpan implements IDocumentSpan
       right -= borderPadding;
     }
 
-    double y = 0;
+    double y =  paragraph.firstInClass ? borderPadding : 0;
 
     if (_Hr.hrStyle(paragraph.masterClass))
     {
       final hr = _Hr(paragraph.masterClass, right).calcMetrics(parameters);
-      y = hr.height;
-      _height = y;
+      y += hr.height;
       _spans.add(hr);
     }
+
+    _height = y;
 
     // Odsazeni a decorace zleva
     if (paragraph.words.isNotEmpty && (paragraph.decorations?.isNotEmpty ?? false))
@@ -213,18 +214,35 @@ class MarkdownTextSpan implements IDocumentSpan
 
     line.calcPosition(this, parameters);
     _width = parameters.size.width;
+
     _height = math.max(leftHeight, math.max(_height, rightHeight));
 
     if (borderPadding > 0.0)
     {
-      final rect = ui.RRect.fromLTRBAndCorners(left, 0, right, _height);
+      var topRadius=0.0,bottomRadius=0.0;
+
+      if (paragraph.lastInClass)
+      {
+        _height += borderPadding;
+        bottomRadius=5.0;
+      }
+      if (paragraph.firstInClass)
+      {
+        topRadius = 5.0;
+      }
+      final tr = ui.Radius.circular(topRadius);
+      final br = ui.Radius.circular(bottomRadius);
+
+      final rect = ui.RRect.fromLTRBAndCorners(left-borderPadding, 0, right+borderPadding, _height,
+                         topLeft: tr, topRight:  tr,
+                         bottomLeft: br, bottomRight: br);
       final box = _Box(paraStyle.borderColor, rect);
       _spans.insert(0, box);
     }
 
     if (paragraph.lastInClass)
     {
-      _height += 10;
+      _height += math.max(10,borderPadding);
     }
   }
 

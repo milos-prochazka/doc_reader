@@ -272,9 +272,7 @@ class Markdown
       final para = paragraphs[i];
       final prevPara = paragraphs[i - 1];
 
-      if (para.lineDecoration.isEmpty &&
-          prevPara.lineDecoration.isEmpty &&
-          para.masterClass == prevPara.masterClass &&
+      if (para.masterClass == prevPara.masterClass &&
           (const ['p','indent']).contains(para.masterClass))
       {
           prevPara.lastInClass = false;
@@ -286,19 +284,6 @@ class Markdown
     for (int i = 0; i < paragraphs.length;)
     {
       final para = paragraphs[i];
-
-      if (i >= 1)
-      {
-        final prevPara = paragraphs[i];
-
-        if (prevPara.masterClass == para.masterClass)
-        {
-          if (prevPara.lineDecoration != '' && para.lineDecoration != '')
-          {
-            prevPara.lastInClass = false;
-          }
-        }
-      }
 
       if (para.lineDecoration.isEmpty && para.words.isEmpty && para.masterClass.isEmpty)
       {

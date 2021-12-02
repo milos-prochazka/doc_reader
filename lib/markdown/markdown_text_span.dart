@@ -59,12 +59,15 @@ class MarkdownTextSpan implements IDocumentSpan
     }
 
     final borderPadding = paraStyle.borderPadding;
+    final borderLeft = left;
+    final borderRight = right;
 
     if (borderPadding > 0)
     {
       left += borderPadding;
       right -= borderPadding;
     }
+
 
     double y =  paragraph.firstInClass ? borderPadding : 0;
 
@@ -118,7 +121,7 @@ class MarkdownTextSpan implements IDocumentSpan
         final style = config.getTextStyle(paragraph, word: paragraph.words[0], bullet: bullet);
         final span = _Text(text, style.textStyle, false).calcMetrics(parameters);
         span.yOffset = style.yOffseet;
-        span.xOffset = dec.level * config._bulletIntent(parameters, paragraph, paragraph.words[0]);
+        span.xOffset = left+dec.level * config._bulletIntent(parameters, paragraph, paragraph.words[0]);
 
         _spans.add(span);
         line.add(span);
@@ -233,7 +236,7 @@ class MarkdownTextSpan implements IDocumentSpan
       final tr = ui.Radius.circular(topRadius);
       final br = ui.Radius.circular(bottomRadius);
 
-      final rect = ui.RRect.fromLTRBAndCorners(left-borderPadding, 0, right+borderPadding, _height,
+      final rect = ui.RRect.fromLTRBAndCorners(borderLeft, 0, borderRight, _height,
                          topLeft: tr, topRight:  tr,
                          bottomLeft: br, bottomRight: br);
       final box = _Box(paraStyle.borderColor, rect);

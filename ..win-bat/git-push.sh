@@ -9,6 +9,7 @@ if [[ "$comment" == "" ]] ; then
     exit 0
 fi
 
+
 dart-format ./ 2
 dart-prep --enable-all ./
 find ./ -name "*.bak" -type f -delete

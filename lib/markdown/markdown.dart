@@ -272,11 +272,10 @@ class Markdown
       final para = paragraphs[i];
       final prevPara = paragraphs[i - 1];
 
-      if (para.masterClass == prevPara.masterClass &&
-          (const ['p','indent']).contains(para.masterClass))
+      if (para.masterClass == prevPara.masterClass && (const ['p', 'indent']).contains(para.masterClass))
       {
-          prevPara.lastInClass = false;
-          para.firstInClass = false;
+        prevPara.lastInClass = false;
+        para.firstInClass = false;
       }
     }
 

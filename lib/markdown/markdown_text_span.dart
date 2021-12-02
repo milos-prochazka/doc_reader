@@ -68,8 +68,7 @@ class MarkdownTextSpan implements IDocumentSpan
       right -= borderPadding;
     }
 
-
-    double y =  paragraph.firstInClass ? borderPadding : 0;
+    double y = paragraph.firstInClass ? borderPadding : 0;
 
     if (_Hr.hrStyle(paragraph.masterClass))
     {
@@ -121,7 +120,7 @@ class MarkdownTextSpan implements IDocumentSpan
         final style = config.getTextStyle(paragraph, word: paragraph.words[0], bullet: bullet);
         final span = _Text(text, style.textStyle, false).calcMetrics(parameters);
         span.yOffset = style.yOffseet;
-        span.xOffset = left+dec.level * config._bulletIntent(parameters, paragraph, paragraph.words[0]);
+        span.xOffset = left + dec.level * config._bulletIntent(parameters, paragraph, paragraph.words[0]);
 
         _spans.add(span);
         line.add(span);
@@ -222,12 +221,12 @@ class MarkdownTextSpan implements IDocumentSpan
 
     if (borderPadding > 0.0)
     {
-      var topRadius=0.0,bottomRadius=0.0;
+      var topRadius = 0.0, bottomRadius = 0.0;
 
       if (paragraph.lastInClass)
       {
         _height += borderPadding;
-        bottomRadius=5.0;
+        bottomRadius = 5.0;
       }
       if (paragraph.firstInClass)
       {
@@ -237,15 +236,14 @@ class MarkdownTextSpan implements IDocumentSpan
       final br = ui.Radius.circular(bottomRadius);
 
       final rect = ui.RRect.fromLTRBAndCorners(borderLeft, 0, borderRight, _height,
-                         topLeft: tr, topRight:  tr,
-                         bottomLeft: br, bottomRight: br);
+        topLeft: tr, topRight: tr, bottomLeft: br, bottomRight: br);
       final box = _Box(paraStyle.borderColor, rect);
       _spans.insert(0, box);
     }
 
     if (paragraph.lastInClass)
     {
-      _height += math.max(10,borderPadding);
+      _height += math.max(10, borderPadding);
     }
   }
 

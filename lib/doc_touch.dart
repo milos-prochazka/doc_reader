@@ -5,19 +5,19 @@ import 'package:flutter/material.dart';
 
 import 'objects/applog.dart';
 
-class DocTouch 
+class DocTouch
 {
   DocReader docReader;
   late Document document;
   Offset _downPoint = Offset.infinite;
   bool isDown = false;
 
-  DocTouch._internal(BuildContext context, this.docReader, String documentProperty) 
+  DocTouch._internal(BuildContext context, this.docReader, String documentProperty)
   {
     document = PropertyBinder.of(context).getProperty<Document?>(documentProperty, null)!;
   }
 
-  static Widget build({required BuildContext context, Key? key, required String documentProperty}) 
+  static Widget build({required BuildContext context, Key? key, required String documentProperty})
   {
     final touch = DocTouch._internal(context, DocReader(documentProperty: documentProperty), documentProperty);
 
@@ -36,9 +36,9 @@ class DocTouch
     );
   }
 
-  void _down(Offset downPoint) 
+  void _down(Offset downPoint)
   {
-    if (!isDown) 
+    if (!isDown)
     {
       _downPoint = downPoint;
       isDown = true;
@@ -46,18 +46,18 @@ class DocTouch
     }
   }
 
-  void _up(Offset upPoint) 
+  void _up(Offset upPoint)
   {
     _downPoint = Offset.infinite;
 
-    if (isDown) 
+    if (isDown)
     {
       isDown = false;
       document.onTouchUpDown?.call(true, upPoint.dx, upPoint.dy);
     }
   }
 
-  void onPanDown(DragDownDetails details) 
+  void onPanDown(DragDownDetails details)
   {
     appLog_debug
     (
@@ -69,7 +69,7 @@ class DocTouch
     _down(details.localPosition);
   }
 
-  void onPanStart(DragStartDetails details) 
+  void onPanStart(DragStartDetails details)
   {
     appLog_debug
     (
@@ -81,7 +81,7 @@ class DocTouch
     _down(details.localPosition);
   }
 
-  void onPanUpdate(DragUpdateDetails details) 
+  void onPanUpdate(DragUpdateDetails details)
   {
     appLog_debug
     (
@@ -92,43 +92,43 @@ class DocTouch
       'time=${details.sourceTimeStamp}'
     );
 
-    if (_downPoint.isFinite) 
+    if (_downPoint.isFinite)
     {
       document.onTouchMove?.call(details.localPosition.dx - _downPoint.dx, details.localPosition.dy - _downPoint.dy);
       _downPoint = Offset.infinite;
-    } 
-    else 
+    }
+    else
     {
       _down(details.localPosition);
       document.onTouchMove?.call(details.delta.dx, details.delta.dy);
     }
   }
 
-  void onPanEnd(DragEndDetails details) 
+  void onPanEnd(DragEndDetails details)
   {
     appLog_debug('onPanEnd: '
       'velocity=${details.velocity} primaryVelocity=${details.primaryVelocity}');
     _up(Offset.infinite);
   }
 
-  void _doTap(double relativeX, double relativeY) 
+  void _doTap(double relativeX, double relativeY)
   {
     appLog_debug('doTap: relativeX=${relativeX.toStringAsFixed(4)} relativeY=${relativeY.toStringAsFixed(4)}');
     document.onTap?.call(relativeX, relativeY);
   }
 
-  void onTap() 
+  void onTap()
   {
     appLog_debug('onTap:');
 
-    if (_downPoint.isFinite && document.actualWidgetSize.isFinite) 
+    if (_downPoint.isFinite && document.actualWidgetSize.isFinite)
     {
       _doTap(_downPoint.dx / document.actualWidgetSize.width, _downPoint.dy / document.actualWidgetSize.height);
     }
     _up(_downPoint);
   }
 
-  void onTapDown(TapDownDetails details) 
+  void onTapDown(TapDownDetails details)
   {
     appLog_debug
     (
@@ -140,13 +140,13 @@ class DocTouch
     _down(details.localPosition);
   }
 
-  void onPanCancel() 
+  void onPanCancel()
   {
     appLog('onPanCancel:');
     _up(_downPoint);
   }
 
-  void onTapUp(TapUpDetails details) 
+  void onTapUp(TapUpDetails details)
   {
     appLog_debug
     (
@@ -156,7 +156,7 @@ class DocTouch
       'kind=${details.kind}'
     );
 
-    if (_downPoint.isFinite && document.actualWidgetSize.isFinite) 
+    if (_downPoint.isFinite && document.actualWidgetSize.isFinite)
     {
       _doTap(_downPoint.dx / document.actualWidgetSize.width, _downPoint.dy / document.actualWidgetSize.height);
     }

@@ -88,7 +88,7 @@ final _escapedCharRegExp = RegExp(r'[\uE000-\uE0FF]', multiLine: false);
 /// ! E021
 /// | E07C
 
-class Markdown 
+class Markdown
 {
   // Vsechny odstavce dokumentu
   final paragraphs = <MarkdownParagraph>[];
@@ -97,135 +97,135 @@ class Markdown
   // Tridy
   final classes = <String, Map<String, String>>{};
 
-  writeMarkdownString(String text) 
+  writeMarkdownString(String text)
   {
     var blockClass = '';
     final lines = MarkdownParagraph.escape(text).split(_newLineRegex);
 
-    for (int i = 0; i < lines.length; i++) 
+    for (int i = 0; i < lines.length; i++)
     {
       String line = lines[i];
 
       appLog_debug('line:"$line"');
 
       RegExpMatch? match;
-      if ((match = _refLinkLinkRegExp.firstMatch(line)) != null) 
+      if ((match = _refLinkLinkRegExp.firstMatch(line)) != null)
       {
         // Pojmenovany link nebo definice tridy
-        if (match!.groupCount >= 4) 
+        if (match!.groupCount >= 4)
         {
           final name = match.group(3) ?? '';
           final data = (match.group(4) ?? '').trim();
-          if (match.group(2) == '.') 
+          if (match.group(2) == '.')
           {
             // Trida
             final attributes = _namedAttributeRegExp.allMatches(data);
             final clsAttr = <String, String>{};
-            for (final attr in attributes) 
+            for (final attr in attributes)
             {
               //print ((attr.group(1)??'<>') + '=' + (attr.group(2)??'<>'));
               final name = attr.group(1) ?? '?';
               final value = attr.group(2) ?? '?';
               final match = _valueUnitRegExp.firstMatch(value);
 
-              if (match != null) 
+              if (match != null)
               {
                 // Hodnota s jednotkou (12.34em)
                 clsAttr[name] = match.group(1) ?? '';
                 clsAttr[name + 'Unit'] = match.group(3) ?? '';
-              } 
-              else 
+              }
+              else
               {
                 clsAttr[name] = value;
               }
             }
 
             classes[name] = clsAttr;
-          } 
-          else 
+          }
+          else
           {
             // Link
             //paragraphs.add(MarkdownParagraph.referenceLink(name, data));
             namedLinks[name] = data;
           }
         }
-      } 
-      else if (_hrRegExp.hasMatch(line)) 
+      }
+      else if (_hrRegExp.hasMatch(line))
       {
         final ch = line.trim()[0];
-        switch (ch) 
+        switch (ch)
         {
           case '=':
           case '-':
-          if (paragraphs.isNotEmpty && paragraphs.last.words.isNotEmpty) 
+          if (paragraphs.isNotEmpty && paragraphs.last.words.isNotEmpty)
           {
-            paragraphs.last.headClass = ch == '=' ? 'h1' : 'h2';
-          } 
-          else 
+            paragraphs.last.masterClass = ch == '=' ? 'h1' : 'h2';
+          }
+          else
           {
-            paragraphs.add(MarkdownParagraph(text: '', headClass: ''.padLeft(3, ch)));
+            paragraphs.add(MarkdownParagraph(text: '', pargraphClass: ''.padLeft(3, ch)));
           }
           break;
 
           default:
-          paragraphs.add(MarkdownParagraph(text: '', headClass: ''.padLeft(3, ch)));
+          paragraphs.add(MarkdownParagraph(text: '', pargraphClass: ''.padLeft(3, ch)));
           break;
         }
-      } 
-      else if ((match = _blockRegExp.firstMatch(line)) != null) 
+      }
+      else if ((match = _blockRegExp.firstMatch(line)) != null)
       {
         final cls = match?.group(2) ?? '';
 
-        if (cls.isEmpty) 
+        if (cls.isEmpty)
         {
           blockClass = (blockClass.isEmpty) ? 'indent' : '';
-        } 
-        else 
+        }
+        else
         {
           blockClass = cls;
         }
-      } 
-      else 
+      }
+      else
       {
         var pStart = '';
         var hClass = '';
 
         int headEnd = 0;
         Match? head;
-        do 
+        do
         {
           head = _headRegExp.matchAsPrefix(line, headEnd);
 
-          if (head != null && head.start == headEnd) 
+          if (head != null && head.start == headEnd)
           {
             final t = head.input.substring(head.start, head.end).trim();
 
-            if (t.startsWith('#')) 
+            if (t.startsWith('#'))
             {
               hClass = 'h${t.length}';
               pStart = line.substring(0, headEnd);
               headEnd = head.end;
               head = null;
-            } 
-            else 
+            }
+            else
             {
               headEnd = head.end;
             }
-          } 
-          else 
+          }
+          else
           {
             pStart = line.substring(0, headEnd);
           }
-        } 
+        }
         while (head != null);
 
         final indent = _indentBlockRegExp.firstMatch(line);
-        if (indent != null) 
+        if (indent != null)
         {
           hClass = 'indent';
         }
 
-        if (blockClass.isNotEmpty) 
+        if (blockClass.isNotEmpty)
         {
           hClass = blockClass;
         }
@@ -233,62 +233,62 @@ class Markdown
         line = line.substring(headEnd);
         appLog_debug('[$pStart] [$hClass] "$line"');
 
-        paragraphs.add(MarkdownParagraph(text: line, lineDecoration: pStart, headClass: hClass));
+        paragraphs.add(MarkdownParagraph(text: line, lineDecoration: pStart, pargraphClass: hClass));
       }
     }
 
     _doProcess();
   }
 
-  void _doProcess() 
+  void _doProcess()
   {
     // Slouceni odstavcu
-    for (int i = 1; i < paragraphs.length;) 
+    for (int i = 1; i < paragraphs.length;)
     {
       final para = paragraphs[i];
       final prevPara = paragraphs[i - 1];
 
-      if 
+      if
       (
         para.lineDecoration.isEmpty &&
-        para.headClass.isEmpty &&
+        para.masterClass.isEmpty &&
         para.words.isNotEmpty &&
         prevPara.words.isNotEmpty &&
-        prevPara.headClass.isEmpty
-      ) 
+        prevPara.masterClass.isEmpty
+      )
       {
         prevPara.copyWords(para);
         paragraphs.removeAt(i);
-      } 
-      else 
+      }
+      else
       {
         i++;
       }
     }
 
     // Vypusteni prazdnych odstavcu a urceni mezer za odstavci a kompilace odsazeni
-    for (int i = 0; i < paragraphs.length;) 
+    for (int i = 0; i < paragraphs.length;)
     {
       final para = paragraphs[i];
 
-      if (i >= 1) 
+      if (i >= 1)
       {
         final prevPara = paragraphs[i];
 
-        if (prevPara.headClass == para.headClass) 
+        if (prevPara.masterClass == para.masterClass)
         {
-          if (prevPara.lineDecoration != '' && para.lineDecoration != '') 
+          if (prevPara.lineDecoration != '' && para.lineDecoration != '')
           {
             prevPara.lastInClass = false;
           }
         }
       }
 
-      if (para.lineDecoration.isEmpty && para.words.isEmpty && para.headClass.isEmpty) 
+      if (para.lineDecoration.isEmpty && para.words.isEmpty && para.masterClass.isEmpty)
       {
         paragraphs.removeAt(i);
-      } 
-      else 
+      }
+      else
       {
         para.decorations = MarkdownDecoration.textToList(para.lineDecoration);
         i++;
@@ -301,28 +301,28 @@ class Markdown
   }
 
   /// Nalzeni odkazu na kratke linky
-  compileLinks() 
+  compileLinks()
   {
     final remove = <MarkdownWord>[];
 
-    for (final para in paragraphs) 
+    for (final para in paragraphs)
     {
       remove.clear();
-      for (final word in para.words) 
+      for (final word in para.words)
       {
-        switch (word.type) 
+        switch (word.type)
         {
           // Odkaz
           case MarkdownWord_Type.link:
           {
-            if (!word.attribs.containsKey('link')) 
+            if (!word.attribs.containsKey('link'))
             {
               final url = namedLinks[word.text];
-              if (url != null) 
+              if (url != null)
               {
                 word.attribs.addAll({'link': url});
-              } 
-              else 
+              }
+              else
               {
                 remove.add(word);
               }
@@ -333,14 +333,14 @@ class Markdown
           // Obrazek
           case MarkdownWord_Type.image:
           {
-            if (!word.attribs.containsKey('image')) 
+            if (!word.attribs.containsKey('image'))
             {
               final url = namedLinks[word.text];
-              if (url != null) 
+              if (url != null)
               {
                 word.attribs.addAll(MarkdownParagraph._imageAttributes(url));
-              } 
-              else 
+              }
+              else
               {
                 remove.add(word);
               }
@@ -354,37 +354,37 @@ class Markdown
       }
 
       // Odstraneni linku bez odkazu
-      for (final word in remove) 
+      for (final word in remove)
       {
         para.words.remove(word);
       }
     }
   }
 
-  static String detab(String text, int tabSize) 
+  static String detab(String text, int tabSize)
   {
-    if (!text.contains("\t")) 
+    if (!text.contains("\t"))
     {
       return text;
-    } 
-    else 
+    }
+    else
     {
       final builder = StringBuffer();
 
-      for (final ch in text.codeUnits) 
+      for (final ch in text.codeUnits)
       {
-        if (ch == /*$\t*/ (0x9)) 
+        if (ch == /*$\t*/(0x9))
         {
           final l = builder.length;
           var n = tabSize - (l % tabSize);
 
-          while (n > 0) 
+          while (n > 0)
           {
-            builder.writeCharCode(/*$ */ (0x20));
+            builder.writeCharCode(/*$ */(0x20));
             n--;
           }
-        } 
-        else 
+        }
+        else
         {
           builder.writeCharCode(ch);
         }
@@ -395,11 +395,11 @@ class Markdown
   }
 
   @override
-  String toString() 
+  String toString()
   {
     final builder = StringBuffer('Markdown: ${paragraphs.length} paragraphs\r\n');
 
-    for (int i = 0; i < paragraphs.length; i++) 
+    for (int i = 0; i < paragraphs.length; i++)
     {
       final para = paragraphs[i].toString();
       builder.write('[$i] $para');
@@ -408,50 +408,57 @@ class Markdown
   }
 }
 
-class MarkdownParagraph 
+class MarkdownParagraph
 {
   MarkdownParagraphType type = MarkdownParagraphType.normalParagraph;
   String lineDecoration = '';
   List<MarkdownDecoration>? decorations;
-  String headClass = '';
-  String subclass = '';
+  String masterClass;
+  String subclass;
   final anchors = <String>[];
   final words = <MarkdownWord>[];
   final attributes = <String, String>{};
   bool lastInClass = true;
   bool firstInClass = true;
 
-  MarkdownParagraph({required String text, this.lineDecoration = '', this.headClass = ''}) 
+  MarkdownParagraph({required String text, this.lineDecoration = '', pargraphClass = ''})
+  : masterClass = pargraphClass.isEmpty ? 'p' : pargraphClass,
+  subclass = ''
   {
     writeText(text);
   }
 
-  MarkdownParagraph.referenceLink(String linkName, String linkUrl) : type = MarkdownParagraphType.linkReferece 
-  {
-    headClass = linkName;
-    subclass = linkUrl;
-  }
+  MarkdownParagraph.referenceLink(String linkName, String linkUrl)
+  : type = MarkdownParagraphType.linkReferece,
+  masterClass = linkName,
+  subclass = linkUrl;
 
-  String get linkName => headClass;
+  String get linkName => masterClass;
 
   String get linkUrl => subclass;
 
-  static String escape(String text) 
+  String fullClassName([MarkdownWord? word])
   {
-    if (!_escapeCharRegExp.hasMatch(text)) 
+    final cname = subclass.isEmpty ? masterClass : '$masterClass.$subclass';
+    return (word?.style.isEmpty ?? true) ? cname : '$cname.${word?.style}';
+  }
+
+  static String escape(String text)
+  {
+    if (!_escapeCharRegExp.hasMatch(text))
     {
       return text;
-    } 
-    else 
+    }
+    else
     {
       var index = 0;
       final builder = StringBuffer();
 
       final matches = _escapeCharRegExp.allMatches(text);
 
-      for (final match in matches) 
+      for (final match in matches)
       {
-        if (match.start > index) 
+        if (match.start > index)
         {
           builder.write(text.substring(index, match.start));
         }
@@ -460,7 +467,7 @@ class MarkdownParagraph
         index = match.end;
       }
 
-      if (text.length > index) 
+      if (text.length > index)
       {
         builder.write(text.substring(index));
       }
@@ -469,22 +476,22 @@ class MarkdownParagraph
     }
   }
 
-  static String unescape(String text) 
+  static String unescape(String text)
   {
-    if (!_escapedCharRegExp.hasMatch(text)) 
+    if (!_escapedCharRegExp.hasMatch(text))
     {
       return text;
-    } 
-    else 
+    }
+    else
     {
       var index = 0;
       final builder = StringBuffer();
 
       final matches = _escapedCharRegExp.allMatches(text);
 
-      for (final match in matches) 
+      for (final match in matches)
       {
-        if (match.start > index) 
+        if (match.start > index)
         {
           builder.write(text.substring(index, match.start));
         }
@@ -493,7 +500,7 @@ class MarkdownParagraph
         index = match.end;
       }
 
-      if (text.length > index) 
+      if (text.length > index)
       {
         builder.write(text.substring(index));
       }
@@ -503,26 +510,26 @@ class MarkdownParagraph
   }
 
   @override
-  String toString() 
+  String toString()
   {
     final builder = StringBuffer('Paragraph: type=${enum_ToString(type)} ');
 
-    switch (type) 
+    switch (type)
     {
       case MarkdownParagraphType.linkReferece:
       builder.write("name='$linkName' link='$linkUrl'\r\n");
       break;
 
       default:
-      builder.write("start='$lineDecoration' class='$headClass' '$subclass'\r\n");
+      builder.write("start='$lineDecoration' class='$masterClass' '$subclass'\r\n");
       break;
     }
     var label = false;
 
-    if (decorations != null && decorations!.isNotEmpty) 
+    if (decorations != null && decorations!.isNotEmpty)
     {
       builder.write('Decorations:');
-      for (final dec in decorations!) 
+      for (final dec in decorations!)
       {
         builder.write(' "${dec.toString()}"');
       }
@@ -531,10 +538,10 @@ class MarkdownParagraph
       label = words.isNotEmpty;
     }
 
-    if (anchors.isNotEmpty) 
+    if (anchors.isNotEmpty)
     {
       builder.write('Anchors:');
-      for (final dec in anchors) 
+      for (final dec in anchors)
       {
         builder.write(' ${dec.toString()}');
       }
@@ -542,22 +549,22 @@ class MarkdownParagraph
       label = words.isNotEmpty;
     }
 
-    if (attributes.isNotEmpty) 
+    if (attributes.isNotEmpty)
     {
       builder.write('Attributes:');
-      for (final dec in attributes.entries) 
+      for (final dec in attributes.entries)
       {
         builder.write(' ${dec.key}=${dec.value}');
       }
       builder.write('\r\n');
     }
 
-    if (label) 
+    if (label)
     {
       builder.write('Words:\r\n');
     }
 
-    for (int i = 0; i < words.length; i++) 
+    for (int i = 0; i < words.length; i++)
     {
       final word = words[i].toString();
       builder.write('  $i: $word\r\n');
@@ -566,7 +573,7 @@ class MarkdownParagraph
   }
 
   MarkdownWord makeWord(String text, List<String> styleStack,
-    {MarkdownWord_Type type = MarkdownWord_Type.word, bool stickToNext = false, Map<String, Object?>? attr}) 
+    {MarkdownWord_Type type = MarkdownWord_Type.word, bool stickToNext = false, Map<String, Object?>? attr})
   {
     final result = MarkdownWord()
     ..type = type
@@ -574,7 +581,7 @@ class MarkdownParagraph
     ..style = styleStack.isEmpty ? '' : styleStack.last
     ..stickToNext = stickToNext;
 
-    if (attr != null) 
+    if (attr != null)
     {
       result.attribs.addAll(attr);
     }
@@ -582,9 +589,9 @@ class MarkdownParagraph
     return result;
   }
 
-  void writeWord(StringBuffer wordBuffer, List<String> styleStack, bool stickToNext) 
+  void writeWord(StringBuffer wordBuffer, List<String> styleStack, bool stickToNext)
   {
-    if (wordBuffer.isNotEmpty) 
+    if (wordBuffer.isNotEmpty)
     {
       words.add
       (
@@ -609,7 +616,7 @@ class MarkdownParagraph
     }
   }*/
 
-  writeText(String text) 
+  writeText(String text)
   {
     const MATCH_NONE = 0;
     const LONG_LINK = 1;
@@ -624,9 +631,9 @@ class MarkdownParagraph
     final List<Match?> lineMatches = List.filled(text.length, null);
     final List<int> lineMatchType = List.filled(text.length, MATCH_NONE);
 
-    for 
+    for
     (
-      final matchInfo in 
+      final matchInfo in
       [
         Tuple2(SHORT_LINK, _shortLinkRegExp),
         Tuple2(EMAIL_LINK, _emailRegExp),
@@ -634,45 +641,45 @@ class MarkdownParagraph
         Tuple2(LONG_LINK, _longLinkRegExp),
         Tuple2(ATTRIBUTE, _attributeLikRegExp),
       ]
-    ) 
+    )
     {
       final matches = matchInfo.item2.allMatches(text);
-      for (final match in matches) 
+      for (final match in matches)
       {
         lineMatches[match.start] = match;
         lineMatchType[match.start] = matchInfo.item1;
       }
     }
 
-    do 
+    do
     {
       final ch = charAT(text, readIndex);
       final type = readIndex < text.length ? lineMatchType[readIndex] : MATCH_NONE;
 
-      try 
+      try
       {
-        if (type != MATCH_NONE) 
+        if (type != MATCH_NONE)
         {
           writeWord(wordBuffer, styleStack, true);
         }
 
-        switch (type) 
+        switch (type)
         {
           case LONG_LINK:
           {
             final match = lineMatches[readIndex]!;
-            if (match.groupCount >= 3) 
+            if (match.groupCount >= 3)
             {
               final type = match.group(1) ?? '';
               final desc = match.group(2) ?? '';
               final link = match.group(3) ?? '';
               MarkdownWord? word;
 
-              if (type == '!') 
+              if (type == '!')
               {
                 word = makeWord(desc, styleStack, type: MarkdownWord_Type.image, attr: _imageAttributes(link));
-              } 
-              else 
+              }
+              else
               {
                 word = makeWord(desc, styleStack, type: MarkdownWord_Type.link, attr: {'link': link});
               }
@@ -688,15 +695,15 @@ class MarkdownParagraph
             final match = lineMatches[readIndex]!;
             MarkdownWord? word;
 
-            if (match.groupCount >= 2) 
+            if (match.groupCount >= 2)
             {
               final type = match.group(1) ?? '';
               final name = match.group(2) ?? '!';
-              if (type == '!') 
+              if (type == '!')
               {
                 word = makeWord(name, styleStack, type: MarkdownWord_Type.image);
-              } 
-              else 
+              }
+              else
               {
                 word = makeWord(name, styleStack, type: MarkdownWord_Type.link);
               }
@@ -710,11 +717,11 @@ class MarkdownParagraph
           case ATTRIBUTE:
           {
             final match = lineMatches[readIndex]!;
-            if (match.groupCount >= 2) 
+            if (match.groupCount >= 2)
             {
               final type = match.group(1) ?? '';
               final text = match.group(2) ?? '';
-              switch (type) 
+              switch (type)
               {
                 case '.':
                 subclass = text;
@@ -725,12 +732,12 @@ class MarkdownParagraph
                 break;
 
                 case '*':
-                if (text.contains('=')) 
+                if (text.contains('='))
                 {
                   final kvi = text.indexOf('=');
                   attributes[text.substring(0, kvi).trim()] = text.substring(kvi + 1).trim();
-                } 
-                else 
+                }
+                else
                 {
                   final t = text.trim();
                   attributes[t] = t;
@@ -742,7 +749,7 @@ class MarkdownParagraph
 
           default: // MATCH_NONE
           {
-            switch (ch) 
+            switch (ch)
             {
               case '': // konec textu
               break;
@@ -754,19 +761,19 @@ class MarkdownParagraph
 
               case '!': // Obrazek (mozna)
               readIndex++;
-              if (charAT(text, readIndex) == '[') 
+              if (charAT(text, readIndex) == '[')
               {
                 var match = _longLinkRegExp.matchAsPrefix(text, readIndex);
 
-                if (match != null && match.start == readIndex) 
+                if (match != null && match.start == readIndex)
                 {
                   writeWord(wordBuffer, styleStack, false);
                   wordBuffer.write(text.substring(readIndex - 1, match.end));
                   writeWord(wordBuffer, styleStack, false);
                   readIndex = match.end;
                 }
-              } 
-              else 
+              }
+              else
               {
                 wordBuffer.write(ch);
               }
@@ -776,27 +783,27 @@ class MarkdownParagraph
               {
                 final match = _charClassRegExp.matchAsPrefix(text, readIndex);
 
-                if (match != null && match.start == readIndex) 
+                if (match != null && match.start == readIndex)
                 {
                   // styl
                   readIndex += match.end - match.start;
                   final mValue = matchVal(match);
 
-                  if (styleStack.isNotEmpty && compareClass(styleStack.last, mValue)) 
+                  if (styleStack.isNotEmpty && compareClass(styleStack.last, mValue))
                   {
                     // konec stylu
                     final ch = charAT(text, readIndex);
                     writeWord(wordBuffer, styleStack, ch != ' ' && ch != '');
                     styleStack.removeLast();
-                  } 
-                  else 
+                  }
+                  else
                   {
                     // zacatek stylu
                     writeWord(wordBuffer, styleStack, true);
                     styleStack.add(matchVal(match));
                   }
-                } 
-                else 
+                }
+                else
                 {
                   readIndex++;
                   wordBuffer.write(ch);
@@ -808,26 +815,26 @@ class MarkdownParagraph
           break;
         }
 
-        if (type != MATCH_NONE) 
+        if (type != MATCH_NONE)
         {
           readIndex = lineMatches[readIndex]?.end ?? readIndex + 1;
         }
-      } 
-      catch (ex, stackTrace) 
+      }
+      catch (ex, stackTrace)
       {
         appLogEx(ex, stackTrace: stackTrace);
       }
-    } 
+    }
     while (readIndex < text.length);
 
     writeWord(wordBuffer, styleStack, false); // Posledni slovo
   }
 
-  static Map<String, Object?> _imageAttributes(String imageUri) 
+  static Map<String, Object?> _imageAttributes(String imageUri)
   {
     final info = _imageSizeRegExp.firstMatch(imageUri);
 
-    if (info != null) 
+    if (info != null)
     {
       final w = info.group(2) ?? '';
       final wu = info.group(3);
@@ -844,30 +851,30 @@ class MarkdownParagraph
         'heightUnit': hu,
         'align': al
       };
-    } 
-    else 
+    }
+    else
     {
       return <String, Object?>{'image': imageUri};
     }
   }
 
-  static String matchVal(Match? match) 
+  static String matchVal(Match? match)
   {
     //return match?.input.substring(match.start, match.end) ?? '';
     return match?.group(0) ?? '';
   }
 
-  static bool compareClass(String push, String pop) 
+  static bool compareClass(String push, String pop)
   {
     return (push == pop) || (pop == '```' && push.startsWith('```@'));
   }
 
-  static String charAT(String text, int index) 
+  static String charAT(String text, int index)
   {
     return (index < 0 || index >= text.length) ? '' : text[index];
   }
 
-  void copyWords(MarkdownParagraph src) 
+  void copyWords(MarkdownParagraph src)
   {
     words.add
     (
@@ -876,7 +883,7 @@ class MarkdownParagraph
       ..text = '\r'
     );
 
-    for (var word in src.words) 
+    for (var word in src.words)
     {
       words.add(word);
     }
@@ -885,7 +892,7 @@ class MarkdownParagraph
 
 enum MarkdownParagraphType { normalParagraph, linkReferece }
 
-class MarkdownDecoration 
+class MarkdownDecoration
 {
   String decoration = '';
   int level = 0;
@@ -893,31 +900,31 @@ class MarkdownDecoration
   int count = 0;
 
   @override
-  String toString() 
+  String toString()
   {
     return '$decoration level=$level column=$column count=$count';
   }
 
-  MarkdownDecoration(String decor, this.column) 
+  MarkdownDecoration(String decor, this.column)
   {
     int ch = decor.codeUnitAt(column);
-    if (ch >= /*$a*/ (0x61) && ch <= /*$z*/ (0x7A)) 
+    if (ch >= /*$a*/(0x61) && ch <= /*$z*/(0x7A))
     {
       decor = 'a';
     }
-    if (ch >= /*$A*/ (0x41) && ch <= /*$Z*/ (0x5A)) 
+    if (ch >= /*$A*/(0x41) && ch <= /*$Z*/(0x5A))
     {
       decor = 'A';
-    } 
-    else if (ch >= /*$0*/ (0x30) && ch <= /*$9*/ (0x39)) 
+    }
+    else if (ch >= /*$0*/(0x30) && ch <= /*$9*/(0x39))
     {
       decor = '1';
-    } 
-    else if (ch == /*$-*/ (0x2D) || ch == /*$**/ (0x2A) || ch == /*$+*/ (0x2B)) 
+    }
+    else if (ch == /*$-*/(0x2D) || ch == /*$**/(0x2A) || ch == /*$+*/(0x2B))
     {
       decor = '-';
-    } 
-    else 
+    }
+    else
     {
       decor = decor.substring(column, column + 1);
     }
@@ -925,21 +932,21 @@ class MarkdownDecoration
     decoration = decor;
   }
 
-  static bool compareModify(List<MarkdownDecoration>? current, List<MarkdownDecoration>? prev) 
+  static bool compareModify(List<MarkdownDecoration>? current, List<MarkdownDecoration>? prev)
   {
-    if (current == null || prev == null) 
+    if (current == null || prev == null)
     {
       return true;
-    } 
-    else 
+    }
+    else
     {
-      for (int i = 0; i < prev.length; i++) 
+      for (int i = 0; i < prev.length; i++)
       {
-        if (i >= current.length) 
+        if (i >= current.length)
         {
           return false;
-        } 
-        else 
+        }
+        else
         {
           final c = current[i];
           final p = prev[i];
@@ -950,20 +957,20 @@ class MarkdownDecoration
           }
           else*/
           {
-            if (c.decoration != '>') 
+            if (c.decoration != '>')
             {
-              if ((c.column - p.column).abs() < 2) 
+              if ((c.column - p.column).abs() < 2)
               {
                 c.column = p.column;
                 c.level = p.level;
                 c.count = p.count + 1;
-              } 
-              else if (c.column > p.column) 
+              }
+              else if (c.column > p.column)
               {
                 c.level = p.level + 1;
                 return true;
-              } 
-              else 
+              }
+              else
               {
                 return false;
               }
@@ -976,40 +983,40 @@ class MarkdownDecoration
     return true;
   }
 
-  static void modify(List<MarkdownParagraph> para) 
+  static void modify(List<MarkdownParagraph> para)
   {
-    for (int index = 1; index < para.length; index++) 
+    for (int index = 1; index < para.length; index++)
     {
       final cur = para[index];
 
       var prev = index - 1;
-      while (prev >= 0 && !compareModify(cur.decorations, para[prev].decorations)) 
+      while (prev >= 0 && !compareModify(cur.decorations, para[prev].decorations))
       {
         prev--;
       }
     }
   }
 
-  static List<MarkdownDecoration> textToList(String text) 
+  static List<MarkdownDecoration> textToList(String text)
   {
     final result = <MarkdownDecoration>[];
 
-    for (int i = 0; i < text.length;) 
+    for (int i = 0; i < text.length;)
     {
       final ch = text.substring(i, i + 1);
-      if (ch != ' ') 
+      if (ch != ' ')
       {
-        if ((result.isNotEmpty) && (ch == result.last.decoration)) 
+        if ((result.isNotEmpty) && (ch == result.last.decoration))
         {
           result.last.level++;
           i++;
-        } 
-        else 
+        }
+        else
         {
           result.add(MarkdownDecoration(text, i++));
         }
-      } 
-      else 
+      }
+      else
       {
         i++;
       }
@@ -1019,7 +1026,7 @@ class MarkdownDecoration
   }
 }
 
-class MarkdownWord 
+class MarkdownWord
 {
   MarkdownWord_Type type = MarkdownWord_Type.word;
   String style = '';
@@ -1029,7 +1036,7 @@ class MarkdownWord
   final attribs = <String, Object?>{};
 
   @override
-  String toString() 
+  String toString()
   {
     final s = stickToNext ? '+' : ' ';
     final t = lineBreak ? '<break>' : text;

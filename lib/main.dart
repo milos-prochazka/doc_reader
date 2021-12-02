@@ -66,24 +66,24 @@ Pokračování odstavce za přechodem na nový řádek
 Další odstavec
 ''';
 
-void testColor(String text) 
+void testColor(String text)
 {
   print('${text.padRight(24)} ${colorFormText(text)}');
 }
 
-void main() 
+void main()
 {
   appLog("Testovaci log");
   runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget 
+class MyApp extends StatelessWidget
 {
   late Markdown markdown;
   late MarkdownTextConfig textConfig;
   late Document document;
 
-  MyApp({Key? key}) : super(key: key) 
+  MyApp({Key? key}) : super(key: key)
   {
     document = Document();
     markdown = Markdown();
@@ -92,7 +92,7 @@ class MyApp extends StatelessWidget
     print(markdown.toString());
 
     final ms = MarkdownTextSpan.create(markdown, textConfig, document);
-    for (final s in ms) 
+    for (final s in ms)
     {
       document.docSpans.add(DocumentSpanContainer(s));
     }
@@ -100,7 +100,7 @@ class MyApp extends StatelessWidget
 
   // This widget is the root of your application.
   @override
-  Widget build(BuildContext context) 
+  Widget build(BuildContext context)
   {
     return MaterialApp
     (
@@ -114,7 +114,7 @@ class MyApp extends StatelessWidget
   }
 }
 
-class MyHomePage extends StatefulWidget 
+class MyHomePage extends StatefulWidget
 {
   const MyHomePage({Key? key, required this.title, required this.document}) : super(key: key);
 
@@ -125,17 +125,17 @@ class MyHomePage extends StatefulWidget
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> 
+class _MyHomePageState extends State<MyHomePage>
 {
   static const documentProperty = 'document';
 
   @override
-  Widget build(BuildContext buildContext) 
+  Widget build(BuildContext buildContext)
   {
     final binder = PropertyBinder
     (
       context: context,
-      builder: (context) 
+      builder: (context)
       {
         return Scaffold
         (

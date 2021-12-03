@@ -12,32 +12,32 @@ String getLocation()
   final stack = StackTrace.current.toString();
 
 //#if WEB
-  {
-    int start = 0;
-    int end = 0;
-
-    for (int c = 0; c < 4; c++)
-    {
-      end = stack.indexOf("\n", start);
-      if (end == -1)
-      {
-        end = stack.length;
-        break;
-      }
-      else
-      {
-        if (c < 3)
-        {
-          start = end + 1;
-        }
-      }
-    }
-
-    final stackLine = stack.substring(start, end);
-
-    name = stackLine;
-  }
-//#else
+//##  {
+//##    int start = 0;
+//##    int end = 0;
+//##
+//##    for (int c = 0; c < 4; c++)
+//##    {
+//##      end = stack.indexOf("\n", start);
+//##      if (end == -1)
+//##      {
+//##        end = stack.length;
+//##        break;
+//##      }
+//##      else
+//##      {
+//##        if (c < 3)
+//##        {
+//##          start = end + 1;
+//##        }
+//##      }
+//##    }
+//##
+//##    final stackLine = stack.substring(start, end);
+//##
+//##    name = stackLine;
+//##  }
+//##//#else
   {
     final m1 = _stackRegEx1.firstMatch(stack);
 

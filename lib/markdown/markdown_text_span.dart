@@ -142,7 +142,7 @@ class MarkdownTextSpan implements IDocumentSpan
       switch (word.type)
       {
         case MarkdownWord_Type.image:
-        span = _Image(word.attribs, document, style.textStyle, word.stickToNext).calcMetrics(parameters);
+        span = _Image(word.attribs, document, style.textStyle, word.stickToNext,left,right).calcMetrics(parameters);
         break;
 
         default:
@@ -169,7 +169,7 @@ class MarkdownTextSpan implements IDocumentSpan
     }
 
     // Zalomeni textu -----------------------------------------------------------------------------------------------
-    double rightHeight = 0;
+    double rightHeight = y;
     double sizeWidth = right;
 
     for (final span in rightSpans)
@@ -182,7 +182,7 @@ class MarkdownTextSpan implements IDocumentSpan
     }
 
     double leftLeft = left;
-    double leftHeight = 0;
+    double leftHeight = y;
     for (final span in leftSpans)
     {
       span.xOffset = left;
@@ -226,15 +226,16 @@ class MarkdownTextSpan implements IDocumentSpan
       if (paragraph.lastInClass)
       {
         _height += borderPadding;
-        bottomRadius = 5.0;
+        bottomRadius = paraStyle.borderRadius;
       }
       if (paragraph.firstInClass)
       {
-        topRadius = 5.0;
+        topRadius = paraStyle.borderRadius;
       }
       final tr = ui.Radius.circular(topRadius);
       final br = ui.Radius.circular(bottomRadius);
 
+      _height = _height.ceilToDouble();
       final rect = ui.RRect.fromLTRBAndCorners(borderLeft, 0, borderRight, _height,
         topLeft: tr, topRight: tr, bottomLeft: br, bottomRight: br);
       final box = _Box(paraStyle.borderColor, rect);
@@ -316,6 +317,7 @@ const _defaultConfig =
       "marginRight": 80,
       "borderPadding": 10,
       "borderColor": "#8edd",
+      "borderRadius": 20,
       "fontSize": 20,
       "fontStyle": "normal", // normal, bold, bold_italic
     },
@@ -471,6 +473,40 @@ class MarkdownTextConfig
     return _fontWeightFromStringMap[text.toLowerCase()] ?? FontWeight.normal;
   }
 
+  bool _setInfoByStyle(_WordStyleInfo styleInfo,String className, bool bullet)
+  {
+      bool result = false;
+      final cfg = get<Map<String, dynamic>?>(['textStyles', className]);
+
+      if (cfg != null)
+      {
+        styleInfo.fontSize = get<double>(['fontSize'], defValue: 20.0, config: cfg);
+
+        final styleStr = get<String>(['fontStyle'], defValue: 'normal', config: cfg);
+        styleInfo.fontStyle = _fontStyleFromString(styleStr);
+        styleInfo.fontWeight = _fontWeightFromString(styleStr);
+
+        final colorStr = get<String?>(['color'], config: cfg);
+        styleInfo.color = colorFormText(colorStr ?? 'Black');
+        styleInfo.yOffset = 0.0;
+
+        styleInfo.leftMargin = get<double>(['marginLeft'], defValue: 0.0, config: cfg);
+        styleInfo.rightMargin = get<double>(['marginRight'], defValue: 0.0, config: cfg);
+        styleInfo.borderPadding = get<double>(['borderPadding'], defValue: 0.0, config: cfg);
+        styleInfo.borderColor = colorFormText(get<String?>(['color'], config: cfg) ?? 'Silver');
+        styleInfo.borderRadius = get<double>(['borderRadius'], defValue: 0.0, config: cfg);
+
+        if (bullet)
+        {
+          //yOffset = fontSize * 0.5;
+          styleInfo.fontSize *= 0.3333;
+          styleInfo.yOffset = -styleInfo.fontSize * 0.3333;
+        }
+      }
+
+      return result;
+  }
+
   _WordStyle getTextStyle(MarkdownParagraph para, {MarkdownWord? word, bool bullet = false})
   {
     final fullStyle = para.fullClassName(word);
@@ -478,31 +514,8 @@ class MarkdownTextConfig
 
     if (result == null)
     {
-      var cfg = get<Map<String, dynamic>>(['textStyles', para.masterClass], defValue: _emptyCfg);
 
       final styleInfo = _WordStyleInfo();
-
-      styleInfo.fontSize = get<double>(['fontSize'], defValue: 20.0, config: cfg);
-
-      final styleStr = get<String>(['fontStyle'], defValue: 'normal', config: cfg);
-      styleInfo.fontStyle = _fontStyleFromString(styleStr);
-      styleInfo.fontWeight = _fontWeightFromString(styleStr);
-
-      final colorStr = get<String?>(['color'], config: cfg);
-      styleInfo.color = colorFormText(colorStr ?? 'Black');
-      var yOffset = 0.0;
-
-      styleInfo.leftMargin = get<double>(['marginLeft'], defValue: 0.0, config: cfg);
-      styleInfo.rightMargin = get<double>(['marginRight'], defValue: 0.0, config: cfg);
-      styleInfo.borderPadding = get<double>(['borderPadding'], defValue: 0.0, config: cfg);
-      styleInfo.borderColor = colorFormText(get<String?>(['color'], config: cfg) ?? 'Silver');
-
-      if (bullet)
-      {
-        //yOffset = fontSize * 0.5;
-        styleInfo.fontSize *= 0.3333;
-        yOffset = -styleInfo.fontSize * 0.3333;
-      }
 
       switch (word?.style)
       {
@@ -523,7 +536,9 @@ class MarkdownTextConfig
         break;
       }
 
-      result = _WordStyle(styleInfo, yOffset);
+      _setInfoByStyle(styleInfo,para.masterClass,bullet);
+
+      result = _WordStyle(styleInfo);
 
       _state.textStyles[fullStyle] = result;
     }
@@ -565,6 +580,7 @@ class _WordStyleInfo
   double rightMargin = 0.0;
   double borderPadding = 0.0;
   Color borderColor = Colors.black;
+  double borderRadius = 0.0;
 }
 
 class _WordStyle
@@ -575,12 +591,15 @@ class _WordStyle
   double rightMargin;
   double borderPadding;
   Color borderColor;
+  double borderRadius;
 
-  _WordStyle(_WordStyleInfo wsInfo, this.yOffseet)
+  _WordStyle(_WordStyleInfo wsInfo)
   : leftMargin = wsInfo.leftMargin,
   rightMargin = wsInfo.rightMargin,
   borderColor = wsInfo.borderColor,
   borderPadding = wsInfo.borderPadding,
+  borderRadius = wsInfo.borderRadius,
+  yOffseet = wsInfo.yOffset,
   textStyle = TextStyle
   (
     color: wsInfo.color,
@@ -782,13 +801,16 @@ class _Image extends _Span
   ui.Image? image;
   DrawableRoot? drawableRoot;
   int count = 0;
+  double maxWidth;
+  double paraLeft;
   double imgWidth = double.nan;
   double imgOffset = double.nan;
   double lineOffset = 0;
 
   Document? document;
 
-  _Image(this.attribs, this.document, this.style, this.stickToNext);
+  _Image(this.attribs, this.document, this.style, this.stickToNext, this.paraLeft, paraRight) :
+      maxWidth = paraRight-paraLeft;
 
   double get _fontSize => style.fontSize ?? 20;
 
@@ -823,8 +845,8 @@ class _Image extends _Span
     double height = info.height;
     double aspectRatio = width / height;
 
-    double? reqWidth = _decodeSize(attribs['width'] as double?, attribs['widthUnit'] as String?, params.size.width);
-    double? reqHeight = _decodeSize(attribs['height'] as double?, attribs['heightUnit'] as String?, params.size.width);
+    double? reqWidth = _decodeSize(attribs['width'] as double?, attribs['widthUnit'] as String?, maxWidth);
+    double? reqHeight = _decodeSize(attribs['height'] as double?, attribs['heightUnit'] as String?, maxWidth);
 
     if (reqWidth != null)
     {
@@ -852,9 +874,9 @@ class _Image extends _Span
       width = height * aspectRatio;
     }
 
-    if (params.size.width < width)
+    if (maxWidth < width)
     {
-      width = params.size.width;
+      width = maxWidth;
       height = width / aspectRatio;
     }
 
@@ -863,11 +885,11 @@ class _Image extends _Span
     {
       case 'tight-line':
       {
-        count = (params.size.width + width) ~/ width;
-        imgWidth = params.size.width / count;
+        count = (maxWidth + width) ~/ width;
+        imgWidth = maxWidth / count;
         height = imgWidth / aspectRatio;
         imgOffset = imgWidth;
-        width = params.size.width;
+        width = maxWidth;
       }
       break;
 
@@ -875,8 +897,8 @@ class _Image extends _Span
       {
         imgWidth = width;
         imgOffset = width;
-        count = (params.size.width) ~/ width;
-        width = params.size.width;
+        count = (maxWidth) ~/ width;
+        width = maxWidth;
         lineOffset = 0.5 * (width - count * imgWidth);
       }
       break;
@@ -884,9 +906,9 @@ class _Image extends _Span
       case 'line':
       case 'center-line':
       {
-        count = params.size.width ~/ width;
+        count = maxWidth ~/ width;
         imgWidth = width;
-        width = params.size.width;
+        width = maxWidth;
 
         if (attr == 'center-line')
         {
@@ -903,23 +925,23 @@ class _Image extends _Span
 
       case 'fill-line':
       {
-        count = params.size.width ~/ width;
-        imgWidth = params.size.width / count;
+        count = maxWidth ~/ width;
+        imgWidth = maxWidth / count;
         imgOffset = imgWidth;
         if (reqHeight == null)
         {
           height = imgWidth / aspectRatio;
         }
-        width = params.size.width;
+        width = maxWidth;
       }
 
       break;
 
       case 'center':
       count = 1;
-      lineOffset = 0.5 * (params.size.width - width);
+      lineOffset = 0.5 * (maxWidth - width);
       imgWidth = width;
-      width = params.size.width;
+      width = maxWidth;
       break;
 
       case 'left':
@@ -1037,7 +1059,7 @@ class _Image extends _Span
 
         if (count > 0)
         {
-          var x = xoffset + lineOffset;
+          var x = xoffset + paraLeft + lineOffset;
           for (int i = 0; i < count; i++)
           {
             params.canvas
@@ -1057,7 +1079,7 @@ class _Image extends _Span
       {
         if (count > 0)
         {
-          var x = xoffset + lineOffset;
+          var x = xoffset + paraLeft + lineOffset;
           for (int i = 0; i < count; i++)
           {
             _paintDrawable(params.canvas, x, yoffset + yOffset, imgWidth, height);

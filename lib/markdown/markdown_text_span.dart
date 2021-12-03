@@ -473,6 +473,40 @@ class MarkdownTextConfig
     return _fontWeightFromStringMap[text.toLowerCase()] ?? FontWeight.normal;
   }
 
+  bool _setInfoByStyle(_WordStyleInfo styleInfo,String className, bool bullet)
+  {
+      bool result = false;
+      final cfg = get<Map<String, dynamic>?>(['textStyles', className]);
+
+      if (cfg != null)
+      {
+        styleInfo.fontSize = get<double>(['fontSize'], defValue: 20.0, config: cfg);
+
+        final styleStr = get<String>(['fontStyle'], defValue: 'normal', config: cfg);
+        styleInfo.fontStyle = _fontStyleFromString(styleStr);
+        styleInfo.fontWeight = _fontWeightFromString(styleStr);
+
+        final colorStr = get<String?>(['color'], config: cfg);
+        styleInfo.color = colorFormText(colorStr ?? 'Black');
+        styleInfo.yOffset = 0.0;
+
+        styleInfo.leftMargin = get<double>(['marginLeft'], defValue: 0.0, config: cfg);
+        styleInfo.rightMargin = get<double>(['marginRight'], defValue: 0.0, config: cfg);
+        styleInfo.borderPadding = get<double>(['borderPadding'], defValue: 0.0, config: cfg);
+        styleInfo.borderColor = colorFormText(get<String?>(['color'], config: cfg) ?? 'Silver');
+        styleInfo.borderRadius = get<double>(['borderRadius'], defValue: 0.0, config: cfg);
+
+        if (bullet)
+        {
+          //yOffset = fontSize * 0.5;
+          styleInfo.fontSize *= 0.3333;
+          styleInfo.yOffset = -styleInfo.fontSize * 0.3333;
+        }
+      }
+
+      return result;
+  }
+
   _WordStyle getTextStyle(MarkdownParagraph para, {MarkdownWord? word, bool bullet = false})
   {
     final fullStyle = para.fullClassName(word);
@@ -480,32 +514,8 @@ class MarkdownTextConfig
 
     if (result == null)
     {
-      var cfg = get<Map<String, dynamic>>(['textStyles', para.masterClass], defValue: _emptyCfg);
 
       final styleInfo = _WordStyleInfo();
-
-      styleInfo.fontSize = get<double>(['fontSize'], defValue: 20.0, config: cfg);
-
-      final styleStr = get<String>(['fontStyle'], defValue: 'normal', config: cfg);
-      styleInfo.fontStyle = _fontStyleFromString(styleStr);
-      styleInfo.fontWeight = _fontWeightFromString(styleStr);
-
-      final colorStr = get<String?>(['color'], config: cfg);
-      styleInfo.color = colorFormText(colorStr ?? 'Black');
-      var yOffset = 0.0;
-
-      styleInfo.leftMargin = get<double>(['marginLeft'], defValue: 0.0, config: cfg);
-      styleInfo.rightMargin = get<double>(['marginRight'], defValue: 0.0, config: cfg);
-      styleInfo.borderPadding = get<double>(['borderPadding'], defValue: 0.0, config: cfg);
-      styleInfo.borderColor = colorFormText(get<String?>(['color'], config: cfg) ?? 'Silver');
-      styleInfo.borderRadius = get<double>(['borderRadius'], defValue: 0.0, config: cfg);
-
-      if (bullet)
-      {
-        //yOffset = fontSize * 0.5;
-        styleInfo.fontSize *= 0.3333;
-        yOffset = -styleInfo.fontSize * 0.3333;
-      }
 
       switch (word?.style)
       {
@@ -526,7 +536,9 @@ class MarkdownTextConfig
         break;
       }
 
-      result = _WordStyle(styleInfo, yOffset);
+      _setInfoByStyle(styleInfo,para.masterClass,bullet);
+
+      result = _WordStyle(styleInfo);
 
       _state.textStyles[fullStyle] = result;
     }
@@ -581,12 +593,13 @@ class _WordStyle
   Color borderColor;
   double borderRadius;
 
-  _WordStyle(_WordStyleInfo wsInfo, this.yOffseet)
+  _WordStyle(_WordStyleInfo wsInfo)
   : leftMargin = wsInfo.leftMargin,
   rightMargin = wsInfo.rightMargin,
   borderColor = wsInfo.borderColor,
   borderPadding = wsInfo.borderPadding,
   borderRadius = wsInfo.borderRadius,
+  yOffseet = wsInfo.yOffset,
   textStyle = TextStyle
   (
     color: wsInfo.color,

@@ -502,6 +502,8 @@ class MarkdownTextConfig
           styleInfo.fontSize *= 0.3333;
           styleInfo.yOffset = -styleInfo.fontSize * 0.3333;
         }
+
+        result = true;
       }
 
       return result;
@@ -536,7 +538,18 @@ class MarkdownTextConfig
         break;
       }
 
-      _setInfoByStyle(styleInfo,para.masterClass,bullet);
+      if (!_setInfoByStyle(styleInfo, fullStyle, bullet))
+      {
+        if (!_setInfoByStyle(styleInfo, para.fullClassName(), bullet))
+        {
+          _setInfoByStyle(styleInfo,para.masterClass,bullet);
+          _setInfoByStyle(styleInfo,para.subclass,bullet);
+        }
+        if (word != null)
+        {
+          _setInfoByStyle(styleInfo,word.style,bullet);
+        }
+      }      
 
       result = _WordStyle(styleInfo);
 

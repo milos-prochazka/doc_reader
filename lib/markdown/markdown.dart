@@ -65,7 +65,7 @@ final _refLinkLinkRegExp = RegExp(r'^\s{0,3}(\[(\.?)(.+)\])\:\s+(.+)*$', multiLi
 final _namedAttributeRegExp = RegExp(r'(\w+)\=(\S+)', multiLine: false);
 
 /// Vyhledani escape eskvenci ve vstupnim textu
-final _escapeCharRegExp = RegExp(r'\\[\\\`\*\_\{\}\[\]\(\)\#\+\-\.\!\|\s]', multiLine: false);
+final _escapeCharRegExp = RegExp(r'\\[\\\`\*\_\{\}\[\]\(\)\#\+\-\.\!\|\:\s]', multiLine: false);
 
 /// Vyhledani escapovanych znaku
 final _escapedCharRegExp = RegExp(r'[\uE000-\uE0FF]', multiLine: false);
@@ -87,6 +87,7 @@ final _escapedCharRegExp = RegExp(r'[\uE000-\uE0FF]', multiLine: false);
 /// . E02E
 /// ! E021
 /// | E07C
+/// : E03A
 
 class Markdown
 {
@@ -96,6 +97,9 @@ class Markdown
   final namedLinks = <String, String>{};
   // Tridy
   final classes = <String, Map<String, String>>{};
+  // Vsechny odstavce odsazene pomoci mezere 
+  final indentParas = <MarkdownParagraph>{};
+
 
   writeMarkdownString(String text)
   {
@@ -104,7 +108,7 @@ class Markdown
 
     for (int i = 0; i < lines.length; i++)
     {
-      String line = lines[i];
+      String line = lines[i].trimRight();
 
       appLog_debug('line:"$line"');
 
@@ -220,12 +224,13 @@ class Markdown
         while (head != null);
 
         final indent = _indentBlockRegExp.firstMatch(line);
-        if (indent != null)
+        final indentPara = indent != null && blockClass.isEmpty; 
+        if (indentPara)
         {
           hClass = 'indent';
+          
         }
-
-        if (blockClass.isNotEmpty)
+        else if (blockClass.isNotEmpty)
         {
           hClass = blockClass;
         }
@@ -233,16 +238,37 @@ class Markdown
         line = line.substring(headEnd);
         appLog_debug('[$pStart] [$hClass] "$line"');
 
-        paragraphs.add(MarkdownParagraph(text: line, lineDecoration: pStart, pargraphClass: hClass));
+        final newPara = MarkdownParagraph(text: line, lineDecoration: pStart, pargraphClass: hClass);
+        if (indentPara)
+        {
+          indentParas.add(newPara);
+        }
+        paragraphs.add(newPara);
       }
     }
 
-    _doProcess();
+    _doProcess(indentParas);
   }
 
-  void _doProcess()
+  void _doProcess(Set<MarkdownParagraph> indentParas)
   {
     // Slouceni odstavcu
+    /*for (int i = 1; i < paragraphs.length;)
+    {
+      final para = paragraphs[i];
+      final prevPara = paragraphs[i - 1];
+
+      if( para.words.length==1 && para.words[0].text == ':')
+      {
+        prevPara.words.add(MarkdownWord()..text=' '..lineBreak=true);
+        paragraphs.removeAt(i);
+      }
+      else
+      {
+        i++;
+      }
+    }*/
+
     /*for (int i = 1; i < paragraphs.length;)
     {
       final para = paragraphs[i];
@@ -266,14 +292,77 @@ class Markdown
       }
     }*/
 
+    // Slouceni odstavcu odsazenych pomoci mezer
+    for (int i = 1; i < paragraphs.length;i++)
+    {
+      final para = paragraphs[i];
+      if (indentParas.contains(para))
+      {
+        int end = -1;
+        
+        for (int j=i+1;j < paragraphs.length;j++)
+        {
+          final nextPara = paragraphs[j];
+          if (!nextPara.isEmpty)
+          {
+            if (indentParas.contains(nextPara))
+            {
+              end = j;
+              break;
+            }
+          }
+        }
+
+        if (end>0)
+        {
+          for(int j=i+1; j<end; j++)
+          {
+            final nextPara = paragraphs[j];
+            nextPara.masterClass = para.masterClass;
+            nextPara.words.add(MarkdownWord.newLine());
+          }
+        }
+      }
+
+    }
+
+
+    // Vypusteni prazdnych odstavcu
+    for (int i = 1; i < paragraphs.length;i++)
+    {
+      final para = paragraphs[i];
+      final prevPara = paragraphs[i - 1];
+
+      if (prevPara.masterClass == 'p')
+      {
+        if(prevPara.isEmpty)
+        {
+          if (para.isBlankLine)
+          {
+            paragraphs.removeAt(i);
+            i--;
+          }
+          else
+          {
+            prevPara.words.add(MarkdownWord.newLine());
+          }
+        }
+      }
+      else if (prevPara.isEmpty)
+         {
+           prevPara.words.add(MarkdownWord.newLine());
+         }
+      
+    }
+
     // Nalezeni odstavcu tesne za sebou (zobrazene bez mezery)
     for (int i = 1; i < paragraphs.length; i++)
     {
       final para = paragraphs[i];
       final prevPara = paragraphs[i - 1];
 
-      if (para.masterClass == prevPara.masterClass && (const ['p', 'indent']).contains(para.masterClass))
-      {
+      if ( para.masterClass == prevPara.masterClass && (const ['p', 'indent']).contains(para.masterClass))
+      {        
         prevPara.lastInClass = false;
         para.firstInClass = false;
       }
@@ -616,6 +705,7 @@ class MarkdownParagraph
     }
   }*/
 
+  
   writeText(String text)
   {
     const MATCH_NONE = 0;
@@ -888,6 +978,10 @@ class MarkdownParagraph
       words.add(word);
     }
   }
+
+  bool get isBlankLine=> masterClass=='p' && words.isEmpty;
+
+  bool get isEmpty=>words.isEmpty;
 }
 
 enum MarkdownParagraphType { normalParagraph, linkReferece }
@@ -1015,6 +1109,11 @@ class MarkdownDecoration
         {
           result.add(MarkdownDecoration(text, i++));
         }
+
+        while (i<text.length && text.codeUnitAt(i) == /*$.*/(0x2E))
+        {
+          i++;
+        }
       }
       else
       {
@@ -1034,6 +1133,13 @@ class MarkdownWord
   String text = '';
   bool lineBreak = false;
   final attribs = <String, Object?>{};
+
+  MarkdownWord();
+
+  factory MarkdownWord.newLine()
+  {
+    return MarkdownWord()..lineBreak=true;
+  }
 
   @override
   String toString()

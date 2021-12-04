@@ -135,6 +135,7 @@ class MarkdownTextSpan implements IDocumentSpan
 
     for (final word in paragraph.words)
     {
+
       //const style = TextStyle(color: Color.fromARGB(255, 0, 0, 160), fontSize: 20.0, fontFamily: "Times New Roman", fontWeight: FontWeight.bold);
       final style = config.getTextStyle(paragraph, word: word);
       _Span span;
@@ -142,7 +143,7 @@ class MarkdownTextSpan implements IDocumentSpan
       switch (word.type)
       {
         case MarkdownWord_Type.image:
-        span = _Image(word.attribs, document, style.textStyle, word.stickToNext,left,right).calcMetrics(parameters);
+        span = _Image(word.attribs, document, style.textStyle, word.stickToNext, left, right).calcMetrics(parameters);
         break;
 
         default:
@@ -311,12 +312,13 @@ const _defaultConfig =
       "fontSize": 20,
       "fontStyle": "normal", // normal, bold, bold_italic
     },
+    "qaqa": {"color": "cyan", "borderColor": "blue"},
     "indent":
     {
-      "marginLeft": 80,
-      "marginRight": 80,
+      "marginLeft": 40,
+      "marginRight": 40,
       "borderPadding": 10,
-      "borderColor": "#8edd",
+      "borderColor": "#fedd",
       "borderRadius": 20,
       "fontSize": 20,
       "fontStyle": "normal", // normal, bold, bold_italic
@@ -473,40 +475,35 @@ class MarkdownTextConfig
     return _fontWeightFromStringMap[text.toLowerCase()] ?? FontWeight.normal;
   }
 
-  bool _setInfoByStyle(_WordStyleInfo styleInfo,String className, bool bullet)
+  bool _setInfoByStyle(_WordStyleInfo styleInfo, String className)
   {
-      bool result = false;
-      final cfg = get<Map<String, dynamic>?>(['textStyles', className]);
+    bool result = false;
+    final cfg = get<Map<String, dynamic>?>(['textStyles', className]);
 
-      if (cfg != null)
-      {
-        styleInfo.fontSize = get<double>(['fontSize'], defValue: 20.0, config: cfg);
+    if (cfg != null)
+    {
+      styleInfo.fontSize = get<double>(['fontSize'], defValue: styleInfo.fontSize, config: cfg);
 
-        final styleStr = get<String>(['fontStyle'], defValue: 'normal', config: cfg);
-        styleInfo.fontStyle = _fontStyleFromString(styleStr);
-        styleInfo.fontWeight = _fontWeightFromString(styleStr);
+      styleInfo.styleStr = get<String>(['fontStyle'], defValue: styleInfo.styleStr, config: cfg);
+      styleInfo.fontStyle = _fontStyleFromString(styleInfo.styleStr);
+      styleInfo.fontWeight = _fontWeightFromString(styleInfo.styleStr);
 
-        final colorStr = get<String?>(['color'], config: cfg);
-        styleInfo.color = colorFormText(colorStr ?? 'Black');
-        styleInfo.yOffset = 0.0;
+      final colorStr = get<String?>(['color'], defValue: textFromColor(styleInfo.color), config: cfg);
+      styleInfo.color = colorFormText(colorStr ?? 'Black');
 
-        styleInfo.leftMargin = get<double>(['marginLeft'], defValue: 0.0, config: cfg);
-        styleInfo.rightMargin = get<double>(['marginRight'], defValue: 0.0, config: cfg);
-        styleInfo.borderPadding = get<double>(['borderPadding'], defValue: 0.0, config: cfg);
-        styleInfo.borderColor = colorFormText(get<String?>(['color'], config: cfg) ?? 'Silver');
-        styleInfo.borderRadius = get<double>(['borderRadius'], defValue: 0.0, config: cfg);
+      styleInfo.leftMargin = get<double>(['marginLeft'], defValue: styleInfo.leftMargin, config: cfg);
+      styleInfo.rightMargin = get<double>(['marginRight'], defValue: styleInfo.rightMargin, config: cfg);
+      styleInfo.borderPadding = get<double>(['borderPadding'], defValue: styleInfo.borderPadding, config: cfg);
+      styleInfo.borderColor = colorFormText
+      (
+        get<String?>(['borderColor'], defValue: textFromColor(styleInfo.borderColor), config: cfg) ?? 'Silver'
+      );
+      styleInfo.borderRadius = get<double>(['borderRadius'], defValue: styleInfo.borderRadius, config: cfg);
 
-        if (bullet)
-        {
-          //yOffset = fontSize * 0.5;
-          styleInfo.fontSize *= 0.3333;
-          styleInfo.yOffset = -styleInfo.fontSize * 0.3333;
-        }
+      result = true;
+    }
 
-        result = true;
-      }
-
-      return result;
+    return result;
   }
 
   _WordStyle getTextStyle(MarkdownParagraph para, {MarkdownWord? word, bool bullet = false})
@@ -516,40 +513,57 @@ class MarkdownTextConfig
 
     if (result == null)
     {
-
       final styleInfo = _WordStyleInfo();
+      var wordStyle = false;
 
-      switch (word?.style)
+      if (!_setInfoByStyle(styleInfo, fullStyle))
       {
-        case '_':
-        case '*':
-        styleInfo.fontStyle = FontStyle.italic;
-        break;
-
-        case '__':
-        case '**':
-        styleInfo.fontWeight = FontWeight.bold;
-        break;
-
-        case '___':
-        case '***':
-        styleInfo.fontStyle = FontStyle.italic;
-        styleInfo.fontWeight = FontWeight.bold;
-        break;
-      }
-
-      if (!_setInfoByStyle(styleInfo, fullStyle, bullet))
-      {
-        if (!_setInfoByStyle(styleInfo, para.fullClassName(), bullet))
+        if (!_setInfoByStyle(styleInfo, para.fullClassName()))
         {
-          _setInfoByStyle(styleInfo,para.masterClass,bullet);
-          _setInfoByStyle(styleInfo,para.subclass,bullet);
+          _setInfoByStyle(styleInfo, para.masterClass);
+          _setInfoByStyle(styleInfo, para.subclass);
         }
         if (word != null)
         {
-          _setInfoByStyle(styleInfo,word.style,bullet);
+          if (_setInfoByStyle(styleInfo, word.style))
+          {
+            wordStyle = true;
+          }
         }
-      }      
+      }
+      else
+      {
+        wordStyle = true;
+      }
+
+      if (!wordStyle)
+      {
+        switch (word?.style)
+        {
+          case '_':
+          case '*':
+          styleInfo.fontStyle = FontStyle.italic;
+          break;
+
+          case '__':
+          case '**':
+          styleInfo.fontWeight = FontWeight.bold;
+          break;
+
+          case '___':
+          case '***':
+          styleInfo.fontStyle = FontStyle.italic;
+          styleInfo.fontWeight = FontWeight.bold;
+          break;
+        }
+      }
+
+      if (bullet)
+      {
+        //yOffset = fontSize * 0.5;
+        styleInfo.fontSize *= 0.3333;
+        styleInfo.yOffset = -styleInfo.fontSize * 0.3333;
+      }
 
       result = _WordStyle(styleInfo);
 
@@ -585,6 +599,7 @@ class MarkdownTextConfig
 class _WordStyleInfo
 {
   double fontSize = 20.0;
+  String styleStr = 'normal';
   FontStyle? fontStyle;
   FontWeight? fontWeight;
   Color color = Colors.black;
@@ -592,7 +607,7 @@ class _WordStyleInfo
   double leftMargin = 0.0;
   double rightMargin = 0.0;
   double borderPadding = 0.0;
-  Color borderColor = Colors.black;
+  Color borderColor = Colors.grey;
   double borderRadius = 0.0;
 }
 
@@ -822,8 +837,8 @@ class _Image extends _Span
 
   Document? document;
 
-  _Image(this.attribs, this.document, this.style, this.stickToNext, this.paraLeft, paraRight) :
-      maxWidth = paraRight-paraLeft;
+  _Image(this.attribs, this.document, this.style, this.stickToNext, this.paraLeft, paraRight)
+  : maxWidth = paraRight - paraLeft;
 
   double get _fontSize => style.fontSize ?? 20;
 

@@ -194,3 +194,8 @@ Color colorFormText(String text, [Color defColor = Colors.black])
 {
   return Color(intColorFromText(text, defColor.value));
 }
+
+String textFromColor(Color color)
+{
+  return '#${color.value.toRadixString(16).padLeft(8, '0')}';
+}

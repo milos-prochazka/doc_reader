@@ -13,13 +13,37 @@ import 'markdown/markdown_text_span.dart';
 
 // **![toto je popis obrázku](media/pngegg.png)**
 const testMarkdown = r'''
+
+# Head 1
+## Head 2
+#### Head 3
+#### Head 4
+##### Head 5
+###### Head 6
+
+Head1 uderline
+=============
+
+Head2 underline
+---------------
+
+# Nadpis
+A text za ním.
+Další řádek.
+
+Řádek po mezeře
+
+    *Blok* textu (zdrojový text)
+    další řádek odsazeného textu
+
+    třetí řádek
+
 ```
-![toto je popis obrázku](media/vector.svg = 5em x  tight-line ) sds djks djh sds dsdh sdh sdhj sdhsd sdhs djh hss dsdj hsdhj sdh sdhs dhsd sdhd hdhd dhdh sdh sdh sdsdj sdjhsd hd sdhjs dhsdsd
- 1. prvni druhy ŘÝŠČŠĚÁĚÍÁÚŮ
- 2. BOFOD DSSOSDO
- 3. treti  ctvrty
+Zrojový text v úvozovkách
+
+Další řádek zdrojového textu
 ```
-paty
+
 ''';
 const test = r'''
 a**h**oj ![toto je popis obrázku](media/vector.svg = 5em x  tight-center-line) aasjkaskjasas jakokoles mikrosek jarosek marosek doloker

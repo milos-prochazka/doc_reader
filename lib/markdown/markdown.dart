@@ -13,6 +13,9 @@ final _headRegExp = RegExp(r'\s*((\>+\s*)|([\-\+\*]\s+)|(\#{1,6}\s+)|(\d+\.\s)|(
 /// Detekce znaku # na konci nadpisu (odstrani se)
 final _headEndRegExp = RegExp(r'\s*\#{1,}\s*$', multiLine: false);
 
+/// Detekce znaku # na konci nadpisu s escapovanim (neodstrani se)
+final _headEcapeEndRegExp = RegExp(r'\uE023[\uE023#]*\s*$', multiLine: false);
+
 
 /// Detekce odsazeneho bloku (mezery na zacatku)
 final _indentBlockRegExp = RegExp(r'^\s{3,}', multiLine: false);
@@ -213,7 +216,9 @@ class Markdown
             {
               hClass = 'h${t.length}';
               pStart = line.substring(0, headEnd);
-              line = line.replaceAll(_headEndRegExp, '');
+              if (!_headEcapeEndRegExp.hasMatch(line)) {
+                line = line.replaceAll(_headEndRegExp, '');
+              }
               headEnd = head.end;
               head = null;
             }

@@ -10,6 +10,10 @@ final _newLineRegex = RegExp(r'([\r\n])|(\r\n)]', multiLine: true);
 /// Detekce nadpisu a odsazeni
 final _headRegExp = RegExp(r'\s*((\>+\s*)|([\-\+\*]\s+)|(\#{1,6}\s+)|(\d+\.\s)|([A-Za-z]\.\s))', multiLine: false);
 
+/// Detekce znaku # na konci nadpisu (odstrani se)
+final _headEndRegExp = RegExp(r'\s*\#{1,}\s*$', multiLine: false);
+
+
 /// Detekce odsazeneho bloku (mezery na zacatku)
 final _indentBlockRegExp = RegExp(r'^\s{3,}', multiLine: false);
 
@@ -65,7 +69,8 @@ final _refLinkLinkRegExp = RegExp(r'^\s{0,3}(\[(\.?)(.+)\])\:\s+(.+)*$', multiLi
 final _namedAttributeRegExp = RegExp(r'(\w+)\=(\S+)', multiLine: false);
 
 /// Vyhledani escape eskvenci ve vstupnim textu
-final _escapeCharRegExp = RegExp(r'\\[\\\`\*\_\{\}\[\]\(\)\#\+\-\.\!\|\:\s]', multiLine: false);
+//final _escapeCharRegExp = RegExp(r'\\[\\\`\*\_\{\}\[\]\(\)\#\+\-\.\!\|\:\s]', multiLine: false);
+final _escapeCharRegExp = RegExp(r'\\[\x21-0x2f\x3a-\x40\x5b-\x60\x7b-\x7e]', multiLine: false);
 
 /// Vyhledani escapovanych znaku
 final _escapedCharRegExp = RegExp(r'[\uE000-\uE0FF]', multiLine: false);
@@ -104,7 +109,7 @@ class Markdown
   writeMarkdownString(String text)
   {
     var blockClass = '';
-    final lines = MarkdownParagraph.escape(text).split(_newLineRegex);
+    final lines =  MarkdownParagraph.escape(detab(text, 4)).split(_newLineRegex);
 
     for (int i = 0; i < lines.length; i++)
     {
@@ -208,6 +213,7 @@ class Markdown
             {
               hClass = 'h${t.length}';
               pStart = line.substring(0, headEnd);
+              line = line.replaceAll(_headEndRegExp, '');
               headEnd = head.end;
               head = null;
             }

@@ -7,6 +7,12 @@ import 'package:tuple/tuple.dart';
 /// Deleni textu na radky
 final _newLineRegex = RegExp(r'([\r\n])|(\r\n)]', multiLine: true);
 
+/// Detekce radku ktere se nespojuji s  ( zacatek #, []:, * , - , + , 1. , a., A. , ```, nebo horizontalni cara)
+final _noMergeRegExp = RegExp(r'(^\s*#{1,6}\s.*)|(^\[.*\]\:)|(^\s*\>+\s*)|(^\s*[\-\+\*]\s+)|(^\s*\#{1,6}\s+)|(^\s*\d+\.\s)|(^\s*[A-Za-z]\.\s)|(^\s*[\-\=\*\`]{3,}\s*$)', multiLine: false);
+
+/// Detekce potencialnniho potrzeni nadpisu 
+final _headUnderlineRegExp = RegExp(r'^\s*[\-\=]{3,}\s*', multiLine: false);
+
 /// Detekce nadpisu a odsazeni
 final _headRegExp = RegExp(r'\s*((\>+\s*)|([\-\+\*]\s+)|(\#{1,6}\s+)|(\d+\.\s)|([A-Za-z]\.\s))', multiLine: false);
 
@@ -112,7 +118,8 @@ class Markdown
   writeMarkdownString(String text)
   {
     var blockClass = '';
-    final lines =  MarkdownParagraph.escape(detab(text, 4)).split(_newLineRegex);
+    //final lines =  MarkdownParagraph.escape(detab(text, 4)).split(_newLineRegex);
+    final lines = textToLines(text);
 
     for (int i = 0; i < lines.length; i++)
     {
@@ -259,6 +266,60 @@ class Markdown
     }
 
     _doProcess(indentParas);
+  }
+
+  String _textLine(List<String> lines,int index)
+  {
+      return (index>=0 && index<lines.length) ? lines[index].trimRight() : '';
+  }
+
+  List<String> textToLines(String text)
+  {
+     final lines =  detab(MarkdownParagraph.escape(text), 4).split(_newLineRegex);
+     final result = <String>[];
+
+     for (var i=0; i<lines.length; i++)
+     {
+       final line = _textLine(lines,i);
+
+       if (line.isEmpty)
+       {
+         result.add(line);
+       }
+       else if (_noMergeRegExp.hasMatch(line))
+       {
+         result.add(line);
+       }
+       else 
+       {
+          var nextLine = _textLine(lines,i+1);
+
+          if (nextLine.isEmpty || _noMergeRegExp.hasMatch(nextLine) || _headUnderlineRegExp.hasMatch(_textLine(lines,i+2)))
+          {
+            result.add(line);
+          }
+          else
+          {
+            final builder = StringBuffer(line);
+            do
+            {
+              builder.write('\n');
+              builder.write(nextLine);
+              i++;
+              nextLine = _textLine(lines,i+1);
+            }
+            while ( !( nextLine.isEmpty || 
+                       _noMergeRegExp.hasMatch(nextLine) || 
+                      _headUnderlineRegExp.hasMatch(_textLine(lines,i+2))));
+
+            result.add(builder.toString());
+          }
+       }
+
+     }
+
+
+     return result;
   }
 
   void _doProcess(Set<MarkdownParagraph> indentParas)
@@ -859,6 +920,13 @@ class MarkdownParagraph
               writeWord(wordBuffer, styleStack, false);
               readIndex++;
               break;
+
+              case '\n': // Novy radek
+              writeWord(wordBuffer, styleStack, false);
+               words.add(MarkdownWord.newLine());
+              readIndex++;
+              break;
+
 
               case '!': // Obrazek (mozna)
               readIndex++;

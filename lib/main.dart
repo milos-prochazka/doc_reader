@@ -13,7 +13,7 @@ import 'markdown/markdown_text_span.dart';
 
 // **![toto je popis obrázku](media/pngegg.png)**
 const testMarkdown = r'''
-*to je text 
+*to je text
 druha radka*
 Nadpis
 ------

@@ -8,9 +8,13 @@ import 'package:tuple/tuple.dart';
 final _newLineRegex = RegExp(r'([\r\n])|(\r\n)]', multiLine: true);
 
 /// Detekce radku ktere se nespojuji s  ( zacatek #, []:, * , - , + , 1. , a., A. , ```, nebo horizontalni cara)
-final _noMergeRegExp = RegExp(r'(^\s*#{1,6}\s.*)|(^\[.*\]\:)|(^\s*\>+\s*)|(^\s*[\-\+\*]\s+)|(^\s*\#{1,6}\s+)|(^\s*\d+\.\s)|(^\s*[A-Za-z]\.\s)|(^\s*[\-\=\*\`]{3,}\s*$)', multiLine: false);
+final _noMergeRegExp = RegExp
+(
+  r'(^\s*#{1,6}\s.*)|(^\[.*\]\:)|(^\s*\>+\s*)|(^\s*[\-\+\*]\s+)|(^\s*\#{1,6}\s+)|(^\s*\d+\.\s)|(^\s*[A-Za-z]\.\s)|(^\s*[\-\=\*\`]{3,}\s*$)',
+  multiLine: false
+);
 
-/// Detekce potencialnniho potrzeni nadpisu 
+/// Detekce potencialnniho potrzeni nadpisu
 final _headUnderlineRegExp = RegExp(r'^\s*[\-\=]{3,}\s*', multiLine: false);
 
 /// Detekce nadpisu a odsazeni
@@ -21,7 +25,6 @@ final _headEndRegExp = RegExp(r'\s*\#{1,}\s*$', multiLine: false);
 
 /// Detekce znaku # na konci nadpisu s escapovanim (neodstrani se)
 final _headEcapeEndRegExp = RegExp(r'\uE023[\uE023#]*\s*$', multiLine: false);
-
 
 /// Detekce odsazeneho bloku (mezery na zacatku)
 final _indentBlockRegExp = RegExp(r'^\s{3,}', multiLine: false);
@@ -111,15 +114,14 @@ class Markdown
   final namedLinks = <String, String>{};
   // Tridy
   final classes = <String, Map<String, String>>{};
-  // Vsechny odstavce odsazene pomoci mezere 
+  // Vsechny odstavce odsazene pomoci mezere
   final indentParas = <MarkdownParagraph>{};
-
 
   writeMarkdownString(String text)
   {
     var blockClass = '';
-    //final lines =  MarkdownParagraph.escape(detab(text, 4)).split(_newLineRegex);
-    final lines = textToLines(text);
+    final lines = detab(MarkdownParagraph.escape(text), 4).split(_newLineRegex);
+    //final lines = textToLines(text);
 
     for (int i = 0; i < lines.length; i++)
     {
@@ -223,7 +225,8 @@ class Markdown
             {
               hClass = 'h${t.length}';
               pStart = line.substring(0, headEnd);
-              if (!_headEcapeEndRegExp.hasMatch(line)) {
+              if (!_headEcapeEndRegExp.hasMatch(line))
+              {
                 line = line.replaceAll(_headEndRegExp, '');
               }
               headEnd = head.end;
@@ -242,11 +245,10 @@ class Markdown
         while (head != null);
 
         final indent = _indentBlockRegExp.firstMatch(line);
-        final indentPara = indent != null && blockClass.isEmpty; 
+        final indentPara = indent != null && blockClass.isEmpty;
         if (indentPara)
         {
           hClass = 'indent';
-          
         }
         else if (blockClass.isNotEmpty)
         {
@@ -268,63 +270,100 @@ class Markdown
     _doProcess(indentParas);
   }
 
-  String _textLine(List<String> lines,int index)
+  String _textLine(List<String> lines, int index)
   {
-      return (index>=0 && index<lines.length) ? lines[index].trimRight() : '';
+    return (index >= 0 && index < lines.length) ? lines[index].trimRight() : '';
   }
 
   List<String> textToLines(String text)
   {
-     final lines =  detab(MarkdownParagraph.escape(text), 4).split(_newLineRegex);
-     final result = <String>[];
+    final lines = detab(MarkdownParagraph.escape(text), 4).split(_newLineRegex);
+    final result = <String>[];
 
-     for (var i=0; i<lines.length; i++)
-     {
-       final line = _textLine(lines,i);
+    for (var i = 0; i < lines.length; i++)
+    {
+      final line = _textLine(lines, i);
 
-       if (line.isEmpty)
-       {
-         result.add(line);
-       }
-       else if (_noMergeRegExp.hasMatch(line))
-       {
-         result.add(line);
-       }
-       else 
-       {
-          var nextLine = _textLine(lines,i+1);
+      if (line.isEmpty)
+      {
+        result.add(line);
+      }
+      else if (_noMergeRegExp.hasMatch(line))
+      {
+        result.add(line);
+      }
+      else
+      {
+        var nextLine = _textLine(lines, i + 1);
 
-          if (nextLine.isEmpty || _noMergeRegExp.hasMatch(nextLine) || _headUnderlineRegExp.hasMatch(_textLine(lines,i+2)))
+        if
+        (
+          nextLine.isEmpty ||
+          _noMergeRegExp.hasMatch(nextLine) ||
+          _headUnderlineRegExp.hasMatch(_textLine(lines, i + 2))
+        )
+        {
+          result.add(line);
+        }
+        else
+        {
+          final builder = StringBuffer(line);
+          do
           {
-            result.add(line);
+            builder.write('\n');
+            builder.write(nextLine);
+            i++;
+            nextLine = _textLine(lines, i + 1);
           }
-          else
-          {
-            final builder = StringBuffer(line);
-            do
-            {
-              builder.write('\n');
-              builder.write(nextLine);
-              i++;
-              nextLine = _textLine(lines,i+1);
-            }
-            while ( !( nextLine.isEmpty || 
-                       _noMergeRegExp.hasMatch(nextLine) || 
-                      _headUnderlineRegExp.hasMatch(_textLine(lines,i+2))));
+          while
+          (
+            !
+            (
+              nextLine.isEmpty ||
+              _noMergeRegExp.hasMatch(nextLine) ||
+              _headUnderlineRegExp.hasMatch(_textLine(lines, i + 2))
+            )
+          );
 
-            result.add(builder.toString());
-          }
-       }
+          result.add(builder.toString());
+        }
+      }
+    }
 
-     }
-
-
-     return result;
+    return result;
   }
 
   void _doProcess(Set<MarkdownParagraph> indentParas)
   {
     // Slouceni odstavcu
+    for (int i = 1; i < paragraphs.length;)
+    {
+      final para = paragraphs[i];
+      final prevPara = paragraphs[i - 1];
+      final clsComb = '${prevPara.masterClass}.${para.masterClass}';
+
+      bool merge = false;
+
+      switch (clsComb)
+      {
+        case 'indent.p':
+      }
+
+      if (para.masterClass == prevPara.masterClass && (const ['p', 'indent']).contains(para.masterClass))
+      {
+        prevPara.words.add
+        (
+          MarkdownWord()
+          ..text = ' '
+          ..lineBreak = true
+        );
+        paragraphs.removeAt(i);
+      }
+      else
+      {
+        i++;
+      }
+    }
     /*for (int i = 1; i < paragraphs.length;)
     {
       final para = paragraphs[i];
@@ -365,14 +404,14 @@ class Markdown
     }*/
 
     // Slouceni odstavcu odsazenych pomoci mezer
-    for (int i = 1; i < paragraphs.length;i++)
+    for (int i = 1; i < paragraphs.length; i++)
     {
       final para = paragraphs[i];
       if (indentParas.contains(para))
       {
         int end = -1;
-        
-        for (int j=i+1;j < paragraphs.length;j++)
+
+        for (int j = i + 1; j < paragraphs.length; j++)
         {
           final nextPara = paragraphs[j];
           if (!nextPara.isEmpty)
@@ -385,9 +424,9 @@ class Markdown
           }
         }
 
-        if (end>0)
+        if (end > 0)
         {
-          for(int j=i+1; j<end; j++)
+          for (int j = i + 1; j < end; j++)
           {
             final nextPara = paragraphs[j];
             nextPara.masterClass = para.masterClass;
@@ -395,19 +434,17 @@ class Markdown
           }
         }
       }
-
     }
 
-
     // Vypusteni prazdnych odstavcu
-    for (int i = 1; i < paragraphs.length;i++)
+    for (int i = 1; i < paragraphs.length; i++)
     {
       final para = paragraphs[i];
       final prevPara = paragraphs[i - 1];
 
       if (prevPara.masterClass == 'p')
       {
-        if(prevPara.isEmpty)
+        if (prevPara.isEmpty)
         {
           if (para.isBlankLine)
           {
@@ -421,10 +458,9 @@ class Markdown
         }
       }
       else if (prevPara.isEmpty)
-         {
-           prevPara.words.add(MarkdownWord.newLine());
-         }
-      
+      {
+        prevPara.words.add(MarkdownWord.newLine());
+      }
     }
 
     // Nalezeni odstavcu tesne za sebou (zobrazene bez mezery)
@@ -433,8 +469,8 @@ class Markdown
       final para = paragraphs[i];
       final prevPara = paragraphs[i - 1];
 
-      if ( para.masterClass == prevPara.masterClass && (const ['p', 'indent']).contains(para.masterClass))
-      {        
+      if (para.masterClass == prevPara.masterClass && (const ['p', 'indent']).contains(para.masterClass))
+      {
         prevPara.lastInClass = false;
         para.firstInClass = false;
       }
@@ -777,7 +813,6 @@ class MarkdownParagraph
     }
   }*/
 
-  
   writeText(String text)
   {
     const MATCH_NONE = 0;
@@ -923,10 +958,9 @@ class MarkdownParagraph
 
               case '\n': // Novy radek
               writeWord(wordBuffer, styleStack, false);
-               words.add(MarkdownWord.newLine());
+              words.add(MarkdownWord.newLine());
               readIndex++;
               break;
-
 
               case '!': // Obrazek (mozna)
               readIndex++;
@@ -1058,9 +1092,9 @@ class MarkdownParagraph
     }
   }
 
-  bool get isBlankLine=> masterClass=='p' && words.isEmpty;
+  bool get isBlankLine => masterClass == 'p' && words.isEmpty;
 
-  bool get isEmpty=>words.isEmpty;
+  bool get isEmpty => words.isEmpty;
 }
 
 enum MarkdownParagraphType { normalParagraph, linkReferece }
@@ -1189,7 +1223,7 @@ class MarkdownDecoration
           result.add(MarkdownDecoration(text, i++));
         }
 
-        while (i<text.length && text.codeUnitAt(i) == /*$.*/(0x2E))
+        while (i < text.length && text.codeUnitAt(i) == /*$.*/(0x2E))
         {
           i++;
         }
@@ -1217,7 +1251,7 @@ class MarkdownWord
 
   factory MarkdownWord.newLine()
   {
-    return MarkdownWord()..lineBreak=true;
+    return MarkdownWord()..lineBreak = true;
   }
 
   @override

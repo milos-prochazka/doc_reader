@@ -135,7 +135,6 @@ class MarkdownTextSpan implements IDocumentSpan
 
     for (final word in paragraph.words)
     {
-
       //const style = TextStyle(color: Color.fromARGB(255, 0, 0, 160), fontSize: 20.0, fontFamily: "Times New Roman", fontWeight: FontWeight.bold);
       final style = config.getTextStyle(paragraph, word: word);
       _Span span;

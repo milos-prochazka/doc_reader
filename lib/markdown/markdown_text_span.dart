@@ -207,11 +207,14 @@ class MarkdownTextSpan implements IDocumentSpan
         x = y > leftHeight ? left : leftLeft;
       }
 
-      span.xOffset = x;
-      span.yOffset = y;
-      _spans.add(span);
-      line.add(span);
-      x += spanWidth + wordSpace;
+      if (!span.lineBreak)
+      {
+        span.xOffset = x;
+        span.yOffset = y;
+        _spans.add(span);
+        line.add(span);
+        x += spanWidth + wordSpace;
+      }
     }
 
     line.calcPosition(this, parameters);
@@ -507,7 +510,7 @@ class MarkdownTextConfig
 
   _WordStyle getTextStyle(MarkdownParagraph para, {MarkdownWord? word, bool bullet = false})
   {
-    final fullStyle = para.fullClassName(word);
+    final fullStyle = para.fullClassName(word, bullet);
     _WordStyle? result = _state.textStyles[fullStyle];
 
     if (result == null)
@@ -517,7 +520,7 @@ class MarkdownTextConfig
 
       if (!_setInfoByStyle(styleInfo, fullStyle))
       {
-        if (!_setInfoByStyle(styleInfo, para.fullClassName()))
+        if (!_setInfoByStyle(styleInfo, para.fullClassName(null, bullet)))
         {
           _setInfoByStyle(styleInfo, para.masterClass);
           _setInfoByStyle(styleInfo, para.subclass);

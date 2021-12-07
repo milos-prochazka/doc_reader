@@ -32,6 +32,33 @@ class MarkdownTextSpan implements IDocumentSpan
   {
     final result = <MarkdownTextSpan>[];
 
+    if (markdown.classes.isNotEmpty)
+    {
+      final classes = config.get<Map<String, dynamic>?>(['classes']);
+    
+      
+      if (classes != null)
+      {
+        
+        for (var markdownClass in markdown.classes.entries)
+        {
+          var cls = classes [markdownClass.key];
+          if (cls!=null)
+          {
+            for(final item in markdownClass.value.entries)
+            {
+              cls[item.key] = clone(item.value);
+            }
+          }
+          else
+          {
+            cls = clone(markdownClass.value);
+            classes[markdownClass.key] =  cls;
+          }
+        }
+      }
+    }
+
     for (final para in markdown.paragraphs)
     {
       result.add(MarkdownTextSpan(para, config, document));
@@ -296,7 +323,7 @@ class MarkdownTextSpan implements IDocumentSpan
   }
 }
 
-const _defaultConfig =
+final _defaultConfig =
 {
   // ••●○■ □▪▫◌○●◦ꓸ
   "bullets": ["        ●  ", "        □  ", "        ■  ", "        ●  ", "        □  ", "        ■  "],
@@ -307,7 +334,7 @@ const _defaultConfig =
     "paddingLeft": 5,
     "paddingRight": 5,
   },
-  "textStyles":
+  "classes":
   {
     "":
     {
@@ -363,8 +390,8 @@ const _defaultConfig =
 
 class MarkdownTextConfig
 {
-  dynamic config = _defaultConfig;
-  _MarkdownTextConfigState _state = _MarkdownTextConfigState();
+  dynamic config = clone(_defaultConfig);
+  _MarkdownTextConfigState _state = clone(_MarkdownTextConfigState());
   Key? _layoutKey;
 
   static final _emptyCfg = <String, dynamic>{};
@@ -480,7 +507,7 @@ class MarkdownTextConfig
   bool _setInfoByStyle(_WordStyleInfo styleInfo, String className)
   {
     bool result = false;
-    final cfg = get<Map<String, dynamic>?>(['textStyles', className]);
+    final cfg = get<Map<String, dynamic>?>(['classes', className]);
 
     if (cfg != null)
     {
@@ -504,6 +531,7 @@ class MarkdownTextConfig
 
       result = true;
     }
+
 
     return result;
   }

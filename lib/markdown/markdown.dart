@@ -43,10 +43,10 @@ final _longLinkRegExp = RegExp(r'(\!?)\[([^\]]+)\]\(([^\)]+)\)', multiLine: fals
 final _shortLinkRegExp = RegExp(r'(\!?)\[([^\]]+)\]', multiLine: false);
 
 /// Obrazek se zadanou velikosti
-/// img.jpg =1.5%x34em#right  gr2 = 1.5 , gr3 = % , gr8 = 34 , gr9 = em , gr14 = right
+/// img.jpg =1.5%x34em right .mycls gr2 = 1.5 , gr3 = % , gr8 = 34 , gr9 = em , gr14 = right, gr16 = mycls
 final _imageSizeRegExp = RegExp
 (
-  r'\s\=\s*(([\d\.]*)((px)|(em)|(%))?)?\s*[xX]\s*(([\d\.]*)((px)|(em)|(%))?)?(\s*([\.\#]?[\w\-]+))?',
+  r'\s\=\s*(([\d\.]*)((px)|(em)|(%))?)?\s*[xX]\s*(([\d\.]*)((px)|(em)|(%))?)?(\s*([\.\#]?[\w\-]+))?(\s*([\.\#]?[\w\-]+))?\s*$',
   multiLine: false,
   caseSensitive: false
 );
@@ -602,7 +602,38 @@ class Markdown
   @override
   String toString()
   {
+    bool insertHr = false;
     final builder = StringBuffer('Markdown: ${paragraphs.length} paragraphs\r\n');
+
+    if (classes.isNotEmpty)
+    {
+      builder.write('Classes:\r\n');
+      insertHr = true;
+      for (final cls in classes.entries)
+      {
+        builder.write('  ${cls.key}:');
+        for (final attr in cls.value.entries)
+        {
+          builder.write(' ${attr.key}:${attr.value}');
+        }
+        builder.write('\r\n');
+      }
+    }
+
+    if (namedLinks.isNotEmpty)
+    {
+      builder.write('Links:\r\n');
+      insertHr = true;
+      for (final link in namedLinks.entries)
+      {
+        builder.write("  ${link.key}: '${link.value}'\r\n");
+      }
+    }
+
+    if (insertHr)
+    {
+      builder.write('============\r\n');
+    }
 
     for (int i = 0; i < paragraphs.length; i++)
     {
@@ -1052,7 +1083,23 @@ class MarkdownParagraph
       final wu = info.group(3);
       final h = info.group(8) ?? '';
       final hu = info.group(9);
-      final al = info.group(14);
+      String? al;
+      String? cl;
+
+      for (final p in [info.group(14), info.group(16)])
+      {
+        if (p != null)
+        {
+          if (p.startsWith('.'))
+          {
+            cl = p.substring(1);
+          }
+          else
+          {
+            al = p;
+          }
+        }
+      }
 
       return <String, Object?>
       {
@@ -1061,7 +1108,8 @@ class MarkdownParagraph
         'widthUnit': wu,
         'height': double.tryParse(h),
         'heightUnit': hu,
-        'align': al
+        'align': al,
+        'class': cl,
       };
     }
     else
@@ -1261,7 +1309,7 @@ class MarkdownWord
   {
     final s = stickToNext ? '+' : ' ';
     final t = lineBreak ? '<break>' : text;
-    return '[$style]$s "$t"';
+    return "[$style]$s '$t' ${type.toString().replaceAll('MarkdownWord_Type.', '')}";
   }
 }
 

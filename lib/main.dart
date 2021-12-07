@@ -13,21 +13,9 @@ import 'markdown/markdown_text_span.dart';
 
 // **![toto je popis obrázku](media/pngegg.png)**
 const testMarkdown = r'''
-```
-     - odsazeno
-        - dkdkd
-```
-- **to je text**
-- ededjed
-  - djdsjsdkjdsjksd
-  - dejdsdsj cdsjkdsdsjk
-     - Tohle je zobrazeno blbe
-     sdsoso
-     - sdsdsdjksdj
-druha radka
-Nadpis
-------
-CTVRTE
+[KOLOKOL]: media/vector.svg = 5em x center .MYIMG
+[.MYIMG]: width=10em height=20em
+![KOLOKOL]
 ''';
 const test = r'''
 a**h**oj ![toto je popis obrázku](media/vector.svg = 5em x  tight-center-line) aasjkaskjasas jakokoles mikrosek jarosek marosek doloker

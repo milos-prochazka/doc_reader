@@ -1135,7 +1135,13 @@ class _Image extends _Span
       {
         final paint = Paint()
         ..filterQuality = ui.FilterQuality.high
-        ..isAntiAlias = true;
+        ..isAntiAlias = true
+        ..colorFilter = const ui.ColorFilter.matrix([
+          1, 0, 0, 0, 0,
+          0, 1, 0, 0, 0,
+          0, 0, 1, 0, 0,
+          -0.5, 0, 0, 0, 255,
+        ]);
 
         final imageRect = Rect.fromLTWH(0, 0, image!.width.toDouble(), image!.height.toDouble());
 

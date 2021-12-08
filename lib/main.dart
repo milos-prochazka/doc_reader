@@ -17,6 +17,8 @@ const testMarkdown = r'''
 [KOLOKOL]: media/vector.svg
 [.MYIMG]: width=1em height=40em align=left
 ![KOLOKOL]
+![My image](media/pngegg.png)
+![My image](media/podzim.jpeg)
 ''';
 const test = r'''
 a**h**oj ![toto je popis obrázku](media/vector.svg = 5em x  tight-center-line) aasjkaskjasas jakokoles mikrosek jarosek marosek doloker

@@ -1,5 +1,6 @@
 import 'package:doc_reader/doc_reader.dart';
 import 'package:doc_reader/doc_span/basic/basic_text_span.dart';
+import 'package:doc_reader/markdown/value_unit.dart';
 import 'package:doc_reader/objects/utils.dart';
 import 'doc_span/color_text.dart';
 import 'package:doc_reader/doc_span/doc_span_interface.dart';
@@ -13,8 +14,8 @@ import 'markdown/markdown_text_span.dart';
 
 // **![toto je popis obrázku](media/pngegg.png)**
 const testMarkdown = r'''
-[KOLOKOL]: media/vector.svg = 5em x center .MYIMG
-[.MYIMG]: width=10em height=20em
+[KOLOKOL]: media/vector.svg
+[.MYIMG]: width=1em height=40em align=left
 ![KOLOKOL]
 ''';
 const test = r'''

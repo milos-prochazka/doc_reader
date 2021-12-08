@@ -36,18 +36,17 @@ String numberToCharacters(int param, String charList)
 dynamic clone(dynamic value)
 {
   dynamic result;
-  
 
-  if (value != null)    
+  if (value != null)
   {
     if (value is Map)
     {
-      result = <String,dynamic>{};
+      result = <String, dynamic>{};
       for (final v in value.entries)
       {
-          result[v.key] = clone(v.value);
+        result[v.key] = clone(v.value);
       }
-    } 
+    }
     else if (value is List)
     {
       result = <dynamic>[];

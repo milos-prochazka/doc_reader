@@ -42,6 +42,7 @@ final _longLinkRegExp = RegExp(r'(\!?)\[([^\]]+)\]\(([^\)]+)\)', multiLine: fals
 /// ![myImage] g1=! g2=image
 final _shortLinkRegExp = RegExp(r'(\!?)\[([^\]]+)\]', multiLine: false);
 
+// TODO UPRAVIT!!!
 /// Obrazek se zadanou velikosti
 /// img.jpg =1.5%x34em right .mycls gr2 = 1.5 , gr3 = % , gr8 = 34 , gr9 = em , gr14 = right, gr16 = mycls
 final _imageSizeRegExp = RegExp
@@ -51,8 +52,9 @@ final _imageSizeRegExp = RegExp
   caseSensitive: false
 );
 
-/// Dekodovani hodnoty a jednotky (px,em nebo %). 12.34em => gr1= 12.34 gr3=>em
-final _valueUnitRegExp = RegExp(r'(\d+(\.\d+)?)\s*(\w+)?', multiLine: false, caseSensitive: false);
+/// Obrazek se zadanou tridou
+/// imge.jpg .myclass gr1=myclass
+final _imageClassRegExp = RegExp(r'\s+\.(\w+)\s*$', multiLine: false);
 
 /// Special attributes {.class}  {#anchor} {*name=dddd}
 final _attributeLikRegExp = RegExp(r'\{([\.\#\*])([^}]+)\}');
@@ -145,29 +147,10 @@ class Markdown
             for (final attr in attributes)
             {
               //print ((attr.group(1)??'<>') + '=' + (attr.group(2)??'<>'));
-              final name = attr.group(1) ?? '?';
-              final value = attr.group(2) ?? '?';
-              final match = _valueUnitRegExp.firstMatch(value);
+              final name = attr.group(1) ?? '';
+              final value = attr.group(2) ?? '';
 
-              if (match != null)
-              {
-                // Hodnota 
-                final v = double.tryParse(match.group(1) ?? '');
-                if (v!=null)
-                {
-                  clsAttr[name] = v;
-                }
-
-                final u = match.group(3);
-                if (u!=null)
-                {
-                  clsAttr[name + 'Unit'] = u;
-                }
-              }
-              else
-              {
-                clsAttr[name] = value;
-              }
+              clsAttr[name] = value;
             }
 
             classes[name] = clsAttr;
@@ -819,7 +802,7 @@ class MarkdownParagraph
   }
 
   MarkdownWord makeWord(String text, List<String> styleStack,
-    {MarkdownWord_Type type = MarkdownWord_Type.word, bool stickToNext = false, Map<String, Object?>? attr})
+    {MarkdownWord_Type type = MarkdownWord_Type.word, bool stickToNext = false, Map<String, String?>? attr})
   {
     final result = MarkdownWord()
     ..type = type
@@ -1082,16 +1065,17 @@ class MarkdownParagraph
     writeWord(wordBuffer, styleStack, false); // Posledni slovo
   }
 
-  static Map<String, Object?> _imageAttributes(String imageUri)
+  static Map<String, String?> _imageAttributes(String imageUri)
   {
-    final info = _imageSizeRegExp.firstMatch(imageUri);
+    // TODO Upravit _imageSizeRegExp
+    var info = _imageSizeRegExp.firstMatch(imageUri);
 
     if (info != null)
     {
       final w = info.group(2) ?? '';
-      final wu = info.group(3);
+      final wu = info.group(3) ?? '';
       final h = info.group(8) ?? '';
-      final hu = info.group(9);
+      final hu = info.group(9) ?? '';
       String? al;
       String? cl;
 
@@ -1110,20 +1094,26 @@ class MarkdownParagraph
         }
       }
 
-      return <String, Object?>
+      return <String, String?>
       {
         'image': imageUri.substring(0, info.start).trim(),
-        'width': double.tryParse(w),
-        'widthUnit': wu,
-        'height': double.tryParse(h),
-        'heightUnit': hu,
+        'width': w + wu,
+        'height': h + hu,
         'align': al,
         'class': cl,
       };
     }
+    else if ((info = _imageClassRegExp.firstMatch(imageUri)) != null)
+    {
+      return <String, String?>
+      {
+        'image': imageUri.substring(0, info!.start).trim(),
+        'class': info.group(1),
+      };
+    }
     else
     {
-      return <String, Object?>{'image': imageUri};
+      return <String, String?>{'image': imageUri};
     }
   }
 
@@ -1304,7 +1294,7 @@ class MarkdownWord
   bool stickToNext = false;
   String text = '';
   bool lineBreak = false;
-  final attribs = <String, Object?>{};
+  final attribs = <String, String?>{};
 
   MarkdownWord();
 

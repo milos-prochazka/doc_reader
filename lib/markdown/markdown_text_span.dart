@@ -4,8 +4,11 @@ import 'dart:ui' as ui;
 
 import 'package:doc_reader/doc_span/color_text.dart';
 import 'package:doc_reader/doc_span/doc_span_interface.dart';
+import 'package:doc_reader/markdown/value_unit.dart';
 import 'package:doc_reader/objects/applog.dart';
 import 'package:doc_reader/objects/picture_cache.dart';
+import 'package:doc_reader/objects/utils.dart';
+import 'package:doc_reader/objects/utils.dart';
 import 'package:doc_reader/objects/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -35,17 +38,15 @@ class MarkdownTextSpan implements IDocumentSpan
     if (markdown.classes.isNotEmpty)
     {
       final classes = config.get<Map<String, dynamic>?>(['classes']);
-    
-      
+
       if (classes != null)
       {
-        
         for (var markdownClass in markdown.classes.entries)
         {
-          var cls = classes [markdownClass.key];
-          if (cls!=null)
+          var cls = classes[markdownClass.key];
+          if (cls != null)
           {
-            for(final item in markdownClass.value.entries)
+            for (final item in markdownClass.value.entries)
             {
               cls[item.key] = clone(item.value);
             }
@@ -53,7 +54,7 @@ class MarkdownTextSpan implements IDocumentSpan
           else
           {
             cls = clone(markdownClass.value);
-            classes[markdownClass.key] =  cls;
+            classes[markdownClass.key] = cls;
           }
         }
       }
@@ -169,7 +170,8 @@ class MarkdownTextSpan implements IDocumentSpan
       switch (word.type)
       {
         case MarkdownWord_Type.image:
-        span = _Image(config, word.attribs, document, style.textStyle, word.stickToNext, left, right).calcMetrics(parameters);
+        span = _Image(config, word.attribs, document, style.textStyle, word.stickToNext, left, right)
+        .calcMetrics(parameters);
         break;
 
         default:
@@ -532,7 +534,6 @@ class MarkdownTextConfig
       result = true;
     }
 
-
     return result;
   }
 
@@ -853,7 +854,7 @@ class _Box extends _Span
 
 class _Image extends _Span
 {
-  late Map<String, Object?> attribs;
+  late Map<String, dynamic> attribs;
   final TextStyle style;
   final bool stickToNext;
   final double maxWidth;
@@ -864,30 +865,32 @@ class _Image extends _Span
   ui.Image? image;
   DrawableRoot? drawableRoot;
   int count = 0;
- 
 
   Document? document;
 
-  _Image(MarkdownTextConfig config, Map<String, Object?> attribs, this.document, this.style, this.stickToNext, this.paraLeft, paraRight)
+  _Image(MarkdownTextConfig config, Map<String, String?> attribs, this.document, this.style, this.stickToNext,
+    this.paraLeft, paraRight)
   : maxWidth = paraRight - paraLeft
   {
-    final clsName = attribs['class'] as String?;
+    final clsName = attribs['class'];
 
     if (clsName != null)
     {
       this.attribs = clone(attribs);
-      final clsData = config.get<Map<String,Object?>?>(['classes',clsName]);
+      final clsData = config.get<Map<String, dynamic>?>(['classes', clsName]);
 
-      clsData?.forEach((key, value) 
-      { 
+      clsData?.forEach
+      (
+        (key, value)
+        {
           this.attribs[key] = value;
-      });
+        }
+      );
     }
     else
     {
       this.attribs = attribs;
     }
-
   }
 
   double get _fontSize => style.fontSize ?? 20;
@@ -897,7 +900,7 @@ class _Image extends _Span
 
   String get imgSource => attribs['image'] as String;
 
-  double? _decodeSize(double? value, String? unit, double screenSize)
+  /*double? _decodeSize(double? value, String? unit, double screenSize)
   {
     double? result;
 
@@ -915,7 +918,7 @@ class _Image extends _Span
     }
 
     return result;
-  }
+  }*/
 
   _setSize(PaintParameters params, PictureCacheInfo info)
   {
@@ -923,8 +926,9 @@ class _Image extends _Span
     double height = info.height;
     double aspectRatio = width / height;
 
-    double? reqWidth = _decodeSize(attribs['width'] as double?, attribs['widthUnit'] as String?, maxWidth);
-    double? reqHeight = _decodeSize(attribs['height'] as double?, attribs['heightUnit'] as String?, maxWidth);
+    double? reqWidth = ValueUnit(attribs['width']).toDip(_fontSize, maxWidth);
+    // TODO neni u reqHeight spatne maxWidth?
+    double? reqHeight = ValueUnit(attribs['height']).toDip(_fontSize, maxWidth);
 
     if (reqWidth != null)
     {

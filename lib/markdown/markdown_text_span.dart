@@ -169,7 +169,7 @@ class MarkdownTextSpan implements IDocumentSpan
       switch (word.type)
       {
         case MarkdownWord_Type.image:
-        span = _Image(word.attribs, document, style.textStyle, word.stickToNext, left, right).calcMetrics(parameters);
+        span = _Image(config, word.attribs, document, style.textStyle, word.stickToNext, left, right).calcMetrics(parameters);
         break;
 
         default:
@@ -853,22 +853,42 @@ class _Box extends _Span
 
 class _Image extends _Span
 {
-  final Map<String, Object?> attribs;
+  late Map<String, Object?> attribs;
   final TextStyle style;
   final bool stickToNext;
-  ui.Image? image;
-  DrawableRoot? drawableRoot;
-  int count = 0;
-  double maxWidth;
-  double paraLeft;
+  final double maxWidth;
+  final double paraLeft;
   double imgWidth = double.nan;
   double imgOffset = double.nan;
   double lineOffset = 0;
+  ui.Image? image;
+  DrawableRoot? drawableRoot;
+  int count = 0;
+ 
 
   Document? document;
 
-  _Image(this.attribs, this.document, this.style, this.stickToNext, this.paraLeft, paraRight)
-  : maxWidth = paraRight - paraLeft;
+  _Image(MarkdownTextConfig config, Map<String, Object?> attribs, this.document, this.style, this.stickToNext, this.paraLeft, paraRight)
+  : maxWidth = paraRight - paraLeft
+  {
+    final clsName = attribs['class'] as String?;
+
+    if (clsName != null)
+    {
+      this.attribs = clone(attribs);
+      final clsData = config.get<Map<String,Object?>?>(['classes',clsName]);
+
+      clsData?.forEach((key, value) 
+      { 
+          this.attribs[key] = value;
+      });
+    }
+    else
+    {
+      this.attribs = attribs;
+    }
+
+  }
 
   double get _fontSize => style.fontSize ?? 20;
 

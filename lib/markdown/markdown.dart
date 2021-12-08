@@ -52,7 +52,7 @@ final _imageSizeRegExp = RegExp
 );
 
 /// Dekodovani hodnoty a jednotky (px,em nebo %). 12.34em => gr1= 12.34 gr3=>em
-final _valueUnitRegExp = RegExp(r'(\d+(\.d+)?)((px)|(em)|(%))', multiLine: false, caseSensitive: false);
+final _valueUnitRegExp = RegExp(r'(\d+(\.\d+)?)\s*(\w+)?', multiLine: false, caseSensitive: false);
 
 /// Special attributes {.class}  {#anchor} {*name=dddd}
 final _attributeLikRegExp = RegExp(r'\{([\.\#\*])([^}]+)\}');
@@ -113,7 +113,7 @@ class Markdown
   // Pojmenovane linky
   final namedLinks = <String, String>{};
   // Tridy
-  final classes = <String, Map<String, String>>{};
+  final classes = <String, Map<String, Object?>>{};
   // Vsechny odstavce odsazene pomoci mezerer
   final _indentParas = <MarkdownParagraph>{};
 
@@ -141,7 +141,7 @@ class Markdown
           {
             // Trida
             final attributes = _namedAttributeRegExp.allMatches(data);
-            final clsAttr = <String, String>{};
+            final clsAttr = <String, Object?>{};
             for (final attr in attributes)
             {
               //print ((attr.group(1)??'<>') + '=' + (attr.group(2)??'<>'));
@@ -151,9 +151,18 @@ class Markdown
 
               if (match != null)
               {
-                // Hodnota s jednotkou (12.34em)
-                clsAttr[name] = match.group(1) ?? '';
-                clsAttr[name + 'Unit'] = match.group(3) ?? '';
+                // Hodnota 
+                final v = double.tryParse(match.group(1) ?? '');
+                if (v!=null)
+                {
+                  clsAttr[name] = v;
+                }
+
+                final u = match.group(3);
+                if (u!=null)
+                {
+                  clsAttr[name + 'Unit'] = u;
+                }
               }
               else
               {

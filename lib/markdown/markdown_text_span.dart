@@ -867,19 +867,20 @@ class _Image extends _Span
   ui.Image? image;
   DrawableRoot? drawableRoot;
   int count = 0;
+  Color? color;
   ColorFilter? colorFilter;
 
   Document? document;
 
-  _Image(MarkdownTextConfig config, Map<String, String?> attribs, this.document, this.style, this.stickToNext,
+  _Image(MarkdownTextConfig config, Map<String, String?> attr, this.document, this.style, this.stickToNext,
     this.paraLeft, paraRight)
   : maxWidth = paraRight - paraLeft
   {
-    final clsName = attribs['class'];
+    final clsName = attr['class'];
 
     if (clsName != null)
     {
-      this.attribs = clone(attribs);
+      this.attribs = clone(attr);
       final clsData = config.get<Map<String, dynamic>?>(['classes', clsName]);
 
       clsData?.forEach
@@ -892,7 +893,150 @@ class _Image extends _Span
     }
     else
     {
-      this.attribs = attribs;
+      this.attribs = attr;
+    }
+
+    final colorStr = this.attribs['color'];
+    if (colorStr != null)
+    {
+      color = colorFormText(colorStr);
+    }
+
+    const stdColorFilter = <double>[1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0];
+
+    List<double> interleawe(double factor, List<double> src, List<double> dst)
+    {
+      if (factor <= 0)
+      {
+        return src;
+      }
+      else if (factor >= 1)
+      {
+        return dst;
+      }
+      else
+      {
+        final result = <double>[];
+        final count = math.min(src.length, dst.length);
+
+        for (int i = 0; i < count; i++)
+        {
+          result.add(dst[i] * factor + src[i] * (1 - factor));
+        }
+        return result;
+      }
+    }
+
+    final colorFilter = this.attribs['colorfilter'];
+
+    if (colorFilter != null)
+    {
+      final params = colorFilter.toString().split(' ');
+
+      if (params.isNotEmpty)
+      {
+        switch (params[0].toLowerCase())
+        {
+          case 'sepia':
+          {
+            final double factor = (params.length >= 2) ? ((ValueUnit(params[2]).value ?? 100) * 0.01) : 1;
+
+            this.colorFilter = ui.ColorFilter.matrix
+            (
+              interleawe
+              (
+                factor, stdColorFilter, const <double>
+                [
+                  0.393,
+                  0.769,
+                  0.189,
+                  0,
+                  0,
+                  0.349,
+                  0.686,
+                  0.168,
+                  0,
+                  0,
+                  0.272,
+                  0.534,
+                  0.131,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0
+                ]
+              )
+            );
+          }
+          break;
+
+          case 'monochrome':
+          {
+            final color = this.color ?? Colors.white;
+            final double factor = (params.length >= 2) ? ((ValueUnit(params[2]).value ?? 100) * 0.01) : 1;
+            const cr = 0.2125 * 0.00392157;
+            const cg = 0.7154 * 0.00392157;
+            const cb = 0.0721 * 0.00392157;
+
+            this.colorFilter = ui.ColorFilter.matrix
+            (
+              interleawe
+              (
+                factor, stdColorFilter, <double>
+                [
+                  // red
+                  color.red * cr,
+                  color.red * cg,
+                  color.red * cb,
+                  0,
+                  0,
+                  // green
+                  color.green * cr,
+                  color.green * cg,
+                  color.green * cb,
+                  0,
+                  0,
+                  // blue
+                  color.blue * cr,
+                  color.blue * cg,
+                  color.blue * cb,
+                  0,
+                  0,
+                  // alpha
+                  0,
+                  0,
+                  0,
+                  1,
+                  0
+                ]
+              )
+            );
+          }
+          break;
+
+          default:
+          {
+            final matches = _decimalNumberRegEx.allMatches(colorFilter).toList();
+
+            if (matches.isNotEmpty)
+            {
+              final array = <double>[];
+
+              for (int i = 0; i < 20; i++)
+              {
+                final s = i < matches.length ? matches[i].group(1) ?? '0' : '0';
+                array.add(double.tryParse(s) ?? 0);
+              }
+
+              this.colorFilter = ui.ColorFilter.matrix(array);
+            }
+          }
+          break;
+        }
+      }
     }
   }
 
@@ -1042,78 +1186,6 @@ class _Image extends _Span
     this.width = width;
     this.height = height;
     this.baseLine = height;
-
-    final colorFilter = attribs['colorfilter'];
-
-    if (colorFilter != null)
-    {
-      final params = colorFilter.toString().split(' ');
-
-      if (params.isNotEmpty)
-      {
-        switch (params[0].toLowerCase())
-        {
-          case 'monochrome':
-          {
-            final color = colorFormText(params.length >= 2 ? params[1] : 'white');
-            const cr = 0.2125 * 0.00392157;
-            const cg = 0.7154 * 0.00392157;
-            const cb = 0.0721 * 0.00392157;
-
-            this.colorFilter = ui.ColorFilter.matrix
-            (
-              <double>
-              [
-                // red
-                color.red * cr,
-                color.red * cg,
-                color.red * cb,
-                0,
-                0,
-                // green
-                color.green * cr,
-                color.green * cg,
-                color.green * cb,
-                0,
-                0,
-                // blue
-                color.blue * cr,
-                color.blue * cg,
-                color.blue * cb,
-                0,
-                0,
-                // alpha
-                0,
-                0,
-                0,
-                1,
-                0
-              ]
-            );
-          }
-          break;
-
-          default:
-          {
-            final matches = _decimalNumberRegEx.allMatches(colorFilter).toList();
-
-            if (matches.isNotEmpty)
-            {
-              final array = <double>[];
-
-              for (int i = 0; i < 20; i++)
-              {
-                final s = i < matches.length ? matches[i].group(1) ?? '0' : '0';
-                array.add(double.tryParse(s) ?? 0);
-              }
-
-              this.colorFilter = ui.ColorFilter.matrix(array);
-            }
-          }
-          break;
-        }
-      }
-    }
   }
 
   bool _loadLock = false;

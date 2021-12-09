@@ -17,6 +17,8 @@ import '../document.dart';
 import 'markdown.dart';
 import 'dart:math' as math;
 
+final _decimalNumberRegEx = RegExp(r'(\-?\d+(\.\d+)?)', multiLine: false);
+
 /// Jeden odstavec markdown
 class MarkdownTextSpan implements IDocumentSpan
 {
@@ -865,6 +867,7 @@ class _Image extends _Span
   ui.Image? image;
   DrawableRoot? drawableRoot;
   int count = 0;
+  ColorFilter? colorFilter;
 
   Document? document;
 
@@ -1039,6 +1042,78 @@ class _Image extends _Span
     this.width = width;
     this.height = height;
     this.baseLine = height;
+
+    final colorFilter = attribs['colorfilter'];
+
+    if (colorFilter != null)
+    {
+      final params = colorFilter.toString().split(' ');
+
+      if (params.isNotEmpty)
+      {
+        switch (params[0].toLowerCase())
+        {
+          case 'monochrome':
+          {
+            final color = colorFormText(params.length >= 2 ? params[1] : 'white');
+            const cr = 0.2125 * 0.00392157;
+            const cg = 0.7154 * 0.00392157;
+            const cb = 0.0721 * 0.00392157;
+
+            this.colorFilter = ui.ColorFilter.matrix
+            (
+              <double>
+              [
+                // red
+                color.red * cr,
+                color.red * cg,
+                color.red * cb,
+                0,
+                0,
+                // green
+                color.green * cr,
+                color.green * cg,
+                color.green * cb,
+                0,
+                0,
+                // blue
+                color.blue * cr,
+                color.blue * cg,
+                color.blue * cb,
+                0,
+                0,
+                // alpha
+                0,
+                0,
+                0,
+                1,
+                0
+              ]
+            );
+          }
+          break;
+
+          default:
+          {
+            final matches = _decimalNumberRegEx.allMatches(colorFilter).toList();
+
+            if (matches.isNotEmpty)
+            {
+              final array = <double>[];
+
+              for (int i = 0; i < 20; i++)
+              {
+                final s = i < matches.length ? matches[i].group(1) ?? '0' : '0';
+                array.add(double.tryParse(s) ?? 0);
+              }
+
+              this.colorFilter = ui.ColorFilter.matrix(array);
+            }
+          }
+          break;
+        }
+      }
+    }
   }
 
   bool _loadLock = false;
@@ -1136,12 +1211,7 @@ class _Image extends _Span
         final paint = Paint()
         ..filterQuality = ui.FilterQuality.high
         ..isAntiAlias = true
-        ..colorFilter = const ui.ColorFilter.matrix([
-          1, 0, 0, 0, 0,
-          0, 1, 0, 0, 0,
-          0, 0, 1, 0, 0,
-          -0.5, 0, 0, 0, 255,
-        ]);
+        ..colorFilter = colorFilter;
 
         final imageRect = Rect.fromLTWH(0, 0, image!.width.toDouble(), image!.height.toDouble());
 

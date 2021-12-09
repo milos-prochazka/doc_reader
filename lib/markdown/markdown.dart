@@ -80,7 +80,8 @@ final _hrRegExp = RegExp(r'^\s*(([\*]{3,})|([\-]{3,})|([\_]{3,})|([\=]{3,}))\s*$
 final _refLinkLinkRegExp = RegExp(r'^\s{0,3}(\[(\.?)(.+)\])\:\s+(.+)*$', multiLine: false);
 
 // Pojemnovany atroibitu: width=100em  g1=width g2=100em
-final _namedAttributeRegExp = RegExp(r'(\w+)\=(\S+)', multiLine: false);
+//final _namedAttributeRegExp = RegExp(r'(\w+)\=(\S+)', multiLine: false);
+final _namedAttributeRegExp = RegExp(r'\s([-_%\w]+)\=', multiLine: false);
 
 /// Vyhledani escape eskvenci ve vstupnim textu
 //final _escapeCharRegExp = RegExp(r'\\[\\\`\*\_\{\}\[\]\(\)\#\+\-\.\!\|\:\s]', multiLine: false);
@@ -142,15 +143,19 @@ class Markdown
           if (match.group(2) == '.')
           {
             // Trida
-            final attributes = _namedAttributeRegExp.allMatches(data);
-            final clsAttr = <String, Object?>{};
-            for (final attr in attributes)
-            {
-              //print ((attr.group(1)??'<>') + '=' + (attr.group(2)??'<>'));
-              final name = attr.group(1) ?? '';
-              final value = attr.group(2) ?? '';
+            final clsData = ' ' + data;
+            final attributes = _namedAttributeRegExp.allMatches(clsData).toList();
+            final clsAttr = classes[name] ?? <String, Object?>{};
 
-              clsAttr[name] = value;
+            for (var i = 0; i < attributes.length; i++)
+            {
+              final attr = attributes[i];
+              final end = (i + 1) < attributes.length ? attributes[i + 1].start : clsData.length;
+              //print ((attr.group(1)??'<>') + '=' + (attr.group(2)??'<>'));
+              final attrName = MarkdownParagraph.unescape(attr.group(1) ?? '');
+              final attrValue = MarkdownParagraph.unescape(attr.input.substring(attr.end, end).trim());
+
+              clsAttr[attrName] = attrValue;
             }
 
             classes[name] = clsAttr;
@@ -159,7 +164,7 @@ class Markdown
           {
             // Link
             //paragraphs.add(MarkdownParagraph.referenceLink(name, data));
-            namedLinks[name] = data;
+            namedLinks[name] = MarkdownParagraph.unescape(data);
           }
         }
       }

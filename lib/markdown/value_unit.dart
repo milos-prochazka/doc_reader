@@ -1,7 +1,7 @@
 class ValueUnit
 {
   /// Dekodovani hodnoty a jednotky. 12.34em => gr1= 12.34 gr3=>em
-  static RegExp valueUnitRegExp = RegExp(r'^(\-?\d+(\.\d+)?)\s*(\w+)?', multiLine: false, caseSensitive: false);
+  static RegExp valueUnitRegExp = RegExp(r'^(\-?\d+(\.\d+)?)\s*([%-_\w+])?', multiLine: false, caseSensitive: false);
 
   double? value;
 
@@ -35,7 +35,7 @@ class ValueUnit
         return emSize * value!;
 
         case '%':
-        return screenSize * value!;
+        return 0.01 * screenSize * value!;
 
         default:
         return value;

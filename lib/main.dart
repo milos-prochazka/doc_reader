@@ -14,16 +14,23 @@ import 'markdown/markdown_text_span.dart';
 
 // **![toto je popis obrázku](media/pngegg.png)**
 const testMarkdown = r'''
+[.myclassx]: colorfilter= red r:1 g:0 b:0 a:0 o:0 / green r:0 g:1 b:0 a:0 o:0 / blue r:0.0 g:0 b:1 a:0 o:0 / alpha r:-0.1 g:0 b:0.0 a:0 o:255 / width=50%
+[.myclass]: colorfilter= monochrome #FFFFEE80 width=50%
+![My image](media/podzim.jpeg  .myclass)
+''';
+const xtestMarkdown = r'''
 [KOLOKOL]: media/vector.svg
-[.MYIMG]: width=1em height=40em align=left
+![KOLOKOL]
+[@MYIMG]: width=1em height=40em align=left
+[.myclass]: colorfilter=1 0 0 0  / 0 1 0 0  /  0 0 1 0  / 0 0 0 1 0   width=70%
 ![KOLOKOL]
 ![My image](media/pngegg.png)
 ![My image](media/podzim.jpeg)
+![No Image](media/vector.svg)
 ''';
 const test = r'''
 a**h**oj ![toto je popis obrázku](media/vector.svg = 5em x  tight-center-line) aasjkaskjasas jakokoles mikrosek jarosek marosek doloker
 Dlouhy odstacec na zacatku textu. Dlouhy odstacec na zacatku textu. Dlouhy odstavec na zacatku textu.
-[.myclass]: width=10em height=50em
 ## ZACATEK {.trida} {#kotva} {*aaa=123} {*bbb} {*aja = paja }
 \* a\*\aaaa
 ![KOLOKOL]

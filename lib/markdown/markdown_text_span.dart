@@ -864,6 +864,7 @@ class _Image extends _Span
   double imgWidth = double.nan;
   double imgOffset = double.nan;
   double lineOffset = 0;
+  double _devicePixelRatio = 2.0;
   ui.Image? _image;
   DrawableRoot? _drawableRoot;
   int count = 0;
@@ -1047,9 +1048,31 @@ class _Image extends _Span
     return result;
   }*/
 
+  int get imagePixelWidth => (imgWidth * _devicePixelRatio).round();
+
+  int get imagePixelHeight => (height * _devicePixelRatio).round();
+
+  Future<ui.Image?> _createImage(PictureCacheInfo info) async
+  {
+    ui.Image? result;
+
+    if (info.hasDrawable)
+    {
+      _drawableRoot = info.drawableRoot;
+
+      result = await info.makeSizedImage(imagePixelWidth, imagePixelHeight);
+    }
+
+    return result;
+  }
+
+  ui.Image? _getImage(PictureCacheInfo info) => info.getSizedImage(imagePixelWidth, imagePixelHeight);
+
   _setSize(PaintParameters params, PictureCacheInfo info)
   {
     print("_setSize()");
+
+    _devicePixelRatio = params.devicePixelRatio;
 
     double width = info.width;
     double height = info.height;
@@ -1176,10 +1199,9 @@ class _Image extends _Span
   bool _loadLock = false;
   _load(PaintParameters params) async
   {
-    print("_load()");
-
     if (!_loadLock)
     {
+      print("_load()");
       try
       {
         _loadLock = true;
@@ -1202,16 +1224,15 @@ class _Image extends _Span
           else if (info.hasDrawable)
           {
             _drawableRoot = info.drawableRoot;
-            if (this._drawableRoot != null)
+
+            final img = await _createImage(info);
+            if (img != null)
             {
-              final w = imgWidth.round();
-              final h = height.round();
-              if (!(this._image?.width == w && this._image?.height == h))
-              {
-                this._image =
-                await this._drawableRoot!.toPicture(size: ui.Size(w.toDouble(), h.toDouble())).toImage(w, h);
-                info.image = this._image;
-              }
+              _image = info.image;
+            }
+            else
+            {
+              repaint = false;
             }
           }
           else
@@ -1243,8 +1264,15 @@ class _Image extends _Span
     if (info.hasInfo)
     {
       _setSize(parameters, info);
-      _image = info.image;
       _drawableRoot = info.drawableRoot;
+      if (_drawableRoot == null)
+      {
+        _image = info.image;
+      }
+      else
+      {
+        _image = _getImage(info);
+      }
     }
     else
     {

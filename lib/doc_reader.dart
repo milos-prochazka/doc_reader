@@ -23,13 +23,20 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
     Document? document;
     Timer? _timer;
     int cnt = 0;
+    double devicePixelRatio = 2.0;
+    double textScale = 1.0;
+    Size screenSize = const Size(512, 512);
 
     _DocReaderState();
 
     @override
     Widget build(BuildContext context)
     {
-        //_calcLayout(context);
+        final media = MediaQuery.of(context);
+        devicePixelRatio = media.devicePixelRatio;
+        screenSize = media.size;
+        textScale = media.textScaleFactor;
+
         final document =
         PropertyBinder.of(context).getOrCreateProperty<Document>(widget.documentProperty, (binder) => Document());
         this.document = document;
@@ -39,7 +46,7 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
         document.onTouchUpDown = onTouchUpDown;
         document.onRepaint = onRepaint;
 
-        final painter = DocumentPainter(document);
+        final painter = DocumentPainter(document, this);
 
         final result = CustomPaint
         (
@@ -153,15 +160,40 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
         }
     }
 
+    bool onRepaint_run = false;
     void onRepaint()
     {
-        try
+        if (!onRepaint_run)
         {
-            Future.microtask(() => setState(() {}));
-        }
-        catch (ex, stackTrace)
-        {
-            appLogEx(ex, stackTrace: stackTrace);
+            onRepaint_run = true;
+
+            try
+            {
+                Future.microtask
+                (
+                    () async
+                    {
+                        try
+                        {
+                            print("onRepiant() -------------------------------------------------------------");
+                            await Future.delayed(const Duration(milliseconds: 20));
+                            setState(() {});
+                        }
+                        catch (ex, stackTrace)
+                        {
+                            appLogEx(ex, stackTrace: stackTrace);
+                        }
+                        finally
+                        {
+                            onRepaint_run = false;
+                        }
+                    }
+                );
+            }
+            catch (ex, stackTrace)
+            {
+                appLogEx(ex, stackTrace: stackTrace);
+            }
         }
     }
 }
@@ -197,8 +229,9 @@ class _DocReaderPainterState extends State<DocReaderPainter> {
 class DocumentPainter extends CustomPainter
 {
     final Document document;
+    final _DocReaderState state;
 
-    DocumentPainter(this.document);
+    DocumentPainter(this.document, this.state);
 
     @override
     void paint(Canvas canvas, Size size)
@@ -209,7 +242,8 @@ class DocumentPainter extends CustomPainter
             if (document.paintParameters == null || document.actualWidgetSize != size)
             {
                 document.actualWidgetSize = size;
-                document.paintParameters = PaintParameters(canvas, size);
+                document.paintParameters =
+                PaintParameters(canvas, size, state.devicePixelRatio, state.textScale, state.screenSize);
             }
             else
             {

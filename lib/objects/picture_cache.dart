@@ -3,6 +3,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
+import 'dart:ui';
 
 import 'package:doc_reader/objects/applog.dart';
 import 'package:flutter/services.dart';
@@ -75,7 +76,23 @@ class PictureCache
 
     if (!imgInfo.hasInfo)
     {
-      imgInfo.setImage(await _provider(imageSource).loadSourceAsync(imageSource));
+      try
+      {
+        while (imgInfo.asyncLock)
+        {
+          await Future.delayed(const Duration(milliseconds: 100));
+        }
+
+        if (!imgInfo.hasInfo)
+        {
+          imgInfo.asyncLock = true;
+          imgInfo.setImage(await _provider(imageSource).loadSourceAsync(imageSource));
+        }
+      }
+      finally
+      {
+        imgInfo.asyncLock = false;
+      }
     }
 
     return imgInfo;
@@ -94,7 +111,23 @@ class PictureCache
 
     if (!imgInfo.hasPicture)
     {
-      imgInfo.setImage(await _provider(imageSource).loadSourceAsync(imageSource));
+      try
+      {
+        while (imgInfo.asyncLock)
+        {
+          await Future.delayed(const Duration(milliseconds: 100));
+        }
+
+        if (!imgInfo.hasPicture)
+        {
+          imgInfo.asyncLock = true;
+          imgInfo.setImage(await _provider(imageSource).loadSourceAsync(imageSource));
+        }
+      }
+      finally
+      {
+        imgInfo.asyncLock = false;
+      }
 
       if (!imgInfo.hasPicture)
       {
@@ -117,8 +150,7 @@ class PictureCache
         }
         else
         {
-          info.image = null;
-          info.drawableRoot = null;
+          info.clear();
           print("CACHE CLEAR");
         }
       }
@@ -128,17 +160,27 @@ class PictureCache
 
 class PictureCacheInfo
 {
+  bool asyncLock = false;
   ui.Image? image;
   DrawableRoot? drawableRoot;
   double width = double.nan;
   double height = double.nan;
   bool use = true;
+  Map<int, ui.Image>? sizedImages;
+
+  // TODO Odstranit debug CNT
+  int debugCnt = 0;
 
   bool get hasInfo => !width.isNaN && !height.isNaN;
 
   bool get hasPicture => hasImage | hasDrawable;
   bool get hasImage => image != null;
   bool get hasDrawable => drawableRoot != null;
+
+  PictureCacheInfo()
+  {
+    debugCnt = 1;
+  }
 
   void setImage(Object? image)
   {
@@ -159,6 +201,38 @@ class PictureCacheInfo
       width = double.nan;
       height = double.nan;
     }
+  }
+
+  ui.Image? getSizedImage(int width, int height)
+  {
+    final int sizeDescriptor = width + (height << 16);
+
+    return sizedImages?[sizeDescriptor];
+  }
+
+  Future<ui.Image?> makeSizedImage(int width, int height) async
+  {
+    final int sizeDescriptor = width + (height << 16);
+
+    ui.Image? result = sizedImages?[sizeDescriptor];
+
+    if (result == null && hasDrawable)
+    {
+      final picture = drawableRoot?.toPicture(size: Size(width.toDouble(), height.toDouble()));
+      result = await picture!.toImage(width, height);
+      sizedImages ??= <int, ui.Image>{};
+      sizedImages?[sizeDescriptor] = result;
+    }
+
+    debugCnt++;
+    return result;
+  }
+
+  void clear()
+  {
+    image = null;
+    drawableRoot = null;
+    sizedImages = null;
   }
 }
 

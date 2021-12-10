@@ -864,8 +864,8 @@ class _Image extends _Span
   double imgWidth = double.nan;
   double imgOffset = double.nan;
   double lineOffset = 0;
-  ui.Image? image;
-  DrawableRoot? drawableRoot;
+  ui.Image? _image;
+  DrawableRoot? _drawableRoot;
   int count = 0;
   Color? color;
   ColorFilter? colorFilter;
@@ -903,6 +903,14 @@ class _Image extends _Span
     }
 
     const stdColorFilter = <double>[1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0];
+    const sepiaFilter = <double>
+    [
+      //
+      0.393, 0.769, 0.189, 0, 0, //
+      0.349, 0.686, 0.168, 0, 0, //
+      0.272, 0.534, 0.131, 0, 0, //
+      0, 0, 0, 1, 0 //
+    ];
 
     List<double> interleawe(double factor, List<double> src, List<double> dst)
     {
@@ -941,35 +949,7 @@ class _Image extends _Span
           {
             final double factor = (params.length >= 2) ? ((ValueUnit(params[2]).value ?? 100) * 0.01) : 1;
 
-            this.colorFilter = ui.ColorFilter.matrix
-            (
-              interleawe
-              (
-                factor, stdColorFilter, const <double>
-                [
-                  0.393,
-                  0.769,
-                  0.189,
-                  0,
-                  0,
-                  0.349,
-                  0.686,
-                  0.168,
-                  0,
-                  0,
-                  0.272,
-                  0.534,
-                  0.131,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  1,
-                  0
-                ]
-              )
-            );
+            this.colorFilter = ui.ColorFilter.matrix(interleawe(factor, stdColorFilter, sepiaFilter));
           }
           break;
 
@@ -1069,6 +1049,8 @@ class _Image extends _Span
 
   _setSize(PaintParameters params, PictureCacheInfo info)
   {
+    print("_setSize()");
+
     double width = info.width;
     double height = info.height;
     double aspectRatio = width / height;
@@ -1108,6 +1090,8 @@ class _Image extends _Span
       width = maxWidth;
       height = width / aspectRatio;
     }
+
+    imgWidth = width;
 
     final attr = attribs['align'];
     switch (attr)
@@ -1163,14 +1147,15 @@ class _Image extends _Span
         }
         width = maxWidth;
       }
-
       break;
 
       case 'center':
-      count = 1;
-      lineOffset = 0.5 * (maxWidth - width);
-      imgWidth = width;
-      width = maxWidth;
+      {
+        count = 1;
+        lineOffset = 0.5 * (maxWidth - width);
+        imgWidth = width;
+        width = maxWidth;
+      }
       break;
 
       case 'left':
@@ -1212,11 +1197,22 @@ class _Image extends _Span
           _setSize(params, info);
           if (info.hasImage)
           {
-            image = info.image;
+            _image = info.image;
           }
           else if (info.hasDrawable)
           {
-            drawableRoot = info.drawableRoot;
+            _drawableRoot = info.drawableRoot;
+            if (this._drawableRoot != null)
+            {
+              final w = imgWidth.round();
+              final h = height.round();
+              if (!(this._image?.width == w && this._image?.height == h))
+              {
+                this._image =
+                await this._drawableRoot!.toPicture(size: ui.Size(w.toDouble(), h.toDouble())).toImage(w, h);
+                info.image = this._image;
+              }
+            }
           }
           else
           {
@@ -1247,8 +1243,8 @@ class _Image extends _Span
     if (info.hasInfo)
     {
       _setSize(parameters, info);
-      image = info.image;
-      drawableRoot = info.drawableRoot;
+      _image = info.image;
+      _drawableRoot = info.drawableRoot;
     }
     else
     {
@@ -1259,13 +1255,14 @@ class _Image extends _Span
 
   _paintDrawable(Canvas canvas, double left, double top, double width, double height)
   {
+    // TODO perspektivne zrusit -> tiskne se pomoci prevodu na image
     try
     {
       canvas.save();
 
       canvas.translate(left, top);
-      canvas.scale(width / drawableRoot!.viewport.viewBox.width, height / drawableRoot!.viewport.viewBox.height);
-      drawableRoot!.draw(canvas, Rect.zero);
+      canvas.scale(width / _drawableRoot!.viewport.viewBox.width, height / _drawableRoot!.viewport.viewBox.height);
+      _drawableRoot!.draw(canvas, Rect.zero);
     }
     finally
     {
@@ -1278,14 +1275,14 @@ class _Image extends _Span
   {
     try
     {
-      if (image != null)
+      if (_image != null)
       {
         final paint = Paint()
         ..filterQuality = ui.FilterQuality.high
         ..isAntiAlias = true
         ..colorFilter = colorFilter;
 
-        final imageRect = Rect.fromLTWH(0, 0, image!.width.toDouble(), image!.height.toDouble());
+        final imageRect = Rect.fromLTWH(0, 0, _image!.width.toDouble(), _image!.height.toDouble());
 
         if (count > 0)
         {
@@ -1293,7 +1290,7 @@ class _Image extends _Span
           for (int i = 0; i < count; i++)
           {
             params.canvas
-            .drawImageRect(image!, imageRect, Rect.fromLTWH(x, yoffset + yOffset, imgWidth, height), paint);
+            .drawImageRect(_image!, imageRect, Rect.fromLTWH(x, yoffset + yOffset, imgWidth, height), paint);
             x += imgOffset;
           }
         }
@@ -1301,12 +1298,12 @@ class _Image extends _Span
         {
           params.canvas.drawImageRect
           (
-            image!, imageRect, Rect.fromLTWH(xoffset + xOffset, yoffset + yOffset, width, height), paint
+            _image!, imageRect, Rect.fromLTWH(xoffset + xOffset, yoffset + yOffset, width, height), paint
           );
         }
       }
-      else if (drawableRoot != null)
-      {
+      /*else if (_drawableRoot != null)
+      { // TODO perspektivne zrusit -> tiskne se pomoci prevodu na image
         if (count > 0)
         {
           var x = xoffset + paraLeft + lineOffset;
@@ -1320,7 +1317,7 @@ class _Image extends _Span
         {
           _paintDrawable(params.canvas, xoffset + xOffset, yoffset + yOffset, width, height);
         }
-      }
+      }*/
       else
       {
         _load(params);

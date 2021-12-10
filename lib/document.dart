@@ -34,7 +34,7 @@ class Document
   /// Relativni vyska vertikalni znacky v dokumentu
   double markSize = 0.0;
 
-  PaintParameters getPaintParameters(Canvas canvas, Size size)
+  /*PaintParameters getPaintParameters(Canvas canvas, Size size)
   {
     if (paintParameters?.size != size)
     {
@@ -42,7 +42,7 @@ class Document
     }
 
     return paintParameters!;
-  }
+  }*/
 
   double frac(double x)
   {

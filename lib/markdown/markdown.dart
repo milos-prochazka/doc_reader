@@ -38,7 +38,7 @@ final _charClassRegExp = RegExp(r'((\_{1,3})|(\*{1,3}))|(\`{3}(@\w+\s))', multiL
 /// Dlouhy link (obsahuje URL)
 final _longLinkRegExp = RegExp(r'(\!?)\[([^\]]+)\]\(([^\)]+)\)', multiLine: false);
 
-/// Kratky link [link] , nebo ![image]
+/// Kratky link [link] , nebo ![_image]
 /// ![myImage] g1=! g2=image
 final _shortLinkRegExp = RegExp(r'(\!?)\[([^\]]+)\]', multiLine: false);
 

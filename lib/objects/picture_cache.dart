@@ -80,7 +80,7 @@ class PictureCache
       {
         while (imgInfo.asyncLock)
         {
-          await Future.delayed(const Duration(milliseconds: 100));
+          await Future.delayed(const Duration(milliseconds: 20));
         }
 
         if (!imgInfo.hasInfo)
@@ -115,7 +115,7 @@ class PictureCache
       {
         while (imgInfo.asyncLock)
         {
-          await Future.delayed(const Duration(milliseconds: 100));
+          await Future.delayed(const Duration(milliseconds: 20));
         }
 
         if (!imgInfo.hasPicture)

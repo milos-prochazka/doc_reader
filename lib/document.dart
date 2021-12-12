@@ -25,6 +25,12 @@ class Document
   /// Handler prekresleni
   OnRepaintHandler? onRepaint;
 
+  /// Handler otevreni souboru
+  OnOpenHandler? onOpenFile;
+
+  /// Konfigurace otevreni douboru
+  dynamic onOpenFileConfig;
+
   /// Jednotlive casti (spany) dokumentu
   final docSpans = <DocumentSpanContainer>[];
 
@@ -130,9 +136,20 @@ class Document
     paintParameters?.newKey();
     onRepaint?.call();
   }
+
+  Future openFile(String name) async
+  {
+    final success = await onOpenFile?.call(name, this, onOpenFileConfig) ?? false;
+
+    if (success)
+    {
+      repaint();
+    }
+  }
 }
 
 typedef OnTapHandler = Function(double relativeX, double relativeY);
 typedef OnTouchUpDownHandler = Function(bool down, double widgetX, double widgetY);
 typedef OnTouchMoveHandler = Function(double deltaX, double deltaY);
 typedef OnRepaintHandler = Function();
+typedef OnOpenHandler = Future<bool> Function(String name, Document document, dynamic config);

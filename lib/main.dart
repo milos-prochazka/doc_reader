@@ -1,7 +1,9 @@
 import 'package:doc_reader/doc_reader.dart';
 import 'package:doc_reader/doc_span/basic/basic_text_span.dart';
+import 'package:doc_reader/markdown/patterns.dart';
 import 'package:doc_reader/markdown/value_unit.dart';
 import 'package:doc_reader/objects/utils.dart';
+import 'package:flutter/services.dart';
 import 'doc_span/color_text.dart';
 import 'package:doc_reader/doc_span/doc_span_interface.dart';
 import 'package:doc_reader/document.dart';
@@ -14,39 +16,11 @@ import 'markdown/markdown_text_span.dart';
 
 // **![toto je popis obrázku](media/pngegg.png)**
 const testMarkdown = r'''
-![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg)
-![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg)
-![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg)
-![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg)
-![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg)
-![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg)
-![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg)
-![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg)
-![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg)
-![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg)
-![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg)
-![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg)
-![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg)
-![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg)
-![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg)
-![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg)
-![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg)
-![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg)
-![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg)
-![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg)
-![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg)
-![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg)
-![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg)
-![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg)
-![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg)
-![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg)
-![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg)
-![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg)
-![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg)
-![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg) ![KOLOKOL](media/vector.svg)
+![KOLOKOL](media/pngegg.svg .myclass)
 
+![KOLOKOL](media/battery.svg .myclass)
 [.myclassx]: colorfilter= red r:1 g:0 b:0 a:0 o:0 / green r:0 g:1 b:0 a:0 o:0 / blue r:0.0 g:0 b:1 a:0 o:0 / alpha r:-0.1 g:0 b:0.0 a:0 o:255 / width=50%
-[.myclass]: color=#FFFFEE80 colorfilter=sepia  50% width=50%
+[.myclass]: color=#0020ffff colorfilter=monochrome
 !-[My image]-(media/podzim.jpeg  .myclass)
 ''';
 const xtestMarkdown = r'''
@@ -112,6 +86,13 @@ void testColor(String text)
 
 void main()
 {
+  /*final sp = StringPattern();
+
+  final patt = LinkPattern(LinkPattern.TYPE_LINK);
+  var match = patt.firstMatch(r'''[kokolex](fff.jpg "doplkovy popis" "voice"  10.34em x 76.5% left .myclass)''');
+  final word= MarkdownWord.fromMatch(match!);
+  print(word.toString());*/
+
   appLog("Testovaci log");
   runApp(MyApp());
 }
@@ -125,12 +106,26 @@ class MyApp extends StatelessWidget
   MyApp({Key? key}) : super(key: key)
   {
     document = Document();
+    document.onOpenFile = fileOpen;
+    Future.microtask
+    (
+      () async
+      {
+        await document.openFile('media/test1.md');
+      }
+    );
+  }
+
+  void createDocument(String text)
+  {
     markdown = Markdown();
-    markdown.writeMarkdownString(testMarkdown);
+    markdown.writeMarkdownString(text);
     textConfig = MarkdownTextConfig();
     print(markdown.toString());
 
     final ms = MarkdownTextSpan.create(markdown, textConfig, document);
+
+    document.docSpans.clear();
     for (final s in ms)
     {
       document.docSpans.add(DocumentSpanContainer(s));
@@ -150,6 +145,24 @@ class MyApp extends StatelessWidget
       ),
       home: MyHomePage(title: 'Flutter Demo Home Page', document: document),
     );
+  }
+
+  Future<bool> fileOpen(String name, Document document, config) async
+  {
+    bool result = false;
+
+    try
+    {
+      final text = await rootBundle.loadString(name);
+      createDocument(text);
+      result = true;
+    }
+    catch (ex, stackTrace)
+    {
+      appLogEx(ex, stackTrace: stackTrace);
+    }
+
+    return result;
   }
 }
 

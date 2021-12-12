@@ -1,5 +1,6 @@
 // ignore_for_file: constant_identifier_names
 
+import 'package:doc_reader/markdown/patterns.dart';
 import 'package:doc_reader/objects/applog.dart';
 import 'package:doc_reader/objects/utils.dart';
 import 'package:tuple/tuple.dart';
@@ -77,7 +78,10 @@ final _hrRegExp = RegExp(r'^\s*(([\*]{3,})|([\-]{3,})|([\_]{3,})|([\=]{3,}))\s*$
 ///  [aaa]: http://wwww.seznam.cz g2='' g3=aaa g4=http://wwww.seznam.cz
 /// Nebo definice tridy:
 ///  [.myclass]: width=100em height=50em color=#cfa g2=. g3=myclass g4=width=100em height=50em color=#cfa
-final _refLinkLinkRegExp = RegExp(r'^\s{0,3}(\[(\.?)(.+)\])\:\s+(.+)*$', multiLine: false);
+//final _refLinkLinkRegExp = RegExp(r'^\s{0,3}(\[(\.?)(.+)\])\:\s+(.+)*$', multiLine: false);
+
+// Nova definice
+final _refLinkLinkRegExp = LinkPattern(LinkPattern.TYPE_LINK_REFERENCE);
 
 // Pojemnovany atroibitu: width=100em  g1=width g2=100em
 //final _namedAttributeRegExp = RegExp(r'(\w+)\=(\S+)', multiLine: false);
@@ -114,7 +118,7 @@ class Markdown
   // Vsechny odstavce dokumentu
   final paragraphs = <MarkdownParagraph>[];
   // Pojmenovane linky
-  final namedLinks = <String, String>{};
+  final namedLinks = <String, MarkdownWord>{};
   // Tridy
   final classes = <String, Map<String, Object?>>{};
   // Vsechny odstavce odsazene pomoci mezerer
@@ -132,40 +136,39 @@ class Markdown
 
       appLog_debug('line:"$line"');
 
-      RegExpMatch? match;
+      Match? match;
+
       if ((match = _refLinkLinkRegExp.firstMatch(line)) != null)
       {
         // Pojmenovany link nebo definice tridy
-        if (match!.groupCount >= 4)
+        var name = match![LinkPattern.GR_ALT] ?? '';
+        final data = (match[LinkPattern.GR_URL_PART] ?? '').trim();
+        if (name.startsWith('.'))
         {
-          final name = match.group(3) ?? '';
-          final data = (match.group(4) ?? '').trim();
-          if (match.group(2) == '.')
+          // Trida
+          name = name.substring(1);
+          final clsData = ' ' + data;
+          final attributes = _namedAttributeRegExp.allMatches(clsData).toList();
+          final clsAttr = classes[name] ?? <String, Object?>{};
+
+          for (var i = 0; i < attributes.length; i++)
           {
-            // Trida
-            final clsData = ' ' + data;
-            final attributes = _namedAttributeRegExp.allMatches(clsData).toList();
-            final clsAttr = classes[name] ?? <String, Object?>{};
+            final attr = attributes[i];
+            final end = (i + 1) < attributes.length ? attributes[i + 1].start : clsData.length;
+            //print ((attr.group(1)??'<>') + '=' + (attr.group(2)??'<>'));
+            final attrName = MarkdownParagraph.unescape(attr.group(1) ?? '');
+            final attrValue = MarkdownParagraph.unescape(attr.input.substring(attr.end, end).trim());
 
-            for (var i = 0; i < attributes.length; i++)
-            {
-              final attr = attributes[i];
-              final end = (i + 1) < attributes.length ? attributes[i + 1].start : clsData.length;
-              //print ((attr.group(1)??'<>') + '=' + (attr.group(2)??'<>'));
-              final attrName = MarkdownParagraph.unescape(attr.group(1) ?? '');
-              final attrValue = MarkdownParagraph.unescape(attr.input.substring(attr.end, end).trim());
-
-              clsAttr[attrName] = attrValue;
-            }
-
-            classes[name] = clsAttr;
+            clsAttr[attrName] = attrValue;
           }
-          else
-          {
-            // Link
-            //paragraphs.add(MarkdownParagraph.referenceLink(name, data));
-            namedLinks[name] = MarkdownParagraph.unescape(data);
-          }
+
+          classes[name] = clsAttr;
+        }
+        else
+        {
+          // Link
+          //paragraphs.add(MarkdownParagraph.referenceLink(name, data));
+          namedLinks[name] = MarkdownWord.fromMatch(match);
         }
       }
       else if (_hrRegExp.hasMatch(line))
@@ -371,10 +374,10 @@ class Markdown
           {
             if (!word.attribs.containsKey('link'))
             {
-              final url = namedLinks[word.text];
-              if (url != null)
+              final link = namedLinks[word.text]?.attribs['link'];
+              if (link != null)
               {
-                word.attribs.addAll({'link': url});
+                word.attribs.addAll({'link': link});
               }
               else
               {
@@ -389,10 +392,10 @@ class Markdown
           {
             if (!word.attribs.containsKey('image'))
             {
-              final url = namedLinks[word.text];
-              if (url != null)
+              final image = namedLinks[word.text];
+              if (image != null)
               {
-                word.attribs.addAll(MarkdownParagraph._imageAttributes(url));
+                word.attribs.addAll(image.attribs);
               }
               else
               {
@@ -1308,15 +1311,56 @@ class MarkdownWord
     return MarkdownWord()..lineBreak = true;
   }
 
+  _matchAttrib(String attrib, Match match, int index)
+  {
+    final data = match[index];
+
+    if (data != null)
+    {
+      attribs[attrib] = data;
+    }
+  }
+
+  factory MarkdownWord.fromMatch(Match match)
+  {
+    final result = MarkdownWord()
+    ..type = (match[LinkPattern.GR_EXCLAMATION] == '!') ? MarkdownWord_Type.image : MarkdownWord_Type.link;
+
+    result.text = match[LinkPattern.GR_ALT] ?? '';
+    result._matchAttrib('width', match, LinkPattern.GR_WIDTH);
+    result._matchAttrib('height', match, LinkPattern.GR_HEIGHT);
+    result._matchAttrib('align', match, LinkPattern.GR_ALIGN);
+    result._matchAttrib('class', match, LinkPattern.GR_CLASS);
+    result._matchAttrib('title', match, LinkPattern.GR_TITLE);
+    result._matchAttrib('voice', match, LinkPattern.GR_VOICE);
+
+    if (result.type == MarkdownWord_Type.image)
+    {
+      result._matchAttrib('image', match, LinkPattern.GR_URL);
+    }
+    else
+    {
+      result._matchAttrib('link', match, LinkPattern.GR_LINK);
+      result._matchAttrib('image', match, LinkPattern.GR_LINK);
+    }
+
+    return result;
+  }
+
   @override
   String toString()
   {
     final s = stickToNext ? '+' : ' ';
     final t = lineBreak ? '<break>' : text;
-    return "[$style]$s '$t' ${type.toString().replaceAll('MarkdownWord_Type.', '')}";
+    final builder = StringBuffer("[$style]$s '$t' ${type.toString().replaceAll('MarkdownWord_Type.', '')}");
+
+    for (final attr in attribs.entries)
+    {
+      builder.write(' ${attr.key}=${attr.value ?? "(null)"}');
+    }
+
+    return builder.toString();
   }
 }
 
 enum MarkdownWord_Type { word, link, image, link_image, reference_definition }
-
-// -----------------------------------------------

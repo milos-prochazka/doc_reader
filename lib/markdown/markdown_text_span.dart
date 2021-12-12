@@ -904,6 +904,13 @@ class _Image extends _Span
     }
 
     const stdColorFilter = <double>[1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0];
+    const alphaFilter = <double>
+    [
+      0, 0, 0, 0, 0, //
+      0, 0, 0, 0, 0, //
+      0, 0, 0, 0, 0, //
+      0, 0, 0, 1, 0
+    ];
     const sepiaFilter = <double>
     [
       //
@@ -912,6 +919,8 @@ class _Image extends _Span
       0.272, 0.534, 0.131, 0, 0, //
       0, 0, 0, 1, 0 //
     ];
+
+    double _factor(List<String> params) => (params.length >= 2) ? ((ValueUnit(params[1]).value ?? 100) * 0.01) : 1;
 
     List<double> interleawe(double factor, List<double> src, List<double> dst)
     {
@@ -948,16 +957,26 @@ class _Image extends _Span
         {
           case 'sepia':
           {
-            final double factor = (params.length >= 2) ? ((ValueUnit(params[2]).value ?? 100) * 0.01) : 1;
+            this.colorFilter = ui.ColorFilter.matrix(interleawe(_factor(params), stdColorFilter, sepiaFilter));
+          }
+          break;
 
-            this.colorFilter = ui.ColorFilter.matrix(interleawe(factor, stdColorFilter, sepiaFilter));
+          case 'alpha':
+          {
+            final color = this.color ?? Colors.black;
+            final filter = <double>[...alphaFilter];
+
+            filter[4] = color.red.toDouble();
+            filter[9] = color.green.toDouble();
+            filter[14] = color.blue.toDouble();
+
+            this.colorFilter = ui.ColorFilter.matrix(interleawe(_factor(params), stdColorFilter, filter));
           }
           break;
 
           case 'monochrome':
           {
             final color = this.color ?? Colors.white;
-            final double factor = (params.length >= 2) ? ((ValueUnit(params[2]).value ?? 100) * 0.01) : 1;
             const cr = 0.2125 * 0.00392157;
             const cg = 0.7154 * 0.00392157;
             const cb = 0.0721 * 0.00392157;
@@ -966,7 +985,7 @@ class _Image extends _Span
             (
               interleawe
               (
-                factor, stdColorFilter, <double>
+                _factor(params), stdColorFilter, <double>
                 [
                   // red
                   color.red * cr,

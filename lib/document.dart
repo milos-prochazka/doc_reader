@@ -4,6 +4,9 @@ import 'doc_span/doc_span_interface.dart';
 
 class Document
 {
+  /// Konfigurace pouzita pro zobrazeni dokumentu
+  dynamic config;
+
   /// Aktualni pozice v dokumentu
   double position = 0.0;
 

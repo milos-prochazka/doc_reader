@@ -26,12 +26,14 @@ class LinkPattern with AllMatches implements Pattern
   /// Vyraz link nebo image
   /// [text](link.lnk)    gr1=  gr2=text  gr3=link.lnk
   /// ![text](link.lnk)   gr1=! gr2=text  gr3=link.lnk
-  static final _linkOrImageRegExp = RegExp(r'(\!)?\[([^\s\[\]]*)\]\(([^\)\(]+)\)', multiLine: false);
+  //static final _linkOrImageRegExp = RegExp(r'(\!)?\[([^\s\[\]]*)\]\(([^\)\(]+)\)', multiLine: false);
+  static final _linkOrImageRegExp = RegExp(r'(\!)?\[([^\s\[\]]*)\]\((([^\)\(]+)|([^\)]*)\))\)', multiLine: false);
 
   /// Definice link nebo image
   /// [text]: link.lnk    gr1=  gr2=text  gr3=link.lnk
   /// ![text]: link.lnk   gr1=! gr2=text  gr3=link.lnk
-  static final _defineLinkOrImageRegExp = RegExp(r'^\s{0,3}(\!)?\[([^\s\[\]]*)\]\:\s+([^\)\(]+)', multiLine: false);
+  //static final _defineLinkOrImageRegExp = RegExp(r'^\s{0,3}(\!)?\[([^\s\[\]]*)\]\:\s+([^\)\(]+)', multiLine: false);
+  static final _defineLinkOrImageRegExp = RegExp(r'^\s{0,3}(\!)?\[([^\s\[\]]*)\]\:\s+(.+)', multiLine: false);
 
   /// Vyraz linked nebo image
   /// [![text](image.lnk)](url.lnk)    gr1=[!  gr2=text  gr3=link.lnk gr4=url.lnk

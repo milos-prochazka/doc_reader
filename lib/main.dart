@@ -2,6 +2,7 @@ import 'package:doc_reader/doc_reader.dart';
 import 'package:doc_reader/doc_span/basic/basic_text_span.dart';
 import 'package:doc_reader/markdown/patterns.dart';
 import 'package:doc_reader/markdown/value_unit.dart';
+import 'package:doc_reader/objects/asset_text_load.dart';
 import 'package:doc_reader/objects/utils.dart';
 import 'package:flutter/services.dart';
 import 'doc_span/color_text.dart';
@@ -106,7 +107,10 @@ class MyApp extends StatelessWidget
   MyApp({Key? key}) : super(key: key)
   {
     document = Document();
-    document.onOpenFile = fileOpen;
+    textConfig = MarkdownTextConfig();
+    document.config = textConfig;
+    document.onOpenFile = Markdown.fileOpen;
+    document.onOpenFileConfig = AssetLoadTextLoad();
     Future.microtask
     (
       () async
@@ -114,22 +118,6 @@ class MyApp extends StatelessWidget
         await document.openFile('media/test1.md');
       }
     );
-  }
-
-  void createDocument(String text)
-  {
-    markdown = Markdown();
-    markdown.writeMarkdownString(text);
-    textConfig = MarkdownTextConfig();
-    print(markdown.toString());
-
-    final ms = MarkdownTextSpan.create(markdown, textConfig, document);
-
-    document.docSpans.clear();
-    for (final s in ms)
-    {
-      document.docSpans.add(DocumentSpanContainer(s));
-    }
   }
 
   // This widget is the root of your application.
@@ -145,24 +133,6 @@ class MyApp extends StatelessWidget
       ),
       home: MyHomePage(title: 'Flutter Demo Home Page', document: document),
     );
-  }
-
-  Future<bool> fileOpen(String name, Document document, config) async
-  {
-    bool result = false;
-
-    try
-    {
-      final text = await rootBundle.loadString(name);
-      createDocument(text);
-      result = true;
-    }
-    catch (ex, stackTrace)
-    {
-      appLogEx(ex, stackTrace: stackTrace);
-    }
-
-    return result;
   }
 }
 

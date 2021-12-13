@@ -1,9 +1,14 @@
 // ignore_for_file: constant_identifier_names
 
+import 'package:doc_reader/doc_span/doc_span_interface.dart';
+import 'package:doc_reader/document.dart';
 import 'package:doc_reader/markdown/patterns.dart';
 import 'package:doc_reader/objects/applog.dart';
+import 'package:doc_reader/objects/text_load_provider.dart';
 import 'package:doc_reader/objects/utils.dart';
 import 'package:tuple/tuple.dart';
+
+import 'markdown_text_span.dart';
 
 /// Deleni textu na radky
 final _newLineRegex = RegExp(r'([\r\n])|(\r\n)]', multiLine: true);
@@ -597,6 +602,76 @@ class Markdown
 
     // Spocitani urvni odsazeni a poradi v seznamech ¡¡
     MarkdownDecoration.create(paragraphs);
+  }
+
+  static Future<String> loadText(String name, TextLoadProvider provider, [int level = 0]) async
+  {
+    String text;
+
+    try
+    {
+      text = name.isNotEmpty ? await provider.loadText(name, level > 0) : '';
+    }
+    catch (e, stackTrace)
+    {
+      appLogEx(e, msg: "Can't load file:$name", stackTrace: stackTrace);
+      throw TextLoadException(name);
+    }
+
+    final includeRegEx = RegExp(r'^\s{0,3}\[#include\]:\s*(\S+).*$', multiLine: true, caseSensitive: false);
+    final matches = includeRegEx.allMatches(text);
+
+    if (matches.isNotEmpty)
+    {
+      var index = 0;
+      final builder = StringBuffer();
+
+      for (final match in matches)
+      {
+        builder.write(text.substring(index, match.start));
+        if (level < 5)
+        {
+          final include = await loadText(match[1] ?? '', provider, level + 1);
+          builder.write(include);
+        }
+        index = match.end;
+      }
+
+      if (index < text.length)
+      {
+        builder.write(text.substring(index, text.length));
+      }
+
+      text = builder.toString();
+    }
+
+    return text;
+  }
+
+  static Future<bool> fileOpen(String name, Document document, config) async
+  {
+    bool result = false;
+
+    final text = await loadText(name, config as TextLoadProvider);
+    final markdown = Markdown();
+    markdown.writeMarkdownString(text);
+
+    final textConfig = document.config as MarkdownTextConfig;
+    print(markdown.toString());
+
+    final ms = MarkdownTextSpan.create(markdown, textConfig, document);
+
+    document.docSpans.clear();
+    for (final s in ms)
+    {
+      document.docSpans.add(DocumentSpanContainer(s));
+    }
+
+    document.repaint();
+
+    result = true;
+
+    return result;
   }
 
   @override

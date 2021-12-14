@@ -470,28 +470,31 @@ class Markdown
       final para = paragraphs[i];
       if (_indentParas.contains(para))
       {
-        int end = -1;
-
-        for (int j = i + 1; j < paragraphs.length; j++)
+        print('indent: $para');
+        int j = i + 1;
+        if (j < paragraphs.length)
         {
-          final nextPara = paragraphs[j];
-          if (!nextPara.isEmpty)
+          if (paragraphs[j].isEmpty)
           {
-            if (_indentParas.contains(nextPara))
+            print('empty: ${paragraphs[j]}');
+            for (; j < paragraphs.length; j++)
             {
-              end = j;
-              break;
+              final nextPara = paragraphs[j];
+              if (!nextPara.isEmpty)
+              {
+                if (_indentParas.contains(nextPara))
+                {
+                  for (var k = i + 1; k < j; k++)
+                  {
+                    final indentPara = paragraphs[k];
+                    _indentParas.add(indentPara);
+                    indentPara.masterClass = 'indent';
+                    indentPara.words.add(MarkdownWord.newLine());
+                  }
+                }
+                break;
+              }
             }
-          }
-        }
-
-        if (end > 0)
-        {
-          for (int j = i + 1; j < end; j++)
-          {
-            final nextPara = paragraphs[j];
-            nextPara.masterClass = para.masterClass;
-            nextPara.words.add(MarkdownWord.newLine());
           }
         }
       }
@@ -1251,7 +1254,7 @@ class MarkdownDecoration
     {
       decor = 'a';
     }
-    if (ch >= /*$A*/(0x41) && ch <= /*$Z*/(0x5A))
+    else if (ch >= /*$A*/(0x41) && ch <= /*$Z*/(0x5A))
     {
       decor = 'A';
     }
@@ -1263,9 +1266,14 @@ class MarkdownDecoration
     {
       decor = '-';
     }
+    else if (ch == /*$>*/(0x3E))
+    {
+      decor = '>';
+    }
     else
     {
       decor = decor.substring(column, column + 1);
+      //decor = decor.trim();
     }
 
     decoration = decor;

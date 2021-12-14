@@ -78,6 +78,8 @@ class MarkdownTextSpan implements IDocumentSpan
     _height = 0;
     _width = 0;
 
+    appLog('_updateText:\n$paragraph\n');
+
     var paraStyle = config.getTextStyle(paragraph);
 
     double left = paraStyle.leftMargin;
@@ -232,14 +234,30 @@ class MarkdownTextSpan implements IDocumentSpan
       final lineWidth = y > rightHeight ? right : sizeWidth;
       var wordSpace = span.wordSpace;
 
-      if ((x + spanWidth) > lineWidth || span.lineBreak)
+      if (span.lineBreak)
       {
-        y = line.calcPosition(this, parameters);
+        // Novy radek
+        if (line._words.isEmpty)
+        {
+          _height += span.height;
+          y = _height;
+        }
+        else
+        {
+          y = line.calcPosition(this, parameters);
+        }
+
         x = y > leftHeight ? left : leftLeft;
       }
-
-      if (!span.lineBreak)
+      else
       {
+        // Normalni text
+        if ((x + spanWidth) > lineWidth)
+        {
+          y = line.calcPosition(this, parameters);
+          x = y > leftHeight ? left : leftLeft;
+        }
+
         span.xOffset = x;
         span.yOffset = y;
         _spans.add(span);

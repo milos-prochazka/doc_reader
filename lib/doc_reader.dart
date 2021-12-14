@@ -20,6 +20,7 @@ class DocReader extends StatefulWidget
 
 class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMixin
 {
+    bool isDisposed = false;
     Document? document;
     Timer? _timer;
     int cnt = 0;
@@ -75,6 +76,7 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
     @override
     void dispose()
     {
+        isDisposed = true;
         super.dispose();
         document?.onTap = null;
         /*document?.onTouchMove = null;
@@ -175,9 +177,12 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
                     {
                         try
                         {
-                            print("onRepiant() -------------------------------------------------------------");
+                            print("onRepaint() -------------------------------------------------------------");
                             await Future.delayed(const Duration(milliseconds: 20));
-                            setState(() {});
+                            if (!isDisposed)
+                            {
+                                setState(() {});
+                            }
                         }
                         catch (ex, stackTrace)
                         {

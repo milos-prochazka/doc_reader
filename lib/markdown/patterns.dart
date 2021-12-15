@@ -33,7 +33,7 @@ class LinkPattern with AllMatches implements Pattern
   /// [text]: link.lnk    gr1=  gr2=text  gr3=link.lnk
   /// ![text]: link.lnk   gr1=! gr2=text  gr3=link.lnk
   //static final _defineLinkOrImageRegExp = RegExp(r'^\s{0,3}(\!)?\[([^\s\[\]]*)\]\:\s+([^\)\(]+)', multiLine: false);
-  static final _defineLinkOrImageRegExp = RegExp(r'^\s{0,3}(\!)?\[([^\s\[\]]*)\]\:\s+(.+)', multiLine: false);
+  static final _defineLinkOrImageRegExp = RegExp(r'^\s{0,3}(\!)?\[([^\[\]]*)\]\:\s+(.+)', multiLine: false);
 
   /// Vyraz linked nebo image
   /// [![text](image.lnk)](url.lnk)    gr1=[!  gr2=text  gr3=link.lnk gr4=url.lnk
@@ -88,7 +88,7 @@ class LinkPattern with AllMatches implements Pattern
       .._groups[GR_ALT] = pMatch[2]
       .._groups[GR_URL_PART] = pMatch[3];
 
-      final urlStr = pMatch[3]!;
+      final urlStr = pMatch[3]!.trim();
 
       final uMatch = _urlRegExp.firstMatch(urlStr);
       if (uMatch?.start == 0)
@@ -98,7 +98,13 @@ class LinkPattern with AllMatches implements Pattern
 
         var index = uMatch.end;
 
-        // Vyhlkedani rezecu (popis s zvukovy popis)
+        var iBracket = urlStr.indexOf('(', index);
+        if (iBracket >= 0)
+        {
+          index = iBracket + 1;
+        }
+
+        // Vyhledani rezecu (popis a zvukovy popis)
         final sMatch = StringPattern().allMatches(urlStr, index).toList(growable: false);
 
         for (var c = 0; c < 2; c++)
@@ -126,7 +132,7 @@ class LinkPattern with AllMatches implements Pattern
           for (final m in <String?>[iMatch[7], iMatch[8]])
           {
             // trida a zarovnani
-            if (m != null)
+            if (m != null && m.isNotEmpty)
             {
               if (m.startsWith('.'))
               {

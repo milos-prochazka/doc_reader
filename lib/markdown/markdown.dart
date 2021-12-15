@@ -11,7 +11,7 @@ import 'package:tuple/tuple.dart';
 import 'markdown_text_span.dart';
 
 /// Deleni textu na radky
-final _newLineRegex = RegExp(r'([\r\n])|(\r\n)]', multiLine: true);
+final _newLineRegex = RegExp(r'(\r\n)|([\r\n])]', multiLine: true);
 
 /// Detekce radku ktere se nespojuji s  ( zacatek #, []:, * , - , + , 1. , a., A. , ```, nebo horizontalni cara)
 final _noMergeRegExp = RegExp
@@ -101,7 +101,6 @@ final _escapedCharRegExp = RegExp(r'[\uE000-\uE0FF]', multiLine: false);
 
 /// Escapovane znaky:
 /// \ E0C0
-/// ` E060
 /// * E02A
 /// _ E05F
 /// { E07B

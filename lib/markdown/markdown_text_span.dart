@@ -12,6 +12,7 @@ import 'package:doc_reader/objects/utils.dart';
 import 'package:doc_reader/objects/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:path/path.dart' as path;
 import 'package:flutter_svg/flutter_svg.dart';
 import '../document.dart';
 import 'markdown.dart';
@@ -1063,7 +1064,7 @@ class _Image extends _Span
   @override
   bool get textBaseLine => baseLine > 0;
 
-  String get imgSource => attribs['image'] as String;
+  String get imgSource => path.join(document?.imagePath ?? '', attribs['image'] as String);
 
   /*double? _decodeSize(double? value, String? unit, double screenSize)
   {

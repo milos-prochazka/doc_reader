@@ -53,6 +53,9 @@ class Document
     return paintParameters!;
   }*/
 
+  /// Cesta k obrazkum
+  String imagePath = '';
+
   double frac(double x)
   {
     return x - x.floorToDouble();

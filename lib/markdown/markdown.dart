@@ -7,6 +7,7 @@ import 'package:doc_reader/objects/applog.dart';
 import 'package:doc_reader/objects/text_load_provider.dart';
 import 'package:doc_reader/objects/utils.dart';
 import 'package:tuple/tuple.dart';
+import 'package:path/path.dart' as path;
 
 import 'markdown_text_span.dart';
 
@@ -45,8 +46,12 @@ final _charClassRegExp = RegExp(r'((\_{1,3})|(\*{1,3}))|(\`{3}(@\w+\s))', multiL
 final _longLinkRegExp = RegExp(r'(\!?)\[([^\]]+)\]\(([^\)]+)\)', multiLine: false);
 
 /// Kratky link [link] , nebo ![_image]
-/// ![myImage] g1=! g2=image
+/// ![myImage][id] g1=! g2=image
 final _shortLinkRegExp = RegExp(r'(\!?)\[([^\]]+)\]', multiLine: false);
+
+/// Obrazek s popisem a odkazem na definici obrazku ![popis obrazku][id]
+/// ![myImage][id] g1=muImage g2=id
+final _idImageRegExp = RegExp(r'\!\[([^\]]+)\]\[([^\]]+)\]', multiLine: false);
 
 // TODO UPRAVIT!!!
 /// Obrazek se zadanou velikosti
@@ -654,6 +659,8 @@ class Markdown
   {
     bool result = false;
 
+    document.imagePath = path.dirname(name);
+
     final text = await loadText(name, config as TextLoadProvider);
     final markdown = Markdown();
     markdown.writeMarkdownString(text);
@@ -935,9 +942,10 @@ class MarkdownParagraph
     const MATCH_NONE = 0;
     const LONG_LINK = 1;
     const SHORT_LINK = 2;
-    const EMAIL_LINK = 3;
-    const URL_LINK = 4;
-    const ATTRIBUTE = 5;
+    const ID_IMAGE = 3;
+    const EMAIL_LINK = 4;
+    const URL_LINK = 5;
+    const ATTRIBUTE = 6;
 
     final wordBuffer = StringBuffer();
     final styleStack = <String>[];
@@ -950,6 +958,7 @@ class MarkdownParagraph
       final matchInfo in
       [
         Tuple2(SHORT_LINK, _shortLinkRegExp),
+        Tuple2(ID_IMAGE, _idImageRegExp),
         Tuple2(EMAIL_LINK, _emailRegExp),
         Tuple2(URL_LINK, _urlRegExp),
         Tuple2(LONG_LINK, _longLinkRegExp),
@@ -1016,11 +1025,31 @@ class MarkdownParagraph
               if (type == '!')
               {
                 word = makeWord(name, styleStack, type: MarkdownWord_Type.image);
+                word.attribs['alt'] = name;
               }
               else
               {
                 word = makeWord(name, styleStack, type: MarkdownWord_Type.link);
               }
+
+              word.stickToNext = charAT(text, match.end) != ' ';
+              words.add(word);
+            }
+          }
+          break;
+
+          case ID_IMAGE:
+          {
+            final match = lineMatches[readIndex]!;
+            MarkdownWord? word;
+
+            if (match.groupCount >= 2)
+            {
+              final altText = match.group(1) ?? '';
+              final id = match.group(2) ?? '!';
+
+              word = makeWord(id, styleStack, type: MarkdownWord_Type.image);
+              word.attribs['alt'] = altText;
 
               word.stickToNext = charAT(text, match.end) != ' ';
               words.add(word);

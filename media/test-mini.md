@@ -1,6 +1,4 @@
 
+[mylink]: podzim.jpeg ( x 3em line)
 
-[muj link]: media/battery.svg ('ssss' 'ddd' x 1em)
-
-![muj link]
-
+           ![toto je popis][mylink]

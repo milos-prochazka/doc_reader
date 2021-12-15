@@ -261,25 +261,27 @@ class DefaultPictureProvider extends IPictureProvider
   @override
   Future<Object?> loadSourceAsync(String imageSource) async
   {
+    final imgPath = imageSource.replaceAll('\\', '/');
+
     try
     {
-      switch (path.extension(imageSource))
+      switch (path.extension(imgPath))
       {
         case '.svg':
         {
-          final svgText = await rootBundle.loadString(imageSource);
-          return svg.fromSvgString(svgText, imageSource);
+          final svgText = await rootBundle.loadString(imgPath);
+          return svg.fromSvgString(svgText, imgPath);
         }
 
         case '.xml':
         {
-          final avdText = await rootBundle.loadString(imageSource);
-          return avd.fromAvdString(avdText, imageSource);
+          final avdText = await rootBundle.loadString(imgPath);
+          return avd.fromAvdString(avdText, imgPath);
         }
 
         default:
         {
-          final ByteData data = await rootBundle.load(imageSource);
+          final ByteData data = await rootBundle.load(imgPath);
 
           final Completer<ui.Image> completer = Completer();
           ui.decodeImageFromList

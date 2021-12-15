@@ -39,7 +39,7 @@ class MyApp extends StatelessWidget
     document = Document();
     textConfig = MarkdownTextConfig();
     document.config = textConfig;
-    document.onOpenFile = Markdown.fileOpen;
+    document.onOpenFile = MarkdownTextSpan.fileOpen;
     document.onOpenFileConfig = AssetLoadTextLoad();
     Future.microtask
     (

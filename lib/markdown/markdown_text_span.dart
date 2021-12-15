@@ -7,6 +7,7 @@ import 'package:doc_reader/doc_span/doc_span_interface.dart';
 import 'package:doc_reader/markdown/value_unit.dart';
 import 'package:doc_reader/objects/applog.dart';
 import 'package:doc_reader/objects/picture_cache.dart';
+import 'package:doc_reader/objects/text_load_provider.dart';
 import 'package:doc_reader/objects/utils.dart';
 import 'package:doc_reader/objects/utils.dart';
 import 'package:doc_reader/objects/utils.dart';
@@ -343,6 +344,34 @@ class MarkdownTextSpan implements IDocumentSpan
   {
     calcSize(params);
     return _width;
+  }
+
+  static Future<bool> fileOpen(String name, Document document, config) async
+  {
+    bool result = false;
+
+    document.imagePath = path.dirname(name);
+
+    final text = await Markdown.loadText(name, config as TextLoadProvider);
+    final markdown = Markdown();
+    markdown.writeMarkdownString(text);
+
+    final textConfig = document.config as MarkdownTextConfig;
+    print(markdown.toString());
+
+    final ms = MarkdownTextSpan.create(markdown, textConfig, document);
+
+    document.docSpans.clear();
+    for (final s in ms)
+    {
+      document.docSpans.add(DocumentSpanContainer(s));
+    }
+
+    document.repaint();
+
+    result = true;
+
+    return result;
   }
 }
 

@@ -611,6 +611,14 @@ class Markdown
     MarkdownDecoration.create(paragraphs);
   }
 
+  /// Načtení markdown textu
+  /// - Podporuje TextLoadProvider pro načítání textu
+  /// - Podporuje direktivu:
+  /// ```
+  /// [#include] file.md
+  /// ```
+  /// Tato direktiva se píše na samostatném řádku a vloží text souboru **file.md** do načteného textu.
+  ///
   static Future<String> loadText(String name, TextLoadProvider provider, [int level = 0]) async
   {
     String text;
@@ -653,34 +661,6 @@ class Markdown
     }
 
     return text;
-  }
-
-  static Future<bool> fileOpen(String name, Document document, config) async
-  {
-    bool result = false;
-
-    document.imagePath = path.dirname(name);
-
-    final text = await loadText(name, config as TextLoadProvider);
-    final markdown = Markdown();
-    markdown.writeMarkdownString(text);
-
-    final textConfig = document.config as MarkdownTextConfig;
-    print(markdown.toString());
-
-    final ms = MarkdownTextSpan.create(markdown, textConfig, document);
-
-    document.docSpans.clear();
-    for (final s in ms)
-    {
-      document.docSpans.add(DocumentSpanContainer(s));
-    }
-
-    document.repaint();
-
-    result = true;
-
-    return result;
   }
 
   @override

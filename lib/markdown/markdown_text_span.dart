@@ -589,7 +589,8 @@ class MarkdownTextConfig
 
   _WordStyle getTextStyle(MarkdownParagraph para, {MarkdownWord? word, bool bullet = false})
   {
-    final fullStyle = para.fullClassName(word, bullet);
+    final linkStyle = word?.type == MarkdownWord_Type.link;
+    final fullStyle = para.fullClassName(word, bullet, linkStyle);
     _WordStyle? result = _state.textStyles[fullStyle];
 
     if (result == null)
@@ -646,6 +647,11 @@ class MarkdownTextConfig
         styleInfo.yOffset = -styleInfo.fontSize * 0.3333;
       }
 
+      if (linkStyle)
+      {
+        styleInfo.textDecoration = TextDecoration.underline;
+      }
+
       result = _WordStyle(styleInfo);
 
       _state.textStyles[fullStyle] = result;
@@ -683,6 +689,7 @@ class _WordStyleInfo
   String styleStr = 'normal';
   FontStyle? fontStyle;
   FontWeight? fontWeight;
+  ui.TextDecoration? textDecoration;
   Color color = Colors.black;
   double yOffset = 0.0;
   double leftMargin = 0.0;
@@ -715,6 +722,7 @@ class _WordStyle
     fontStyle: wsInfo.fontStyle,
     fontWeight: wsInfo.fontWeight,
     fontSize: wsInfo.fontSize,
+    decoration: wsInfo.textDecoration
     //fontFamily: wsInfo.fontFamily,
   );
 }

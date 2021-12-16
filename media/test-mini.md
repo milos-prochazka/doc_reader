@@ -1,4 +1,2 @@
+Před odkazem[to  je  odkaz](http://www.seznam.cz)za odkazem
 
-[mylink]: podzim.jpeg ( x 3em line)
-
-           ![toto je popis][mylink]

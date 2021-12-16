@@ -1,4 +1,5 @@
-// ignore: non_constant_identifier_names
+// ignore_for_file: non_constant_identifier_names
+
 import 'package:doc_reader/objects/i_cloneable.dart';
 
 String enum_ToString(Object param)

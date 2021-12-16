@@ -104,6 +104,9 @@ final _escapeCharRegExp = RegExp(r'\\[\x21-0x2f\x3a-\x40\x5b-\x60\x7b-\x7e]', mu
 /// Vyhledani escapovanych znaku
 final _escapedCharRegExp = RegExp(r'[\uE000-\uE0FF]', multiLine: false);
 
+/// Vyhledani mezer (vyhleda bloky vice mezer za sebou mezer), hlevne pro split
+final _spacesRegEx = RegExp(r'\s+');
+
 /// Escapovane znaky:
 /// \ E0C0
 /// * E02A
@@ -733,15 +736,39 @@ class MarkdownParagraph
   masterClass = linkName,
   subclass = linkUrl;
 
+  ///
   String get linkName => masterClass;
 
+  ///
   String get linkUrl => subclass;
 
-  String fullClassName([MarkdownWord? word, bool bullet = false])
+  String fullClassName([MarkdownWord? word, bool bullet = false, bool link = false])
   {
-    final cname = subclass.isEmpty ? masterClass : '$masterClass.$subclass';
-    final fname = (word?.style.isEmpty ?? true) ? cname : '$cname.${word?.style}';
-    return bullet ? '$fname.\ue100' : fname;
+    final builder = StringBuffer(masterClass);
+
+    if (subclass.isNotEmpty)
+    {
+      builder.write('.');
+      builder.write(subclass);
+    }
+
+    if (word?.style.isNotEmpty ?? false)
+    {
+      builder.write('.');
+      builder.write(word?.style);
+    }
+
+    if (bullet)
+    {
+      builder.write('.\u2022');
+    }
+
+    if (link)
+    {
+      builder.write('@');
+    }
+
+    return builder.toString();
   }
 
   static String escape(String text)
@@ -976,19 +1003,33 @@ class MarkdownParagraph
               final type = match.group(1) ?? '';
               final desc = match.group(2) ?? '';
               final link = match.group(3) ?? '';
-              MarkdownWord? word;
 
               if (type == '!')
               {
-                word = makeWord(desc, styleStack, type: MarkdownWord_Type.image, attr: _imageAttributes(link));
+                // image
+                final word = makeWord(desc, styleStack, type: MarkdownWord_Type.image, attr: _imageAttributes(link));
+                word.stickToNext = charAT(text, match.end) != ' ';
+                words.add(word);
               }
               else
               {
-                word = makeWord(desc, styleStack, type: MarkdownWord_Type.link, attr: {'link': link});
-              }
+                // link
+                final descWords = desc.split(_spacesRegEx);
+                final attr = {'link': link};
+                if (words.isNotEmpty)
+                {
+                  words.last.stickToNext = false;
+                }
 
-              word.stickToNext = charAT(text, match.end) != ' ';
-              words.add(word);
+                for (var i = 0; i < descWords.length; i++)
+                {
+                  bool stick = (i + 1) < descWords.length;
+                  final strWord = descWords[i] + (stick ? ' ' : '');
+                  final word = makeWord(strWord, styleStack, type: MarkdownWord_Type.link, attr: attr);
+                  word.stickToNext = stick;
+                  words.add(word);
+                }
+              }
             }
           }
           break;

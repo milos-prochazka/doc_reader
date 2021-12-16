@@ -43,6 +43,7 @@ final _blockRegExp = RegExp(r'^\s*(\`{3,})(\w*)\s*$', multiLine: false);
 final _charClassRegExp = RegExp(r'((\_{1,3})|(\*{1,3}))|(\`{3}(@\w+\s))', multiLine: false);
 
 /// Dlouhy link (obsahuje URL)
+/// TODO Zmena na LinkPattern
 final _longLinkRegExp = RegExp(r'(\!?)\[([^\]]+)\]\(([^\)]+)\)', multiLine: false);
 
 /// Kratky link [link] , nebo ![_image]
@@ -53,7 +54,7 @@ final _shortLinkRegExp = RegExp(r'(\!?)\[([^\]]+)\]', multiLine: false);
 /// ![myImage][id] g1=muImage g2=id
 final _idImageRegExp = RegExp(r'\!\[([^\]]+)\]\[([^\]]+)\]', multiLine: false);
 
-// TODO UPRAVIT!!!
+/// TODO prijde zrusit
 /// Obrazek se zadanou velikosti
 /// img.jpg =1.5%x34em right .mycls gr2 = 1.5 , gr3 = % , gr8 = 34 , gr9 = em , gr14 = right, gr16 = mycls
 final _imageSizeRegExp = RegExp
@@ -1129,7 +1130,7 @@ class MarkdownParagraph
               readIndex++;
               break;
 
-              case '!': // Obrazek (mozna)
+              /*case '!': // Obrazek (mozna)
               readIndex++;
               if (charAT(text, readIndex) == '[')
               {
@@ -1147,7 +1148,7 @@ class MarkdownParagraph
               {
                 wordBuffer.write(ch);
               }
-              break;
+              break;*/
 
               default: // Jiny znak
               {

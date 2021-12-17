@@ -1,2 +1,2 @@
-Před odkazem[to  je  odkaz](http://www.seznam.cz)za odkazem
+Před odkazem[to je obrazek](pngegg.png 'title' 'voice' 10em x 20em left .myclass)za odkazem
 

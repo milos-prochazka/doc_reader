@@ -20,7 +20,8 @@ void main()
   /*final sp = StringPattern();
 
   final patt = LinkPattern(LinkPattern.TYPE_LINK);
-  var match = patt.firstMatch(r'''[kokolex](fff.jpg "doplkovy popis" "voice"  10.34em x 76.5% left .myclass)''');
+  /// Před odkazem[to  je  odkaz](http://www.seznam.cz)za odkazem
+  var match = patt.firstMatch(r'''Před odkazem[to je odkaz](http://www.seznam.cz)za odkazem''');
   final word= MarkdownWord.fromMatch(match!);
   print(word.toString());*/
 

@@ -18,16 +18,23 @@ class LinkPattern with AllMatches implements Pattern
   static const GR_CLASS = 10;
   static const GR_LINK = 11;
 
+  /// Vyraz  typu `[text](link.lnk)` nebo `![text](link.lnk)`
   static const TYPE_LINK = 0;
+
+  /// Vyraz typu `[![text](image.lnk)](url.lnk)`
   static const TYPE_LINKED_IMAGE = 1;
+
+  /// Vyraz typu `[text]: link.lnk` nebo `![text]: link.lnk`
   static const TYPE_LINK_REFERENCE = 2;
+
+  /// Nepouziva se
   static const TYPE_LINKED_IMAGE_REFERENCE = 3;
 
   /// Vyraz link nebo image
   /// [text](link.lnk)    gr1=  gr2=text  gr3=link.lnk
   /// ![text](link.lnk)   gr1=! gr2=text  gr3=link.lnk
   //static final _linkOrImageRegExp = RegExp(r'(\!)?\[([^\s\[\]]*)\]\(([^\)\(]+)\)', multiLine: false);
-  static final _linkOrImageRegExp = RegExp(r'(\!)?\[([^\s\[\]]*)\]\((([^\)\(]+)|([^\)]*)\))\)', multiLine: false);
+  static final _linkOrImageRegExp = RegExp(r'(\!)?\[([^\[\]]*)\]\((([^\)\(]+)|([^\)]*)\))\)', multiLine: false);
 
   /// Definice link nebo image
   /// [text]: link.lnk    gr1=  gr2=text  gr3=link.lnk
@@ -78,11 +85,11 @@ class LinkPattern with AllMatches implements Pattern
       break;
     }
 
-    final pMatch = pattern.matchAsPrefix(string, start);
+    final pMatch = pattern.firstMatch(string.substring(start));
     if (pMatch != null)
     {
       // Vyraz nalezen
-      final result = PatternMatch(12, string, this, pMatch.start, pMatch.end)
+      final result = PatternMatch(12, string, this, pMatch.start + start, pMatch.end + start)
       .._groups[0] = pMatch[0]
       .._groups[GR_EXCLAMATION] = pMatch[1]
       .._groups[GR_ALT] = pMatch[2]

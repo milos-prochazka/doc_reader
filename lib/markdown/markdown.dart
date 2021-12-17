@@ -44,7 +44,8 @@ final _charClassRegExp = RegExp(r'((\_{1,3})|(\*{1,3}))|(\`{3}(@\w+\s))', multiL
 
 /// Dlouhy link (obsahuje URL)
 /// TODO Zmena na LinkPattern
-final _longLinkRegExp = RegExp(r'(\!?)\[([^\]]+)\]\(([^\)]+)\)', multiLine: false);
+//final _longLinkRegExp = RegExp(r'(\!?)\[([^\]]+)\]\(([^\)]+)\)', multiLine: false);
+final _longLinkRegExp = LinkPattern(LinkPattern.TYPE_LINK);
 
 /// Kratky link [link] , nebo ![_image]
 /// ![myImage][id] g1=! g2=image
@@ -53,20 +54,6 @@ final _shortLinkRegExp = RegExp(r'(\!?)\[([^\]]+)\]', multiLine: false);
 /// Obrazek s popisem a odkazem na definici obrazku ![popis obrazku][id]
 /// ![myImage][id] g1=muImage g2=id
 final _idImageRegExp = RegExp(r'\!\[([^\]]+)\]\[([^\]]+)\]', multiLine: false);
-
-/// TODO prijde zrusit
-/// Obrazek se zadanou velikosti
-/// img.jpg =1.5%x34em right .mycls gr2 = 1.5 , gr3 = % , gr8 = 34 , gr9 = em , gr14 = right, gr16 = mycls
-final _imageSizeRegExp = RegExp
-(
-  r'\s\=\s*(([\d\.]*)((px)|(em)|(%))?)?\s*[xX]\s*(([\d\.]*)((px)|(em)|(%))?)?(\s*([\.\#]?[\w\-]+))?(\s*([\.\#]?[\w\-]+))?\s*$',
-  multiLine: false,
-  caseSensitive: false
-);
-
-/// Obrazek se zadanou tridou
-/// imge.jpg .myclass gr1=myclass
-final _imageClassRegExp = RegExp(r'\s+\.(\w+)\s*$', multiLine: false);
 
 /// Special attributes {.class}  {#anchor} {*name=dddd}
 final _attributeLikRegExp = RegExp(r'\{([\.\#\*])([^}]+)\}');
@@ -89,9 +76,6 @@ final _hrRegExp = RegExp(r'^\s*(([\*]{3,})|([\-]{3,})|([\_]{3,})|([\=]{3,}))\s*$
 ///  [aaa]: http://wwww.seznam.cz g2='' g3=aaa g4=http://wwww.seznam.cz
 /// Nebo definice tridy:
 ///  [.myclass]: width=100em height=50em color=#cfa g2=. g3=myclass g4=width=100em height=50em color=#cfa
-//final _refLinkLinkRegExp = RegExp(r'^\s{0,3}(\[(\.?)(.+)\])\:\s+(.+)*$', multiLine: false);
-
-// Nova definice
 final _refLinkLinkRegExp = LinkPattern(LinkPattern.TYPE_LINK_REFERENCE);
 
 // Pojemnovany atroibitu: width=100em  g1=width g2=100em
@@ -181,7 +165,7 @@ class Markdown
         {
           // Link
           //paragraphs.add(MarkdownParagraph.referenceLink(name, data));
-          namedLinks[name] = MarkdownWord.fromMatch(match);
+          namedLinks[name] = MarkdownWord.fromMatch(match, []);
         }
       }
       else if (_hrRegExp.hasMatch(line))
@@ -933,18 +917,6 @@ class MarkdownParagraph
     }
   }
 
-  /*static String centerSubstring(String text, int prefix, int postfix)
-  {
-    if ((prefix + postfix) >= text.length)
-    {
-      return '';
-    }
-    else
-    {
-      return text.substring(prefix, text.length - postfix);
-    }
-  }*/
-
   writeText(String text)
   {
     const MATCH_NONE = 0;
@@ -984,7 +956,7 @@ class MarkdownParagraph
 
     do
     {
-      final ch = charAT(text, readIndex);
+      final ch = charAt(text, readIndex);
       final type = readIndex < text.length ? lineMatchType[readIndex] : MATCH_NONE;
 
       try
@@ -999,39 +971,9 @@ class MarkdownParagraph
           case LONG_LINK:
           {
             final match = lineMatches[readIndex]!;
-            if (match.groupCount >= 3)
-            {
-              final type = match.group(1) ?? '';
-              final desc = match.group(2) ?? '';
-              final link = match.group(3) ?? '';
 
-              if (type == '!')
-              {
-                // image
-                final word = makeWord(desc, styleStack, type: MarkdownWord_Type.image, attr: _imageAttributes(link));
-                word.stickToNext = charAT(text, match.end) != ' ';
-                words.add(word);
-              }
-              else
-              {
-                // link
-                final descWords = desc.split(_spacesRegEx);
-                final attr = {'link': link};
-                if (words.isNotEmpty)
-                {
-                  words.last.stickToNext = false;
-                }
-
-                for (var i = 0; i < descWords.length; i++)
-                {
-                  bool stick = (i + 1) < descWords.length;
-                  final strWord = descWords[i] + (stick ? ' ' : '');
-                  final word = makeWord(strWord, styleStack, type: MarkdownWord_Type.link, attr: attr);
-                  word.stickToNext = stick;
-                  words.add(word);
-                }
-              }
-            }
+            final word = linkWordsFromMatch(match, styleStack);
+            word.stickToNext = charAt(text, match.end) != ' ';
           }
           break;
 
@@ -1054,7 +996,7 @@ class MarkdownParagraph
                 word = makeWord(name, styleStack, type: MarkdownWord_Type.link);
               }
 
-              word.stickToNext = charAT(text, match.end) != ' ';
+              word.stickToNext = charAt(text, match.end) != ' ';
               words.add(word);
             }
           }
@@ -1073,7 +1015,7 @@ class MarkdownParagraph
               word = makeWord(id, styleStack, type: MarkdownWord_Type.image);
               word.attribs['alt'] = altText;
 
-              word.stickToNext = charAT(text, match.end) != ' ';
+              word.stickToNext = charAt(text, match.end) != ' ';
               words.add(word);
             }
           }
@@ -1130,26 +1072,6 @@ class MarkdownParagraph
               readIndex++;
               break;
 
-              /*case '!': // Obrazek (mozna)
-              readIndex++;
-              if (charAT(text, readIndex) == '[')
-              {
-                var match = _longLinkRegExp.matchAsPrefix(text, readIndex);
-
-                if (match != null && match.start == readIndex)
-                {
-                  writeWord(wordBuffer, styleStack, false);
-                  wordBuffer.write(text.substring(readIndex - 1, match.end));
-                  writeWord(wordBuffer, styleStack, false);
-                  readIndex = match.end;
-                }
-              }
-              else
-              {
-                wordBuffer.write(ch);
-              }
-              break;*/
-
               default: // Jiny znak
               {
                 final match = _charClassRegExp.matchAsPrefix(text, readIndex);
@@ -1163,7 +1085,7 @@ class MarkdownParagraph
                   if (styleStack.isNotEmpty && compareClass(styleStack.last, mValue))
                   {
                     // konec stylu
-                    final ch = charAT(text, readIndex);
+                    final ch = charAt(text, readIndex);
                     writeWord(wordBuffer, styleStack, ch != ' ' && ch != '');
                     styleStack.removeLast();
                   }
@@ -1201,58 +1123,6 @@ class MarkdownParagraph
     writeWord(wordBuffer, styleStack, false); // Posledni slovo
   }
 
-  static Map<String, String?> _imageAttributes(String imageUri)
-  {
-    // TODO Upravit _imageSizeRegExp
-    var info = _imageSizeRegExp.firstMatch(imageUri);
-
-    if (info != null)
-    {
-      final w = info.group(2) ?? '';
-      final wu = info.group(3) ?? '';
-      final h = info.group(8) ?? '';
-      final hu = info.group(9) ?? '';
-      String? al;
-      String? cl;
-
-      for (final p in [info.group(14), info.group(16)])
-      {
-        if (p != null)
-        {
-          if (p.startsWith('.'))
-          {
-            cl = p.substring(1);
-          }
-          else
-          {
-            al = p;
-          }
-        }
-      }
-
-      return <String, String?>
-      {
-        'image': imageUri.substring(0, info.start).trim(),
-        'width': w + wu,
-        'height': h + hu,
-        'align': al,
-        'class': cl,
-      };
-    }
-    else if ((info = _imageClassRegExp.firstMatch(imageUri)) != null)
-    {
-      return <String, String?>
-      {
-        'image': imageUri.substring(0, info!.start).trim(),
-        'class': info.group(1),
-      };
-    }
-    else
-    {
-      return <String, String?>{'image': imageUri};
-    }
-  }
-
   static String matchVal(Match? match)
   {
     //return match?.input.substring(match.start, match.end) ?? '';
@@ -1264,7 +1134,7 @@ class MarkdownParagraph
     return (push == pop) || (pop == '```' && push.startsWith('```@'));
   }
 
-  static String charAT(String text, int index)
+  static String charAt(String text, int index)
   {
     return (index < 0 || index >= text.length) ? '' : text[index];
   }
@@ -1275,6 +1145,39 @@ class MarkdownParagraph
     {
       words.add(word);
     }
+  }
+
+  /// Seznam slov vztahujicich se k jednomu nalezenemu linku pro obrazek uklada jendine slovo
+  MarkdownWord linkWordsFromMatch(Match match, List<String> styleStack)
+  {
+    final MarkdownWord result;
+
+    if (match[LinkPattern.GR_EXCLAMATION] == '!')
+    {
+      result = MarkdownWord.fromMatch(match, styleStack);
+      words.add(result);
+    }
+    else
+    {
+      final descWords = (match[LinkPattern.GR_ALT] ?? '').split(_spacesRegEx);
+      if (descWords.isEmpty)
+      {
+        descWords.add(match[LinkPattern.GR_LINK] ?? match[LinkPattern.GR_URL] ?? 'link');
+      }
+
+      for (var i = 0; i < descWords.length; i++)
+      {
+        bool stick = (i + 1) < descWords.length;
+        final strWord = descWords[i] + (stick ? ' ' : '');
+        final word = MarkdownWord.fromMatch(match, styleStack, text: strWord);
+        word.stickToNext = stick;
+        words.add(word);
+      }
+
+      result = words.last;
+    }
+
+    return result;
   }
 
   bool get isBlankLine => masterClass == 'p' && words.isEmpty;
@@ -1454,12 +1357,13 @@ class MarkdownWord
     }
   }
 
-  factory MarkdownWord.fromMatch(Match match)
+  factory MarkdownWord.fromMatch(Match match, List<String> styleStack, {String? text})
   {
     final result = MarkdownWord()
-    ..type = (match[LinkPattern.GR_EXCLAMATION] == '!') ? MarkdownWord_Type.image : MarkdownWord_Type.link;
+    ..type = (match[LinkPattern.GR_EXCLAMATION] == '!') ? MarkdownWord_Type.image : MarkdownWord_Type.link
+    ..style = styleStack.isEmpty ? '' : styleStack.last;
 
-    result.text = match[LinkPattern.GR_ALT] ?? '';
+    result.text = text ?? match[LinkPattern.GR_ALT] ?? '';
     result._matchAttrib('width', match, LinkPattern.GR_WIDTH);
     result._matchAttrib('height', match, LinkPattern.GR_HEIGHT);
     result._matchAttrib('align', match, LinkPattern.GR_ALIGN);
@@ -1473,8 +1377,9 @@ class MarkdownWord
     }
     else
     {
+      result._matchAttrib('link', match, LinkPattern.GR_URL);
       result._matchAttrib('link', match, LinkPattern.GR_LINK);
-      result._matchAttrib('image', match, LinkPattern.GR_LINK);
+      //result._matchAttrib('image', match, LinkPattern.GR_LINK);
     }
 
     return result;

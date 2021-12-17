@@ -43,8 +43,6 @@ final _blockRegExp = RegExp(r'^\s*(\`{3,})(\w*)\s*$', multiLine: false);
 final _charClassRegExp = RegExp(r'((\_{1,3})|(\*{1,3}))|(\`{3}(@\w+\s))', multiLine: false);
 
 /// Dlouhy link (obsahuje URL)
-/// TODO Zmena na LinkPattern
-//final _longLinkRegExp = RegExp(r'(\!?)\[([^\]]+)\]\(([^\)]+)\)', multiLine: false);
 final _longLinkRegExp = LinkPattern(LinkPattern.TYPE_LINK);
 
 /// Kratky link [link] , nebo ![_image]
@@ -1018,6 +1016,19 @@ class MarkdownParagraph
               word.stickToNext = charAt(text, match.end) != ' ';
               words.add(word);
             }
+          }
+          break;
+
+          case EMAIL_LINK:
+          case URL_LINK:
+          {
+            final match = lineMatches[readIndex]!;
+            final text = match[1] ?? '';
+
+            final word = makeWord(text, styleStack, type: MarkdownWord_Type.link, attr: {'link': text});
+            word.stickToNext = charAt(text, match.end) != ' ';
+
+            words.add(word);
           }
           break;
 

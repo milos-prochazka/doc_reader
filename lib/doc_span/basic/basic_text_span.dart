@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
 // ignore_for_file: unnecessary_getters_setters
-class BasicTextSpan implements IDocumentSpan
+class BasicTextSpan implements IDocumentSpan 
 {
   double _height = 0.0;
   double _width = 0.0;
@@ -15,23 +15,23 @@ class BasicTextSpan implements IDocumentSpan
   Key? _layoutKey;
 
   String get text => _text;
-  set text(String value)
+  set text(String value) 
   {
     _text = value;
   }
 
   BasicTextSpan(this._text);
 
-  void _updateText(PaintParameters parameters)
+  void _updateText(PaintParameters parameters) 
   {
     final wrtList = text.split(' ');
     _words.clear();
 
-    for (var $ in wrtList)
+    for (var $ in wrtList) 
     {
       final word = $.trim();
 
-      if (word.isNotEmpty)
+      if (word.isNotEmpty) 
       {
         var painter = TextPainter
         (
@@ -47,7 +47,7 @@ class BasicTextSpan implements IDocumentSpan
   }
 
   @override
-  void calcSize(PaintParameters parameters)
+  void calcSize(PaintParameters parameters) 
   {
     _height = parameters.size.height;
     _width = parameters.size.width;
@@ -58,19 +58,19 @@ class BasicTextSpan implements IDocumentSpan
     double y = 0;
     double h = 0;
 
-    for (var word in _words)
+    for (var word in _words) 
     {
       final tWidth = word.painter.size.width;
       final tHeight = word.painter.size.height;
 
-      if (((x + tWidth) <= _width))
+      if (((x + tWidth) <= _width)) 
       {
         word.xOffset = x;
         word.yOffset = y;
         h = math.max(tHeight, h);
         x += tWidth;
-      }
-      else
+      } 
+      else 
       {
         y += h;
         h = tHeight;
@@ -83,20 +83,20 @@ class BasicTextSpan implements IDocumentSpan
     _height = y + h;
   }
 
-  void _updateSize(PaintParameters params)
+  void _updateSize(PaintParameters params) 
   {
-    if (_layoutKey != params.key)
+    if (_layoutKey != params.key) 
     {
       calcSize(params);
     }
   }
 
   @override
-  void paint(PaintParameters params, double xOffset, double yOffset)
+  void paint(PaintParameters params, double xOffset, double yOffset) 
   {
     _updateSize(params);
 
-    for (var word in _words)
+    for (var word in _words) 
     {
       //word.painter.layout();
       word.painter.paint(params.canvas, Offset(word.xOffset + xOffset, word.yOffset + yOffset));
@@ -104,21 +104,21 @@ class BasicTextSpan implements IDocumentSpan
   }
 
   @override
-  double height(PaintParameters params)
+  double height(PaintParameters params) 
   {
     _updateSize(params);
     return _height;
   }
 
   @override
-  double width(PaintParameters params)
+  double width(PaintParameters params) 
   {
     _updateSize(params);
     return _width;
   }
 }
 
-class _Word
+class _Word 
 {
   TextPainter painter;
   double xOffset = 0;

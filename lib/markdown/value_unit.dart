@@ -1,4 +1,4 @@
-class ValueUnit
+class ValueUnit 
 {
   /// Dekodovani hodnoty a jednotky. 12.34em => gr1= 12.34 gr3=>em
   static RegExp valueUnitRegExp = RegExp(r'^(\-?\d+(\.\d+)?)\s*([%-_\w]*)?', multiLine: false, caseSensitive: false);
@@ -7,13 +7,13 @@ class ValueUnit
 
   String? unit;
 
-  ValueUnit(String? text)
+  ValueUnit(String? text) 
   {
-    if (text != null)
+    if (text != null) 
     {
       final match = valueUnitRegExp.firstMatch(text);
 
-      if (match != null)
+      if (match != null) 
       {
         value = double.tryParse(match.group(1) ?? '');
         unit = match.group(3)?.toLowerCase();
@@ -25,11 +25,11 @@ class ValueUnit
 
   bool get hasUnit => value != null && unit != null;
 
-  double? toDip(double emSize, double screenSize)
+  double? toDip(double emSize, double screenSize) 
   {
-    if (value != null)
+    if (value != null) 
     {
-      switch (unit)
+      switch (unit) 
       {
         case 'em':
         return emSize * value!;
@@ -40,15 +40,15 @@ class ValueUnit
         default:
         return value;
       }
-    }
-    else
+    } 
+    else 
     {
       return null;
     }
   }
 
   @override
-  String toString()
+  String toString() 
   {
     return (value?.toString() ?? '(null)') + (unit ?? '');
   }

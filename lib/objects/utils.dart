@@ -2,7 +2,7 @@
 
 import 'package:doc_reader/objects/i_cloneable.dart';
 
-String enum_ToString(Object param)
+String enum_ToString(Object param) 
 {
   String str = param.toString();
   int i = str.indexOf('.');
@@ -10,21 +10,21 @@ String enum_ToString(Object param)
   return (i > 0) ? str.substring(i + 1) : str;
 }
 
-String numberToCharacters(int param, String charList)
+String numberToCharacters(int param, String charList) 
 {
   String result = '';
   int n = charList.length;
 
-  do
+  do 
   {
     var x = param % n;
     param ~/= n;
-    if (result.isNotEmpty && param == 0)
+    if (result.isNotEmpty && param == 0) 
     {
       x--;
     }
     result = charList.substring(x, x + 1) + result;
-  }
+  } 
   while (param > 0);
 
   return result;
@@ -34,41 +34,41 @@ String numberToCharacters(int param, String charList)
 /// - Klonuje objekt slozeny z Map,List,Set,String,double,int a bool (odpovida Json)
 /// - Objekty ktere jsou potomkem [ICloneable] jsou kopirovany pomoci metody clone
 /// - Opbejkt ktere nesjou potomkem [ICloneable] se vraci odkazem na puvodni objekt
-dynamic clone(dynamic value)
+dynamic clone(dynamic value) 
 {
   dynamic result;
 
-  if (value != null)
+  if (value != null) 
   {
-    if (value is Map)
+    if (value is Map) 
     {
       result = <String, dynamic>{};
-      for (final v in value.entries)
+      for (final v in value.entries) 
       {
         result[v.key] = clone(v.value);
       }
-    }
-    else if (value is List)
+    } 
+    else if (value is List) 
     {
       result = <dynamic>[];
-      for (final v in value)
+      for (final v in value) 
       {
         result.add(clone(v));
       }
-    }
-    else if (value is Set)
+    } 
+    else if (value is Set) 
     {
       result = <dynamic>{};
-      for (final v in value)
+      for (final v in value) 
       {
         result.add(clone(v));
       }
-    }
-    else if (value is ICloneable)
+    } 
+    else if (value is ICloneable) 
     {
       result = value.clone();
-    }
-    else
+    } 
+    else 
     {
       result = value;
     }

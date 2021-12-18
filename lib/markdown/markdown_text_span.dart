@@ -22,7 +22,7 @@ import 'dart:math' as math;
 final _decimalNumberRegEx = RegExp(r'(\-?\d+(\.\d+)?)', multiLine: false);
 
 /// Jeden odstavec markdown
-class MarkdownTextSpan implements IDocumentSpan
+class MarkdownTextSpan implements IDocumentSpan 
 {
   Key? _layoutKey;
   final MarkdownParagraph paragraph;
@@ -35,27 +35,27 @@ class MarkdownTextSpan implements IDocumentSpan
 
   MarkdownTextSpan(this.paragraph, this.config, this.document);
 
-  static List<MarkdownTextSpan> create(Markdown markdown, MarkdownTextConfig config, Document document)
+  static List<MarkdownTextSpan> create(Markdown markdown, MarkdownTextConfig config, Document document) 
   {
     final result = <MarkdownTextSpan>[];
 
-    if (markdown.classes.isNotEmpty)
+    if (markdown.classes.isNotEmpty) 
     {
       final classes = config.get<Map<String, dynamic>?>(['classes']);
 
-      if (classes != null)
+      if (classes != null) 
       {
-        for (var markdownClass in markdown.classes.entries)
+        for (var markdownClass in markdown.classes.entries) 
         {
           var cls = classes[markdownClass.key];
-          if (cls != null)
+          if (cls != null) 
           {
-            for (final item in markdownClass.value.entries)
+            for (final item in markdownClass.value.entries) 
             {
               cls[item.key] = clone(item.value);
             }
-          }
-          else
+          } 
+          else 
           {
             cls = clone(markdownClass.value);
             classes[markdownClass.key] = cls;
@@ -64,7 +64,7 @@ class MarkdownTextSpan implements IDocumentSpan
       }
     }
 
-    for (final para in markdown.paragraphs)
+    for (final para in markdown.paragraphs) 
     {
       result.add(MarkdownTextSpan(para, config, document));
     }
@@ -72,7 +72,7 @@ class MarkdownTextSpan implements IDocumentSpan
     return result;
   }
 
-  void _updateText(PaintParameters parameters)
+  void _updateText(PaintParameters parameters) 
   {
     final line = _Line();
 
@@ -86,7 +86,7 @@ class MarkdownTextSpan implements IDocumentSpan
 
     double left = paraStyle.leftMargin;
     double right = parameters.size.width - paraStyle.rightMargin;
-    if ((right - left) < 0.6 * parameters.size.width)
+    if ((right - left) < 0.6 * parameters.size.width) 
     {
       left = 0.2 * parameters.size.width;
       right = 0.8 * parameters.size.width;
@@ -96,7 +96,7 @@ class MarkdownTextSpan implements IDocumentSpan
     final borderLeft = left;
     final borderRight = right;
 
-    if (borderPadding > 0)
+    if (borderPadding > 0) 
     {
       left += borderPadding;
       right -= borderPadding;
@@ -104,7 +104,7 @@ class MarkdownTextSpan implements IDocumentSpan
 
     double y = paragraph.firstInClass ? borderPadding : 0;
 
-    if (_Hr.hrStyle(paragraph.masterClass))
+    if (_Hr.hrStyle(paragraph.masterClass)) 
     {
       final hr = _Hr(paragraph.masterClass, right).calcMetrics(parameters);
       y += hr.height;
@@ -114,13 +114,13 @@ class MarkdownTextSpan implements IDocumentSpan
     _height = y;
 
     // Odsazeni a decorace zleva
-    if (paragraph.words.isNotEmpty && (paragraph.decorations?.isNotEmpty ?? false))
+    if (paragraph.words.isNotEmpty && (paragraph.decorations?.isNotEmpty ?? false)) 
     {
       final dec = paragraph.decorations!.last;
       bool bullet = false;
       String text;
 
-      switch (dec.decoration)
+      switch (dec.decoration) 
       {
         case 'a':
         text = '   ${numberToCharacters(dec.count, 'abcdefghijklmnopqrstuvwxyz')}. ';
@@ -144,12 +144,12 @@ class MarkdownTextSpan implements IDocumentSpan
         break;
       }
 
-      if (text == '>')
+      if (text == '>') 
       {
         _blockquotes ??= _Blockquotes(config, dec.level + 1);
         left += _blockquotes?.intent ?? 0;
-      }
-      else
+      } 
+      else 
       {
         final style = config.getTextStyle(paragraph, word: paragraph.words[0], bullet: bullet);
         final span = _Text(text, style.textStyle, false).calcMetrics(parameters);
@@ -167,13 +167,13 @@ class MarkdownTextSpan implements IDocumentSpan
     final leftSpans = <_Span>{};
     final rightSpans = <_Span>{};
 
-    for (final word in paragraph.words)
+    for (final word in paragraph.words) 
     {
       //const style = TextStyle(color: Color.fromARGB(255, 0, 0, 160), fontSize: 20.0, fontFamily: "Times New Roman", fontWeight: FontWeight.bold);
       final style = config.getTextStyle(paragraph, word: word);
       _Span span;
 
-      switch (word.type)
+      switch (word.type) 
       {
         case MarkdownWord_Type.image:
         span = _Image(config, word.attribs, document, style.textStyle, word.stickToNext, left, right)
@@ -187,7 +187,7 @@ class MarkdownTextSpan implements IDocumentSpan
 
       span.lineBreak = word.lineBreak;
 
-      switch (span.align)
+      switch (span.align) 
       {
         case _Span.ALIGN_LEFT:
         leftSpans.add(span);
@@ -207,7 +207,7 @@ class MarkdownTextSpan implements IDocumentSpan
     double rightHeight = y;
     double sizeWidth = right;
 
-    for (final span in rightSpans)
+    for (final span in rightSpans) 
     {
       span.xOffset = right - span.width;
       sizeWidth = math.min(span.xOffset, sizeWidth);
@@ -218,7 +218,7 @@ class MarkdownTextSpan implements IDocumentSpan
 
     double leftLeft = left;
     double leftHeight = y;
-    for (final span in leftSpans)
+    for (final span in leftSpans) 
     {
       span.xOffset = left;
       leftLeft = math.max(leftLeft, left + span.width);
@@ -230,31 +230,31 @@ class MarkdownTextSpan implements IDocumentSpan
     double x = leftLeft;
 
     // inline spany
-    for (final span in prepSpans)
+    for (final span in prepSpans) 
     {
       final spanWidth = span.width;
       final lineWidth = y > rightHeight ? right : sizeWidth;
       var wordSpace = span.wordSpace;
 
-      if (span.lineBreak)
+      if (span.lineBreak) 
       {
         // Novy radek
-        if (line._words.isEmpty)
+        if (line._words.isEmpty) 
         {
           _height += span.height;
           y = _height;
-        }
-        else
+        } 
+        else 
         {
           y = line.calcPosition(this, parameters);
         }
 
         x = y > leftHeight ? left : leftLeft;
-      }
-      else
+      } 
+      else 
       {
         // Normalni text
-        if ((x + spanWidth) > lineWidth)
+        if ((x + spanWidth) > lineWidth) 
         {
           y = line.calcPosition(this, parameters);
           x = y > leftHeight ? left : leftLeft;
@@ -273,16 +273,16 @@ class MarkdownTextSpan implements IDocumentSpan
 
     _height = math.max(leftHeight, math.max(_height, rightHeight));
 
-    if (borderPadding > 0.0)
+    if (borderPadding > 0.0) 
     {
       var topRadius = 0.0, bottomRadius = 0.0;
 
-      if (paragraph.lastInClass)
+      if (paragraph.lastInClass) 
       {
         _height += borderPadding;
         bottomRadius = paraStyle.borderRadius;
       }
-      if (paragraph.firstInClass)
+      if (paragraph.firstInClass) 
       {
         topRadius = paraStyle.borderRadius;
       }
@@ -296,42 +296,42 @@ class MarkdownTextSpan implements IDocumentSpan
       _spans.insert(0, box);
     }
 
-    if (paragraph.lastInClass)
+    if (paragraph.lastInClass) 
     {
       _height += math.max(10, borderPadding);
     }
   }
 
   @override
-  void calcSize(PaintParameters parameters)
+  void calcSize(PaintParameters parameters) 
   {
     _layoutKey = parameters.key;
     _updateText(parameters);
   }
 
   @override
-  double height(PaintParameters params)
+  double height(PaintParameters params) 
   {
     _updateSize(params);
     return _height;
   }
 
-  void _updateSize(PaintParameters params)
+  void _updateSize(PaintParameters params) 
   {
-    if (_layoutKey != params.key)
+    if (_layoutKey != params.key) 
     {
       calcSize(params);
     }
   }
 
   @override
-  void paint(PaintParameters params, double xOffset, double yOffset)
+  void paint(PaintParameters params, double xOffset, double yOffset) 
   {
     _updateSize(params);
 
     _blockquotes?.paint(params.canvas, yOffset, _height);
 
-    for (var word in _spans)
+    for (var word in _spans) 
     {
       //word.painter.layout();
       //word.painter.paint(params.canvas, Offset(word.xOffset + xOffset, word.yOffset + yOffset));
@@ -340,13 +340,13 @@ class MarkdownTextSpan implements IDocumentSpan
   }
 
   @override
-  double width(PaintParameters params)
+  double width(PaintParameters params) 
   {
     calcSize(params);
     return _width;
   }
 
-  static Future<bool> fileOpen(String name, Document document, config) async
+  static Future<bool> fileOpen(String name, Document document, config) async 
   {
     bool result = false;
 
@@ -362,7 +362,7 @@ class MarkdownTextSpan implements IDocumentSpan
     final ms = MarkdownTextSpan.create(markdown, textConfig, document);
 
     document.docSpans.clear();
-    for (final s in ms)
+    for (final s in ms) 
     {
       document.docSpans.add(DocumentSpanContainer(s));
     }
@@ -375,26 +375,26 @@ class MarkdownTextSpan implements IDocumentSpan
   }
 }
 
-final _defaultConfig =
+final _defaultConfig = 
 {
   // ••●○■ □▪▫◌○●◦ꓸ
   "bullets": ["        ●  ", "        □  ", "        ■  ", "        ●  ", "        □  ", "        ■  "],
-  "blockquotes":
+  "blockquotes": 
   {
     "color": "silver",
     "width": 5,
     "paddingLeft": 5,
     "paddingRight": 5,
   },
-  "classes":
+  "classes": 
   {
-    "":
+    "": 
     {
       "fontSize": 20,
       "fontStyle": "normal", // normal, bold, bold_italic
     },
     "qaqa": {"color": "cyan", "borderColor": "blue"},
-    "indent":
+    "indent": 
     {
       "marginLeft": 40,
       "marginRight": 40,
@@ -404,34 +404,34 @@ final _defaultConfig =
       "fontSize": 20,
       "fontStyle": "normal", // normal, bold, bold_italic
     },
-    "h1":
+    "h1": 
     {
       "fontSize": 45,
       "fontStyle": "italic", // normal, bold, bold_italic
       "color": "Blue"
     },
-    "h2":
+    "h2": 
     {
       "fontSize": 40,
       "fontStyle": "bold_italic", // normal, bold, bold_italic
       "color": "Dark Green"
     },
-    "h3":
+    "h3": 
     {
       "fontSize": 35,
       "fontStyle": "bold", // normal, bold, bold_italic
     },
-    "h4":
+    "h4": 
     {
       "fontSize": 30,
       "fontStyle": "normal", // normal, bold, bold_italic
     },
-    "h5":
+    "h5": 
     {
       "fontSize": 28,
       "fontStyle": "normal", // normal, bold, bold_italic
     },
-    "h6":
+    "h6": 
     {
       "fontSize": 25,
       "fontStyle": "bold", // normal, bold, bold_italic
@@ -440,7 +440,7 @@ final _defaultConfig =
   }
 };
 
-class MarkdownTextConfig
+class MarkdownTextConfig 
 {
   dynamic config = clone(_defaultConfig);
   _MarkdownTextConfigState _state = clone(_MarkdownTextConfigState());
@@ -448,83 +448,83 @@ class MarkdownTextConfig
 
   static final _emptyCfg = <String, dynamic>{};
 
-  T get<T>(List<dynamic> path, {dynamic config, dynamic defValue, bool lastInArray = true})
+  T get<T>(List<dynamic> path, {dynamic config, dynamic defValue, bool lastInArray = true}) 
   {
-    try
+    try 
     {
       var cfg = config ?? this.config;
 
-      for (var item in path)
+      for (var item in path) 
       {
-        if (item is num)
+        if (item is num) 
         {
-          if (cfg is List)
+          if (cfg is List) 
           {
             final index = item.toInt();
             final count = cfg.length;
 
-            if (index >= count)
+            if (index >= count) 
             {
-              if (!lastInArray)
+              if (!lastInArray) 
               {
                 return defValue as T;
-              }
-              else
+              } 
+              else 
               {
                 cfg = cfg[count - 1];
               }
-            }
-            else
+            } 
+            else 
             {
               cfg = cfg[index];
             }
-          }
-          else
+          } 
+          else 
           {
             return defValue as T;
           }
-        }
-        else if (item is String)
+        } 
+        else if (item is String) 
         {
-          if (cfg is Map)
+          if (cfg is Map) 
           {
             // ignore: unnecessary_cast
             final key = item as String;
 
-            if (cfg.containsKey(key))
+            if (cfg.containsKey(key)) 
             {
               cfg = cfg[key];
-            }
-            else
+            } 
+            else 
             {
               return defValue as T;
             }
-          }
-          else
+          } 
+          else 
           {
             return defValue as T;
           }
         }
       }
 
-      if (cfg is T)
+      if (cfg is T) 
       {
         return cfg;
-      }
-      else if (T == double)
+      } 
+      else if (T == double) 
       {
         return cfg.toDouble() as T;
-      }
-      else if (T == String)
+      } 
+      else if (T == String) 
       {
         return cfg.toString() as T;
-      }
-      else
+      } 
+      else 
       {
         return defValue as T;
       }
-    }
-    catch ($)
+    } 
+    catch ($) 
     {
       return defValue as T;
     }
@@ -538,7 +538,7 @@ class MarkdownTextConfig
     'bold_italic': FontStyle.italic,
   };
 
-  static FontStyle _fontStyleFromString(String text)
+  static FontStyle _fontStyleFromString(String text) 
   {
     return _fontStyleFromStringMap[text.toLowerCase()] ?? FontStyle.normal;
   }
@@ -551,17 +551,17 @@ class MarkdownTextConfig
     'bold_italic': FontWeight.bold,
   };
 
-  static FontWeight _fontWeightFromString(String text)
+  static FontWeight _fontWeightFromString(String text) 
   {
     return _fontWeightFromStringMap[text.toLowerCase()] ?? FontWeight.normal;
   }
 
-  bool _setInfoByStyle(_WordStyleInfo styleInfo, String className)
+  bool _setInfoByStyle(_WordStyleInfo styleInfo, String className) 
   {
     bool result = false;
     final cfg = get<Map<String, dynamic>?>(['classes', className]);
 
-    if (cfg != null)
+    if (cfg != null) 
     {
       styleInfo.fontSize = get<double>(['fontSize'], defValue: styleInfo.fontSize, config: cfg);
 
@@ -587,40 +587,40 @@ class MarkdownTextConfig
     return result;
   }
 
-  _WordStyle getTextStyle(MarkdownParagraph para, {MarkdownWord? word, bool bullet = false})
+  _WordStyle getTextStyle(MarkdownParagraph para, {MarkdownWord? word, bool bullet = false}) 
   {
     final linkStyle = word?.type == MarkdownWord_Type.link;
     final fullStyle = para.fullClassName(word, bullet, linkStyle);
     _WordStyle? result = _state.textStyles[fullStyle];
 
-    if (result == null)
+    if (result == null) 
     {
       final styleInfo = _WordStyleInfo();
       var wordStyle = false;
 
-      if (!_setInfoByStyle(styleInfo, fullStyle))
+      if (!_setInfoByStyle(styleInfo, fullStyle)) 
       {
-        if (!_setInfoByStyle(styleInfo, para.fullClassName(null, bullet)))
+        if (!_setInfoByStyle(styleInfo, para.fullClassName(null, bullet))) 
         {
           _setInfoByStyle(styleInfo, para.masterClass);
           _setInfoByStyle(styleInfo, para.subclass);
         }
-        if (word != null)
+        if (word != null) 
         {
-          if (_setInfoByStyle(styleInfo, word.style))
+          if (_setInfoByStyle(styleInfo, word.style)) 
           {
             wordStyle = true;
           }
         }
-      }
-      else
+      } 
+      else 
       {
         wordStyle = true;
       }
 
-      if (!wordStyle)
+      if (!wordStyle) 
       {
-        switch (word?.style)
+        switch (word?.style) 
         {
           case '_':
           case '*':
@@ -640,14 +640,14 @@ class MarkdownTextConfig
         }
       }
 
-      if (bullet)
+      if (bullet) 
       {
         //yOffset = fontSize * 0.5;
         styleInfo.fontSize *= 0.3333;
         styleInfo.yOffset = -styleInfo.fontSize * 0.3333;
       }
 
-      if (linkStyle)
+      if (linkStyle) 
       {
         styleInfo.textDecoration = TextDecoration.underline;
       }
@@ -660,18 +660,18 @@ class MarkdownTextConfig
     return result;
   }
 
-  void _checkKey(PaintParameters params)
+  void _checkKey(PaintParameters params) 
   {
-    if (_layoutKey != params.key)
+    if (_layoutKey != params.key) 
     {
       _layoutKey = params.key;
       _state = _MarkdownTextConfigState();
     }
   }
 
-  double _bulletIntent(PaintParameters parameters, MarkdownParagraph para, MarkdownWord word)
+  double _bulletIntent(PaintParameters parameters, MarkdownParagraph para, MarkdownWord word) 
   {
-    if (_state.bulletIntent == null)
+    if (_state.bulletIntent == null) 
     {
       final style = getTextStyle(para,
         word: word, bullet: true); //TextStyle(color: Color.fromARGB(255, 0, 0, 160), fontSize: 10.0);
@@ -683,7 +683,7 @@ class MarkdownTextConfig
   }
 }
 
-class _WordStyleInfo
+class _WordStyleInfo 
 {
   double fontSize = 20.0;
   String styleStr = 'normal';
@@ -699,7 +699,7 @@ class _WordStyleInfo
   double borderRadius = 0.0;
 }
 
-class _WordStyle
+class _WordStyle 
 {
   TextStyle textStyle;
   double yOffseet;
@@ -727,13 +727,13 @@ class _WordStyle
   );
 }
 
-class _MarkdownTextConfigState
+class _MarkdownTextConfigState 
 {
   double? bulletIntent;
   final textStyles = <String, _WordStyle>{};
 }
 
-class _Span
+class _Span 
 {
   static const ALIGN_INLINE = 0;
   static const ALIGN_LEFT = 1;
@@ -751,7 +751,7 @@ class _Span
 
   bool get textBaseLine => false;
 
-  _Span calcMetrics(PaintParameters parameters)
+  _Span calcMetrics(PaintParameters parameters) 
   {
     return this;
   }
@@ -759,7 +759,7 @@ class _Span
   void paint(PaintParameters params, double xoffset, double yoffset) {}
 }
 
-class _Text extends _Span
+class _Text extends _Span 
 {
   TextPainter? _painter;
   final String text;
@@ -772,20 +772,20 @@ class _Text extends _Span
   bool get textBaseLine => true;
 
   @override
-  _Span calcMetrics(PaintParameters parameters)
+  _Span calcMetrics(PaintParameters parameters) 
   {
     // ignore: unused_local_variable
     final p = painter;
     return this;
   }
 
-  TextPainter get painter
+  TextPainter get painter 
   {
-    if (_painter != null)
+    if (_painter != null) 
     {
       return _painter!;
-    }
-    else
+    } 
+    else 
     {
       final p = TextPainter
       (
@@ -798,7 +798,7 @@ class _Text extends _Span
 
       final ml = p.computeLineMetrics();
 
-      if (ml.isNotEmpty)
+      if (ml.isNotEmpty) 
       {
         final metrics = ml.first;
         wordSpace = stickToText ? 0 : (style.wordSpacing ?? p.height / 3);
@@ -815,27 +815,27 @@ class _Text extends _Span
   }
 
   @override
-  void paint(PaintParameters params, double xoffset, double yoffset)
+  void paint(PaintParameters params, double xoffset, double yoffset) 
   {
     final textPainter = painter;
 
     final offset = Offset(xOffset + xoffset, yOffset + yoffset);
     final rect = Rect.fromLTWH(offset.dx, offset.dy, width, height);
 
-    if (rect.overlaps(params.rect))
+    if (rect.overlaps(params.rect)) 
     {
       textPainter.paint(params.canvas, offset);
     }
   }
 }
 
-class _Hr extends _Span
+class _Hr extends _Span 
 {
   String style;
 
-  static bool hrStyle(String style)
+  static bool hrStyle(String style) 
   {
-    switch (style)
+    switch (style) 
     {
       case '===':
       case '***':
@@ -848,11 +848,11 @@ class _Hr extends _Span
     }
   }
 
-  _Hr(this.style, double width)
+  _Hr(this.style, double width) 
   {
     this.width = width;
 
-    switch (style)
+    switch (style) 
     {
       case '===':
       height = 8;
@@ -872,13 +872,13 @@ class _Hr extends _Span
   }
 
   @override
-  _Hr calcMetrics(PaintParameters parameters)
+  _Hr calcMetrics(PaintParameters parameters) 
   {
     return this;
   }
 
   @override
-  void paint(PaintParameters params, double xoffset, double yoffset)
+  void paint(PaintParameters params, double xoffset, double yoffset) 
   {
     final paint = Paint()
     ..color = Colors.grey
@@ -890,7 +890,7 @@ class _Hr extends _Span
   }
 }
 
-class _Box extends _Span
+class _Box extends _Span 
 {
   Paint boxPaint;
   ui.RRect rect;
@@ -898,19 +898,19 @@ class _Box extends _Span
   _Box(Color color, this.rect) : boxPaint = Paint()..color = color;
 
   @override
-  _Box calcMetrics(PaintParameters parameters)
+  _Box calcMetrics(PaintParameters parameters) 
   {
     return this;
   }
 
   @override
-  void paint(PaintParameters params, double xoffset, double yoffset)
+  void paint(PaintParameters params, double xoffset, double yoffset) 
   {
     params.canvas.drawRRect(rect.shift(Offset(xoffset, yoffset)), boxPaint);
   }
 }
 
-class _Image extends _Span
+class _Image extends _Span 
 {
   late Map<String, dynamic> attribs;
   final TextStyle style;
@@ -931,30 +931,30 @@ class _Image extends _Span
 
   _Image(MarkdownTextConfig config, Map<String, String?> attr, this.document, this.style, this.stickToNext,
     this.paraLeft, paraRight)
-  : maxWidth = paraRight - paraLeft
+  : maxWidth = paraRight - paraLeft 
   {
     final clsName = attr['class'];
 
-    if (clsName != null)
+    if (clsName != null) 
     {
       this.attribs = clone(attr);
       final clsData = config.get<Map<String, dynamic>?>(['classes', clsName]);
 
       clsData?.forEach
       (
-        (key, value)
+        (key, value) 
         {
           this.attribs[key] = value;
         }
       );
-    }
-    else
+    } 
+    else 
     {
       this.attribs = attr;
     }
 
     final colorStr = this.attribs['color'];
-    if (colorStr != null)
+    if (colorStr != null) 
     {
       color = colorFormText(colorStr);
     }
@@ -978,22 +978,22 @@ class _Image extends _Span
 
     double _factor(List<String> params) => (params.length >= 2) ? ((ValueUnit(params[1]).value ?? 100) * 0.01) : 1;
 
-    List<double> interleawe(double factor, List<double> src, List<double> dst)
+    List<double> interleawe(double factor, List<double> src, List<double> dst) 
     {
-      if (factor <= 0)
+      if (factor <= 0) 
       {
         return src;
-      }
-      else if (factor >= 1)
+      } 
+      else if (factor >= 1) 
       {
         return dst;
-      }
-      else
+      } 
+      else 
       {
         final result = <double>[];
         final count = math.min(src.length, dst.length);
 
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < count; i++) 
         {
           result.add(dst[i] * factor + src[i] * (1 - factor));
         }
@@ -1003,13 +1003,13 @@ class _Image extends _Span
 
     final colorFilter = this.attribs['colorfilter'];
 
-    if (colorFilter != null)
+    if (colorFilter != null) 
     {
       final params = colorFilter.toString().split(' ');
 
-      if (params.isNotEmpty)
+      if (params.isNotEmpty) 
       {
-        switch (params[0].toLowerCase())
+        switch (params[0].toLowerCase()) 
         {
           case 'sepia':
           {
@@ -1077,11 +1077,11 @@ class _Image extends _Span
           {
             final matches = _decimalNumberRegEx.allMatches(colorFilter).toList();
 
-            if (matches.isNotEmpty)
+            if (matches.isNotEmpty) 
             {
               final array = <double>[];
 
-              for (int i = 0; i < 20; i++)
+              for (int i = 0; i < 20; i++) 
               {
                 final s = i < matches.length ? matches[i].group(1) ?? '0' : '0';
                 array.add(double.tryParse(s) ?? 0);
@@ -1127,11 +1127,11 @@ class _Image extends _Span
 
   int get imagePixelHeight => (height * _devicePixelRatio).round();
 
-  Future<ui.Image?> _createImage(PictureCacheInfo info) async
+  Future<ui.Image?> _createImage(PictureCacheInfo info) async 
   {
     ui.Image? result;
 
-    if (info.hasDrawable)
+    if (info.hasDrawable) 
     {
       _drawableRoot = info.drawableRoot;
 
@@ -1143,7 +1143,7 @@ class _Image extends _Span
 
   ui.Image? _getImage(PictureCacheInfo info) => info.getSizedImage(imagePixelWidth, imagePixelHeight);
 
-  _setSize(PaintParameters params, PictureCacheInfo info)
+  _setSize(PaintParameters params, PictureCacheInfo info) 
   {
     print("_setSize()");
 
@@ -1157,19 +1157,19 @@ class _Image extends _Span
     // TODO neni u reqHeight spatne maxWidth?
     double? reqHeight = ValueUnit(attribs['height']).toDip(_fontSize, maxWidth);
 
-    if (reqWidth != null)
+    if (reqWidth != null) 
     {
       width = reqWidth;
-      if (reqHeight == null)
+      if (reqHeight == null) 
       {
         height = width / aspectRatio;
       }
     }
 
-    if (reqHeight != null)
+    if (reqHeight != null) 
     {
       height = reqHeight;
-      if (reqWidth == null)
+      if (reqWidth == null) 
       {
         width = height * aspectRatio;
       }
@@ -1177,13 +1177,13 @@ class _Image extends _Span
 
     aspectRatio = width / height;
 
-    if (params.size.height < height)
+    if (params.size.height < height) 
     {
       height = params.size.height;
       width = height * aspectRatio;
     }
 
-    if (maxWidth < width)
+    if (maxWidth < width) 
     {
       width = maxWidth;
       height = width / aspectRatio;
@@ -1192,7 +1192,7 @@ class _Image extends _Span
     imgWidth = width;
 
     final attr = attribs['align'];
-    switch (attr)
+    switch (attr) 
     {
       case 'tight-line':
       {
@@ -1221,12 +1221,12 @@ class _Image extends _Span
         imgWidth = width;
         width = maxWidth;
 
-        if (attr == 'center-line')
+        if (attr == 'center-line') 
         {
           imgOffset = width / count;
           lineOffset = 0.5 * (imgOffset - imgWidth);
-        }
-        else
+        } 
+        else 
         {
           imgOffset = width / count;
           imgOffset += (count > 1) ? (imgOffset - imgWidth) / (count - 1) : 0.5 * ((imgOffset - imgWidth));
@@ -1239,7 +1239,7 @@ class _Image extends _Span
         count = maxWidth ~/ width;
         imgWidth = maxWidth / count;
         imgOffset = imgWidth;
-        if (reqHeight == null)
+        if (reqHeight == null) 
         {
           height = imgWidth / aspectRatio;
         }
@@ -1272,12 +1272,12 @@ class _Image extends _Span
   }
 
   bool _loadLock = false;
-  _load(PaintParameters params) async
+  _load(PaintParameters params) async 
   {
-    if (!_loadLock)
+    if (!_loadLock) 
     {
       print("_load()");
-      try
+      try 
       {
         _loadLock = true;
         final cache = PictureCache();
@@ -1289,43 +1289,43 @@ class _Image extends _Span
           info = await PictureCache().imageAsync(imgSource);
         }
 
-        if (info.hasInfo)
+        if (info.hasInfo) 
         {
           _setSize(params, info);
-          if (info.hasImage)
+          if (info.hasImage) 
           {
             _image = info.image;
-          }
-          else if (info.hasDrawable)
+          } 
+          else if (info.hasDrawable) 
           {
             _drawableRoot = info.drawableRoot;
 
             final img = await _createImage(info);
-            if (img != null)
+            if (img != null) 
             {
               _image = info.image;
-            }
-            else
+            } 
+            else 
             {
               repaint = false;
             }
-          }
-          else
+          } 
+          else 
           {
             repaint = false;
           }
 
-          if (repaint)
+          if (repaint) 
           {
             document?.repaint();
           }
         }
-      }
-      catch (ex, stackTrace)
+      } 
+      catch (ex, stackTrace) 
       {
         appLogEx(ex, stackTrace: stackTrace);
-      }
-      finally
+      } 
+      finally 
       {
         _loadLock = false;
       }
@@ -1333,52 +1333,52 @@ class _Image extends _Span
   }
 
   @override
-  _Image calcMetrics(PaintParameters parameters)
+  _Image calcMetrics(PaintParameters parameters) 
   {
     final info = PictureCache().getOrCreateInfo(imgSource);
-    if (info.hasInfo)
+    if (info.hasInfo) 
     {
       _setSize(parameters, info);
       _drawableRoot = info.drawableRoot;
-      if (_drawableRoot == null)
+      if (_drawableRoot == null) 
       {
         _image = info.image;
-      }
-      else
+      } 
+      else 
       {
         _image = _getImage(info);
       }
-    }
-    else
+    } 
+    else 
     {
       _load(parameters);
     }
     return this;
   }
 
-  _paintDrawable(Canvas canvas, double left, double top, double width, double height)
+  _paintDrawable(Canvas canvas, double left, double top, double width, double height) 
   {
     // TODO perspektivne zrusit -> tiskne se pomoci prevodu na image
-    try
+    try 
     {
       canvas.save();
 
       canvas.translate(left, top);
       canvas.scale(width / _drawableRoot!.viewport.viewBox.width, height / _drawableRoot!.viewport.viewBox.height);
       _drawableRoot!.draw(canvas, Rect.zero);
-    }
-    finally
+    } 
+    finally 
     {
       canvas.restore();
     }
   }
 
   @override
-  void paint(PaintParameters params, double xoffset, double yoffset)
+  void paint(PaintParameters params, double xoffset, double yoffset) 
   {
-    try
+    try 
     {
-      if (_image != null)
+      if (_image != null) 
       {
         final paint = Paint()
         ..filterQuality = ui.FilterQuality.high
@@ -1387,17 +1387,17 @@ class _Image extends _Span
 
         final imageRect = Rect.fromLTWH(0, 0, _image!.width.toDouble(), _image!.height.toDouble());
 
-        if (count > 0)
+        if (count > 0) 
         {
           var x = xoffset + paraLeft + lineOffset;
-          for (int i = 0; i < count; i++)
+          for (int i = 0; i < count; i++) 
           {
             params.canvas
             .drawImageRect(_image!, imageRect, Rect.fromLTWH(x, yoffset + yOffset, imgWidth, height), paint);
             x += imgOffset;
           }
-        }
-        else
+        } 
+        else 
         {
           params.canvas.drawImageRect
           (
@@ -1421,36 +1421,36 @@ class _Image extends _Span
           _paintDrawable(params.canvas, xoffset + xOffset, yoffset + yOffset, width, height);
         }
       }*/
-      else
+      else 
       {
         _load(params);
       }
-    }
-    catch (ex, stackTrace)
+    } 
+    catch (ex, stackTrace) 
     {
       appLogEx(ex, stackTrace: stackTrace);
     }
   }
 }
 
-class _Line
+class _Line 
 {
   final _words = <_Span>[];
 
   void add(_Span word) => _words.add(word);
 
-  double calcPosition(MarkdownTextSpan span, PaintParameters parameters)
+  double calcPosition(MarkdownTextSpan span, PaintParameters parameters) 
   {
-    if (_words.isNotEmpty)
+    if (_words.isNotEmpty) 
     {
       //double y = 0;
       double asc = 0;
       double desc = 0;
 
-      for (var word in _words)
+      for (var word in _words) 
       {
         //y = math.max(y,word.yOffset);
-        if (word.textBaseLine)
+        if (word.textBaseLine) 
         {
           asc = math.max(asc, word.baseLine);
           desc = math.max(desc, word.height - word.baseLine);
@@ -1459,9 +1459,9 @@ class _Line
 
       final double height = asc + desc;
 
-      for (var word in _words)
+      for (var word in _words) 
       {
-        if (word.textBaseLine)
+        if (word.textBaseLine) 
         {
           word.yOffset += asc - word.baseLine;
         }
@@ -1476,7 +1476,7 @@ class _Line
   }
 }
 
-class _Blockquotes
+class _Blockquotes 
 {
   final Paint _paint;
   final double _left, _right, _width;
@@ -1488,16 +1488,16 @@ class _Blockquotes
   _right = config.get(['blockquotes', 'paddingRight'], defValue: 5.0),
   _width = config.get(['blockquotes', 'width'], defValue: 5.0);
 
-  double get intent
+  double get intent 
   {
     return _count * (_left + _width) + _right;
   }
 
-  void paint(Canvas canvas, double yoffset, double height)
+  void paint(Canvas canvas, double yoffset, double height) 
   {
     double x = 0.0;
 
-    for (int i = 0; i < _count; i++)
+    for (int i = 0; i < _count; i++) 
     {
       canvas.drawRect(Rect.fromLTWH(x + _left, yoffset, _width, height), _paint);
       x += _left + _width;

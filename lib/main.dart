@@ -15,7 +15,7 @@ import 'package:doc_reader/objects/applog.dart';
 import 'doc_touch.dart';
 import 'markdown/markdown_text_span.dart';
 
-void main()
+void main() 
 {
   /*final sp = StringPattern();
 
@@ -29,13 +29,13 @@ void main()
   runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget
+class MyApp extends StatelessWidget 
 {
   late Markdown markdown;
   late MarkdownTextConfig textConfig;
   late Document document;
 
-  MyApp({Key? key}) : super(key: key)
+  MyApp({Key? key}) : super(key: key) 
   {
     document = Document();
     textConfig = MarkdownTextConfig();
@@ -44,7 +44,7 @@ class MyApp extends StatelessWidget
     document.onOpenFileConfig = AssetLoadTextLoad();
     Future.microtask
     (
-      () async
+      () async 
       {
         await document.openFile('media/test-mini.md');
       }
@@ -53,7 +53,7 @@ class MyApp extends StatelessWidget
 
   // This widget is the root of your application.
   @override
-  Widget build(BuildContext context)
+  Widget build(BuildContext context) 
   {
     return MaterialApp
     (
@@ -67,7 +67,7 @@ class MyApp extends StatelessWidget
   }
 }
 
-class MyHomePage extends StatefulWidget
+class MyHomePage extends StatefulWidget 
 {
   const MyHomePage({Key? key, required this.title, required this.document}) : super(key: key);
 
@@ -78,17 +78,17 @@ class MyHomePage extends StatefulWidget
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage>
+class _MyHomePageState extends State<MyHomePage> 
 {
   static const documentProperty = 'document';
 
   @override
-  Widget build(BuildContext buildContext)
+  Widget build(BuildContext buildContext) 
   {
     final binder = PropertyBinder
     (
       context: context,
-      builder: (context)
+      builder: (context) 
       {
         return Scaffold
         (

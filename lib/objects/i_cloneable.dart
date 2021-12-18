@@ -1,4 +1,4 @@
-abstract class ICloneable
+abstract class ICloneable 
 {
   ICloneable clone();
 }

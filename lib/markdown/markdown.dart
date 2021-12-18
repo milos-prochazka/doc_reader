@@ -9,7 +9,7 @@ import '../objects/utils.dart';
 import 'package:tuple/tuple.dart';
 
 /// Deleni textu na radky
-final _newLineRegex = RegExp(r'(\r\n)|([\r\n])]', multiLine: true);
+final _newLineRegex = RegExp(r'\r\n|\n|\r]', multiLine: true);
 
 /// Detekce radku ktere se nespojuji s  ( zacatek #, []:, * , - , + , 1. , a., A. , ```, nebo horizontalni cara)
 final _noMergeRegExp = RegExp
@@ -585,13 +585,14 @@ class Markdown
       }
       else
       {
-        para.decorations = MarkdownDecoration.textToList(para.lineDecoration);
+        para.listIndent = MarkdownListIndentation.fromText(para.lineDecoration);
+        para.blockquoteLevel = MarkdownListIndentation.blockque(para.lineDecoration);
         i++;
       }
     }
 
     // Spocitani urvni odsazeni a poradi v seznamech ¡¡
-    MarkdownDecoration.create(paragraphs);
+    MarkdownListIndentation.create(paragraphs);
   }
 
   /// Načtení markdown textu
@@ -696,7 +697,7 @@ class MarkdownParagraph
   // TODO nevyuziva se
   MarkdownParagraphType type = MarkdownParagraphType.normalParagraph;
   String lineDecoration = '';
-  List<MarkdownDecoration>? decorations;
+  MarkdownListIndentation? listIndent;
   String masterClass;
   String subclass;
   final anchors = <String>[];
@@ -704,6 +705,7 @@ class MarkdownParagraph
   final attributes = <String, String>{};
   bool lastInClass = true;
   bool firstInClass = true;
+  int blockquoteLevel = 0;
 
   MarkdownParagraph({required String text, this.lineDecoration = '', pargraphClass = ''})
   : masterClass = pargraphClass.isEmpty ? 'p' : pargraphClass,
@@ -844,14 +846,9 @@ class MarkdownParagraph
     }
     var label = false;
 
-    if (decorations != null && decorations!.isNotEmpty)
+    if (listIndent != null)
     {
-      builder.write('Decorations:');
-      for (final dec in decorations!)
-      {
-        builder.write(' "${dec.toString()}"');
-      }
-
+      builder.write('Decorations: $listIndent\r\n');
       builder.write('\r\n');
       label = words.isNotEmpty;
     }
@@ -1225,7 +1222,7 @@ class MarkdownParagraph
 
 enum MarkdownParagraphType { normalParagraph, linkReferece }
 
-class MarkdownDecoration
+class MarkdownListIndentation
 {
   String decoration = '';
   int level = 0;
@@ -1238,7 +1235,7 @@ class MarkdownDecoration
     return '$decoration level=$level column=$column count=$count';
   }
 
-  MarkdownDecoration(String decor, this.column)
+  MarkdownListIndentation(String decor, this.column)
   {
     int ch = decor.codeUnitAt(column);
     if (ch >= /*$a*/(0x61) && ch <= /*$z*/(0x7A))
@@ -1270,7 +1267,7 @@ class MarkdownDecoration
     decoration = decor;
   }
 
-  static bool compareModify(List<MarkdownDecoration>? current, List<MarkdownDecoration>? prev)
+  static bool compareModify(MarkdownListIndentation? current, MarkdownListIndentation? prev)
   {
     if (current == null || prev == null)
     {
@@ -1278,37 +1275,31 @@ class MarkdownDecoration
     }
     else
     {
-      for (int i = 0; i < prev.length; i++)
+      ////
+      final c = current;
+      final p = prev;
+
+      if (c.decoration != '>')
       {
-        if (i >= current.length)
+        if ((c.column - p.column).abs() < 2)
         {
-          return false;
+          c.column = p.column;
+          c.level = p.level;
+          c.count = p.count + 1;
+        }
+        else if (c.column > p.column)
+        {
+          c.level = p.level + 1;
+          return true;
         }
         else
         {
-          final c = current[i];
-          final p = prev[i];
-
-          if (c.decoration != '>')
-          {
-            if ((c.column - p.column).abs() < 2)
-            {
-              c.column = p.column;
-              c.level = p.level;
-              c.count = p.count + 1;
-            }
-            else if (c.column > p.column)
-            {
-              c.level = p.level + 1;
-              return true;
-            }
-            else
-            {
-              return false;
-            }
-          }
+          return false;
         }
       }
+
+      ///
+
     }
 
     return true;
@@ -1321,43 +1312,40 @@ class MarkdownDecoration
       final cur = para[index];
 
       var prev = index - 1;
-      while (prev >= 0 && !compareModify(cur.decorations, para[prev].decorations))
+      while (prev >= 0 && !compareModify(cur.listIndent, para[prev].listIndent))
       {
         prev--;
       }
     }
   }
 
-  static List<MarkdownDecoration> textToList(String text)
+  static MarkdownListIndentation? fromText(String text)
   {
-    final result = <MarkdownDecoration>[];
+    final MarkdownListIndentation? result;
 
-    for (int i = 0; i < text.length;)
+    final matches = _headRegExp.allMatches(text);
+    if (matches.length > 0)
     {
-      final ch = text.substring(i, i + 1);
-      if (ch != ' ')
-      {
-        if ((result.isNotEmpty) && (ch == result.last.decoration))
-        {
-          result.last.level++;
-          i++;
-        }
-        else
-        {
-          result.add(MarkdownDecoration(text, i++));
-        }
-
-        while (i < text.length && text.codeUnitAt(i) == /*$.*/(0x2E))
-        {
-          i++;
-        }
-      }
-      else
-      {
-        i++;
-      }
+      result = MarkdownListIndentation(text, matches.last.start);
+    }
+    else
+    {
+      result = null;
     }
 
+    return result;
+  }
+
+  static int blockque(String lineDecoration)
+  {
+    var result = 0;
+    for (var ch in lineDecoration.codeUnits)
+    {
+      if (ch == /*$>*/(0x3E))
+      {
+        result++;
+      }
+    }
     return result;
   }
 }

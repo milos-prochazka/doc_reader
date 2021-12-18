@@ -1,2 +1,7 @@
-Před odkazem<mujmail@email.eml>za odkazem
-To<http://www.seznam.lnk>je seznam
+> 1. T1
+>>   1. T1.1
+>>   1. T1.2
+>>   1. T1.2
+> 1. T2
+> 1. T3
+> 1. AAAA

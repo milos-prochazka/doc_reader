@@ -112,9 +112,9 @@ class MarkdownTextSpan implements IDocumentSpan
     _height = y;
 
     // Odsazeni a decorace zleva
-    if (paragraph.words.isNotEmpty && (paragraph.decorations?.isNotEmpty ?? false))
+    if (paragraph.words.isNotEmpty && paragraph.listIndent != null)
     {
-      final dec = paragraph.decorations!.last;
+      final dec = paragraph.listIndent!;
       bool bullet = false;
       String text;
 
@@ -142,12 +142,17 @@ class MarkdownTextSpan implements IDocumentSpan
         break;
       }
 
-      if (text == '>')
+      if (paragraph.blockquoteLevel > 0)
       {
-        _blockquotes ??= _Blockquotes(config, dec.level + 1);
+        _blockquotes ??= _Blockquotes(config, paragraph.blockquoteLevel);
         left += _blockquotes?.intent ?? 0;
       }
-      else
+      /*if (text == '>')
+      {
+        _blockquotes ??= _Blockquotes(config, paragraph.blockquoteLevel);
+        left += _blockquotes?.intent ?? 0;
+      }
+      else*/
       {
         final style = config.getTextStyle(paragraph, word: paragraph.words[0], bullet: bullet);
         final span = _Text(text, style.textStyle, false).calcMetrics(parameters);

@@ -953,6 +953,7 @@ class MarkdownParagraph
     final List<Match?> lineMatches = List.filled(text.length, null);
     final List<int> lineMatchType = List.filled(text.length, MATCH_NONE);
 
+    // Nalezeni vsech vzorcu v odstavci
     for
     (
       final matchInfo in
@@ -974,6 +975,7 @@ class MarkdownParagraph
       }
     }
 
+    // Zpracovani vsech znaku
     do
     {
       final ch = charAt(text, readIndex);

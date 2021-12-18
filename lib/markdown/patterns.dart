@@ -1,10 +1,8 @@
 // ignore_for_file: constant_identifier_names
 
-import 'dart:typed_data';
+import 'markdown.dart';
 
-import 'package:doc_reader/markdown/markdown.dart';
-
-class LinkPattern with AllMatches implements Pattern 
+class LinkPattern with AllMatches implements Pattern
 {
   static const GR_EXCLAMATION = 1;
   static const GR_ALT = 2;
@@ -62,11 +60,11 @@ class LinkPattern with AllMatches implements Pattern
   LinkPattern(this.type);
 
   @override
-  Match? matchAsPrefix(String string, [int start = 0]) 
+  Match? matchAsPrefix(String string, [int start = 0])
   {
     final RegExp pattern;
 
-    switch (type) 
+    switch (type)
     {
       case TYPE_LINKED_IMAGE:
       pattern = _linkedImageRegExp;
@@ -86,7 +84,7 @@ class LinkPattern with AllMatches implements Pattern
     }
 
     final pMatch = pattern.firstMatch(string.substring(start)); // pattern.matchAsPrefix(string,start) nefunguje ?
-    if (pMatch != null) 
+    if (pMatch != null)
     {
       // Vyraz nalezen
       final result = PatternMatch(12, string, this, pMatch.start + start, pMatch.end + start)
@@ -98,7 +96,7 @@ class LinkPattern with AllMatches implements Pattern
       final urlStr = pMatch[3]!.trim();
 
       final uMatch = _urlRegExp.firstMatch(urlStr);
-      if (uMatch?.start == 0) 
+      if (uMatch?.start == 0)
       {
         // Url objektu nalzeeno
         result._groups[GR_URL] = uMatch![1];
@@ -106,7 +104,7 @@ class LinkPattern with AllMatches implements Pattern
         var index = uMatch.end;
 
         var iBracket = urlStr.indexOf('(', index);
-        if (iBracket >= 0) 
+        if (iBracket >= 0)
         {
           index = iBracket + 1;
         }
@@ -114,9 +112,9 @@ class LinkPattern with AllMatches implements Pattern
         // Vyhledani rezecu (popis a zvukovy popis)
         final sMatch = StringPattern().allMatches(urlStr, index).toList(growable: false);
 
-        for (var c = 0; c < 2; c++) 
+        for (var c = 0; c < 2; c++)
         {
-          if (c < sMatch.length) 
+          if (c < sMatch.length)
           {
             result._groups[GR_TITLE + c] = sMatch[c][1];
             index = sMatch[c].end;
@@ -124,28 +122,28 @@ class LinkPattern with AllMatches implements Pattern
         }
 
         final iMatch = _imageParamsRegExp.matchAsPrefix(urlStr, index);
-        if (iMatch != null) 
+        if (iMatch != null)
         {
           // Nalezena definice parametru obrazku
-          if (iMatch[1] != null) 
+          if (iMatch[1] != null)
           {
             result._groups[GR_WIDTH] = iMatch[1]! + (iMatch[3] ?? '');
           }
-          if (iMatch[4] != null) 
+          if (iMatch[4] != null)
           {
             result._groups[GR_HEIGHT] = iMatch[4]! + (iMatch[6] ?? '');
           }
 
-          for (final m in <String?>[iMatch[7], iMatch[8]]) 
+          for (final m in <String?>[iMatch[7], iMatch[8]])
           {
             // trida a zarovnani
-            if (m != null && m.isNotEmpty) 
+            if (m != null && m.isNotEmpty)
             {
-              if (m.startsWith('.')) 
+              if (m.startsWith('.'))
               {
                 result._groups[GR_CLASS] = m.substring(1);
-              } 
-              else 
+              }
+              else
               {
                 result._groups[GR_ALIGN] = m;
               }
@@ -155,10 +153,10 @@ class LinkPattern with AllMatches implements Pattern
 
         result._groups[GR_LINK] = (pMatch.groupCount >= 4) ? pMatch[4] : uMatch[1];
 
-        for (int i = 0; i < result._groups.length; i++) 
+        for (int i = 0; i < result._groups.length; i++)
         {
           final t = result._groups[i];
-          if (t != null) 
+          if (t != null)
           {
             result._groups[i] = MarkdownParagraph.unescape(t);
           }
@@ -172,44 +170,44 @@ class LinkPattern with AllMatches implements Pattern
   }
 }
 
-extension SafeString on String 
+extension SafeString on String
 {
-  int safeCodeUnitAt(int index, [int defValue = -1]) 
+  int safeCodeUnitAt(int index, [int defValue = -1])
   {
     return (index >= 0 && index < length) ? codeUnitAt(index) : 0;
   }
 }
 
-class StringPattern with AllMatches implements Pattern 
+class StringPattern with AllMatches implements Pattern
 {
   static final StringPattern _instance = StringPattern._();
 
   StringPattern._();
 
-  factory StringPattern() 
+  factory StringPattern()
   {
     return _instance;
   }
 
   @override
-  Match? matchAsPrefix(String string, [int start = 0]) 
+  Match? matchAsPrefix(String string, [int start = 0])
   {
-    while (start < string.length && ' \t\v\u00a0'.contains(string[start])) 
+    while (start < string.length && ' \t\v\u00a0'.contains(string[start]))
     {
       start++;
     }
 
     var ch = string.safeCodeUnitAt(start);
-    if (ch == /*$'*/ (0x27) || ch == /*$"*/ (0x22)) 
+    if (ch == /*$'*/(0x27) || ch == /*$"*/(0x22))
     {
       var index = start + 1;
 
-      while (index < string.length && string.codeUnitAt(index) != ch) 
+      while (index < string.length && string.codeUnitAt(index) != ch)
       {
         index++;
       }
 
-      if (index < string.length) 
+      if (index < string.length)
       {
         return PatternMatch(2, string, this, start, index + 1)
         .._groups[0] = string.substring(start, index + 1)
@@ -221,15 +219,15 @@ class StringPattern with AllMatches implements Pattern
   }
 }
 
-abstract class AllMatches 
+abstract class AllMatches
 {
-  Iterable<Match> allMatches(String string, [int start = 0]) 
+  Iterable<Match> allMatches(String string, [int start = 0])
   {
     final result = <Match>[];
 
     Match? match;
 
-    while ((match = matchAsPrefix(string, start)) != null) 
+    while ((match = matchAsPrefix(string, start)) != null)
     {
       result.add(match!);
       start = match.end;
@@ -246,7 +244,7 @@ abstract class AllMatches
   }*/
 }
 
-class PatternMatch implements Match 
+class PatternMatch implements Match
 {
   final List<String?> _groups;
   final Pattern _pattern;

@@ -1,8 +1,7 @@
 import 'package:flutter/widgets.dart';
-import 'dart:math' as math;
 import 'doc_span/doc_span_interface.dart';
 
-class Document 
+class Document
 {
   /// Konfigurace pouzita pro zobrazeni dokumentu
   dynamic config;
@@ -56,18 +55,18 @@ class Document
   /// Cesta k obrazkum
   String imagePath = '';
 
-  double frac(double x) 
+  double frac(double x)
   {
     return x - x.floorToDouble();
   }
 
-  bool movePosition(double absoluteMove) 
+  bool movePosition(double absoluteMove)
   {
     bool changePosition = false;
 
-    if (paintParameters != null) 
+    if (paintParameters != null)
     {
-      while (absoluteMove.abs() > 1e-6) 
+      while (absoluteMove.abs() > 1e-6)
       {
         changePosition = true;
         final spanIndex = position.floor();
@@ -75,57 +74,57 @@ class Document
         final relativeMove = absoluteMove / height;
         final fpos = frac(position);
 
-        if (relativeMove < 0) 
+        if (relativeMove < 0)
         {
-          if (-relativeMove > fpos) 
+          if (-relativeMove > fpos)
           {
-            if (position <= 0) 
+            if (position <= 0)
             {
               break;
-            } 
-            else 
+            }
+            else
             {
-              if (fpos > 1e-6) 
+              if (fpos > 1e-6)
               {
                 absoluteMove += fpos * height;
                 position = position.floorToDouble();
-              } 
-              else 
+              }
+              else
               {
-                if (position <= 1.0) 
+                if (position <= 1.0)
                 {
                   position = 0;
                   absoluteMove = 0;
-                } 
-                else 
+                }
+                else
                 {
                   position -= 1.0;
                   absoluteMove += docSpans[position.floor()].span.height(paintParameters!);
                 }
               }
             }
-          } 
-          else 
+          }
+          else
           {
             position += relativeMove;
             absoluteMove = 0.0;
           }
-        } 
-        else 
+        }
+        else
         {
-          if ((fpos + relativeMove) >= 1.0) 
+          if ((fpos + relativeMove) >= 1.0)
           {
-            if ((position + 1.99) >= docSpans.length) 
+            if ((position + 1.99) >= docSpans.length)
             {
               break;
-            } 
-            else 
+            }
+            else
             {
               absoluteMove -= (1.0 - fpos) * height;
               position = position.floorToDouble() + 1.0;
             }
-          } 
-          else 
+          }
+          else
           {
             position += relativeMove;
             absoluteMove = 0.0;
@@ -137,17 +136,17 @@ class Document
     return changePosition;
   }
 
-  void repaint() 
+  void repaint()
   {
     paintParameters?.newKey();
     onRepaint?.call();
   }
 
-  Future openFile(String name) async 
+  Future openFile(String name) async
   {
     final success = await onOpenFile?.call(name, this, onOpenFileConfig) ?? false;
 
-    if (success) 
+    if (success)
     {
       repaint();
     }

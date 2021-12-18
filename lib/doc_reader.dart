@@ -1,15 +1,17 @@
 //#set-tab 4
+// ignore_for_file: unused_import
+
 import 'dart:ui';
 import 'dart:async';
-import 'package:doc_reader/doc_span/doc_span_interface.dart';
-import 'package:doc_reader/document.dart';
-import 'package:doc_reader/property_binder.dart';
+import 'doc_span/doc_span_interface.dart';
+import 'document.dart';
+import 'property_binder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'objects/applog.dart';
 import 'dart:math' as math;
 
-class DocReader extends StatefulWidget 
+class DocReader extends StatefulWidget
 {
     final String documentProperty;
     DocReader({Key? key, required this.documentProperty}) : super(key: key ?? GlobalKey(debugLabel: 'DocReader'));
@@ -18,11 +20,10 @@ class DocReader extends StatefulWidget
     State<DocReader> createState() => _DocReaderState();
 }
 
-class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMixin 
+class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMixin
 {
     bool isDisposed = false;
     Document? document;
-    Timer? _timer;
     int cnt = 0;
     double devicePixelRatio = 2.0;
     double textScale = 1.0;
@@ -31,7 +32,7 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
     _DocReaderState();
 
     @override
-    Widget build(BuildContext context) 
+    Widget build(BuildContext context)
     {
         final media = MediaQuery.of(context);
         devicePixelRatio = media.devicePixelRatio;
@@ -59,7 +60,7 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
     }
 
     @override
-    void initState() 
+    void initState()
     {
         super.initState();
         /*WidgetsBinding.instance?.addPostFrameCallback((_)
@@ -74,7 +75,7 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
     }
 
     @override
-    void dispose() 
+    void dispose()
     {
         isDisposed = true;
         super.dispose();
@@ -99,19 +100,21 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
         }
     }*/
 
-    void onTap(double relativeX, double relativeY) 
+    void onTap(double relativeX, double relativeY)
     {
-        if (relativeY >= 0.75) 
+        if (relativeY >= 0.75)
         {
+            // TODO Testovaci kod
             appLog();
             //_timer?.cancel();
-            _timer = Timer.periodic
+            // ignore: unused_local_variable
+            final timer = Timer.periodic
             (
-                const Duration(microseconds: 1000000 ~/ 60), (timer) 
+                const Duration(microseconds: 1000000 ~/ 60), (timer)
                 {
                     setState
                     (
-                        () 
+                        ()
                         {
                             document?.position += 1;
                         }
@@ -122,23 +125,23 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
 
         setState
         (
-            () 
+            ()
             {
                 appLog('onTap: relativeX=${relativeX.toStringAsFixed(4)} relativeY=${relativeY.toStringAsFixed(4)}');
             }
         );
     }
 
-    void onTouchMove(double deltaX, double deltaY) 
+    void onTouchMove(double deltaX, double deltaY)
     {
-        if (document?.movePosition(-deltaY) ?? false) 
+        if (document?.movePosition(-deltaY) ?? false)
         {
             setState
             (
-                () 
+                ()
                 {
                     appLog('onTouchMove: deltaX=$deltaX deltaY=$deltaY');
-                    if (document?.markPosition.isFinite ?? false) 
+                    if (document?.markPosition.isFinite ?? false)
                     {
                         document?.markPosition += deltaY;
                     }
@@ -147,13 +150,13 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
         }
     }
 
-    void onTouchUpDown(bool down, double widgetX, double widgetY) 
+    void onTouchUpDown(bool down, double widgetX, double widgetY)
     {
-        if (down) 
+        if (down)
         {
             setState
             (
-                () 
+                ()
                 {
                     document?.markPosition = widgetY;
                     document?.markSize = 100;
@@ -163,39 +166,39 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
     }
 
     bool onRepaint_run = false;
-    void onRepaint() 
+    void onRepaint()
     {
-        if (!onRepaint_run) 
+        if (!onRepaint_run)
         {
             onRepaint_run = true;
 
-            try 
+            try
             {
                 Future.microtask
                 (
-                    () async 
+                    () async
                     {
-                        try 
+                        try
                         {
-                            print("onRepaint() -------------------------------------------------------------");
+                            print('onRepaint() -------------------------------------------------------------');
                             await Future.delayed(const Duration(milliseconds: 20));
-                            if (!isDisposed) 
+                            if (!isDisposed)
                             {
                                 setState(() {});
                             }
-                        } 
-                        catch (ex, stackTrace) 
+                        }
+                        catch (ex, stackTrace)
                         {
                             appLogEx(ex, stackTrace: stackTrace);
-                        } 
-                        finally 
+                        }
+                        finally
                         {
                             onRepaint_run = false;
                         }
                     }
                 );
-            } 
-            catch (ex, stackTrace) 
+            }
+            catch (ex, stackTrace)
             {
                 appLogEx(ex, stackTrace: stackTrace);
             }
@@ -231,7 +234,7 @@ class _DocReaderPainterState extends State<DocReaderPainter> {
    }
 }*/
 
-class DocumentPainter extends CustomPainter 
+class DocumentPainter extends CustomPainter
 {
     final Document document;
     final _DocReaderState state;
@@ -239,18 +242,18 @@ class DocumentPainter extends CustomPainter
     DocumentPainter(this.document, this.state);
 
     @override
-    void paint(Canvas canvas, Size size) 
+    void paint(Canvas canvas, Size size)
     {
-        try 
+        try
         {
             // TODO predelat ziskavani PaintParameters do document
-            if (document.paintParameters == null || document.actualWidgetSize != size) 
+            if (document.paintParameters == null || document.actualWidgetSize != size)
             {
                 document.actualWidgetSize = size;
                 document.paintParameters =
                 PaintParameters(canvas, size, state.devicePixelRatio, state.textScale, state.screenSize);
-            } 
-            else 
+            }
+            else
             {
                 document.paintParameters = PaintParameters.copyFrom(canvas, document.paintParameters!);
             }
@@ -260,34 +263,34 @@ class DocumentPainter extends CustomPainter
             final docSpans = document.docSpans;
 
             int spanIndex = math.min(document.position.floor(), docSpans.length - 1);
-            if (spanIndex >= 0) 
+            if (spanIndex >= 0)
             {
                 double offset =
                 -(document.position - document.position.floorToDouble()) * docSpans[spanIndex].span.height(params);
 
-                for (; spanIndex < docSpans.length && offset < size.height; spanIndex++) 
+                for (; spanIndex < docSpans.length && offset < size.height; spanIndex++)
                 {
                     final container = docSpans[spanIndex];
                     container.span.paint(params, container.xPosition, offset);
                     offset += container.span.height(params);
                 }
 
-                if (document.markPosition.isFinite) 
+                if (document.markPosition.isFinite)
                 {
                     final markPaint = Paint()..color = const Color.fromARGB(100, 128, 138, 160);
                     canvas.drawRect(Rect.fromLTWH(0, document.markPosition, size.width, document.markSize), markPaint);
                     appLog('MarkSize=${document.markSize}');
                 }
             }
-        } 
-        catch (ex, stackTrace) 
+        }
+        catch (ex, stackTrace)
         {
             appLogEx(ex, stackTrace: stackTrace);
         }
     }
 
     @override
-    bool shouldRepaint(CustomPainter oldDelegate) 
+    bool shouldRepaint(CustomPainter oldDelegate)
     {
         return true;
     }

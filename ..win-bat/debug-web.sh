@@ -1,4 +1,4 @@
 cd ..
 dart-prep +DEBUG +WEB ./
-flutter run -d Chrome
+rem flutter run -d Chrome
  

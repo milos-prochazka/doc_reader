@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
-abstract class IDocumentSpan 
+abstract class IDocumentSpan
 {
   double height(PaintParameters params);
   double width(PaintParameters params);
@@ -9,7 +9,7 @@ abstract class IDocumentSpan
   void calcSize(PaintParameters parameters);
 }
 
-class DocumentSpanContainer 
+class DocumentSpanContainer
 {
   IDocumentSpan span;
   double yPosition = 0.0;
@@ -18,7 +18,7 @@ class DocumentSpanContainer
   DocumentSpanContainer(this.span);
 }
 
-class PaintParameters 
+class PaintParameters
 {
   final Canvas canvas;
   final Size size;
@@ -40,7 +40,7 @@ class PaintParameters
   textScale = source.textScale,
   screenSize = source.screenSize;
 
-  void newKey() 
+  void newKey()
   {
     key = UniqueKey();
   }

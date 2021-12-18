@@ -1,5 +1,7 @@
 // ignore_for_file: constant_identifier_names
 
+import 'dart:ui';
+
 import 'patterns.dart';
 import '../objects/applog.dart';
 import '../objects/text_load_provider.dart';
@@ -367,7 +369,7 @@ class Markdown
               final link = namedLinks[word.text]?.attribs['link'];
               if (link != null)
               {
-                word.attribs.addAll({'link': link});
+                word.attribs.addAll({'link': MarkdownParagraph.unescape(link)});
               }
               else
               {
@@ -519,8 +521,8 @@ class Markdown
     }
   }
 
-  // Vypusteni prazdnych odstavcu
-  // - Pokud za sebou nasleduje dva a vice prazdnych odstavcu ponecha pouze jeden
+  /// Vypusteni prazdnych odstavcu
+  /// - Pokud za sebou nasleduje dva a vice prazdnych odstavcu ponecha pouze jeden
   _removeBlankLines()
   {
     for (int i = 1; i < paragraphs.length; i++)
@@ -550,8 +552,8 @@ class Markdown
     }
   }
 
-  // Nalezeni odstavcu tesne za sebou (zobrazene bez mezery)
-  // - provede slouceni do bloku pomoci lastInClass a firstInClass
+  /// Nalezeni odstavcu tesne za sebou (zobrazene bez mezery)
+  /// - provede slouceni do bloku pomoci lastInClass a firstInClass
   _mergeTight()
   {
     for (int i = 1; i < paragraphs.length; i++)
@@ -691,6 +693,7 @@ class Markdown
 
 class MarkdownParagraph
 {
+  // TODO nevyuziva se
   MarkdownParagraphType type = MarkdownParagraphType.normalParagraph;
   String lineDecoration = '';
   List<MarkdownDecoration>? decorations;
@@ -709,16 +712,17 @@ class MarkdownParagraph
     writeText(text);
   }
 
+  // TODO nevyuziva se
   MarkdownParagraph.referenceLink(String linkName, String linkUrl)
   : type = MarkdownParagraphType.linkReferece,
   masterClass = linkName,
   subclass = linkUrl;
 
   ///
-  String get linkName => masterClass;
+  //String get linkName => masterClass;
 
   ///
-  String get linkUrl => subclass;
+  //String get linkUrl => subclass;
 
   String fullClassName([MarkdownWord? word, bool bullet = false, bool link = false])
   {
@@ -749,14 +753,21 @@ class MarkdownParagraph
     return builder.toString();
   }
 
+  ///
+  /// Zmena znaku uvozenych \ za znaky 0xE000+\<ASCII kod znaku\>
+  ///
+  /// Zamenuji se pouze ASCII interpukcni znaky znaky < 0x80 (ne pismena a cislice)
+  ///
   static String escape(String text)
   {
     if (!_escapeCharRegExp.hasMatch(text))
     {
+      // Netreba escapovat
       return text;
     }
     else
     {
+      // Provedeni escape sekvenci
       var index = 0;
       final builder = StringBuffer();
 
@@ -782,6 +793,7 @@ class MarkdownParagraph
     }
   }
 
+  /// Zamena escapovannych znaku 0xE0## na jejich puvodni ASCII kod.
   static String unescape(String text)
   {
     if (!_escapedCharRegExp.hasMatch(text))
@@ -822,9 +834,9 @@ class MarkdownParagraph
 
     switch (type)
     {
-      case MarkdownParagraphType.linkReferece:
-      builder.write("name='$linkName' link='$linkUrl'\r\n");
-      break;
+      //case MarkdownParagraphType.linkReferece:
+      //builder.write("name='$linkName' link='$linkUrl'\r\n");
+      //break;
 
       default:
       builder.write("start='$lineDecoration' class='$masterClass' '$subclass'\r\n");
@@ -889,12 +901,22 @@ class MarkdownParagraph
 
     if (attr != null)
     {
-      result.attribs.addAll(attr);
+      for (var element in attr.entries)
+      {
+        result.attribs[MarkdownParagraph.unescape(element.key)] =
+        element.value != null ? MarkdownParagraph.unescape(element.value!) : null;
+      }
     }
 
     return result;
   }
 
+  /// Zapis slova do seznamu [words]
+  /// - Zapisuje text z [wordBuffer]
+  /// - Pokud je wordBuffer prazdny nezpisuje nic
+  /// - [wordBuffer] - Text slova
+  /// - [styleStack] - Stack stylu znaku (*, **, _, __ apod)
+  /// - [stickToNext] - Prilepit k nasledujicimu slovu (bez mezery)
   void writeWord(StringBuffer wordBuffer, List<String> styleStack, bool stickToNext)
   {
     if (wordBuffer.isNotEmpty)
@@ -910,6 +932,11 @@ class MarkdownParagraph
     }
   }
 
+  ///
+  /// Zapis textu do odstavce
+  /// - Vytvari slova
+  /// - Vytvari i specialni slova jako linky a obrazky
+  ///
   writeText(String text)
   {
     const MATCH_NONE = 0;
@@ -982,7 +1009,7 @@ class MarkdownParagraph
               if (type == '!')
               {
                 word = makeWord(name, styleStack, type: MarkdownWord_Type.image);
-                word.attribs['alt'] = name;
+                word.attribs['alt'] = MarkdownParagraph.unescape(name);
               }
               else
               {
@@ -1006,7 +1033,7 @@ class MarkdownParagraph
               final id = match.group(2) ?? '!';
 
               word = makeWord(id, styleStack, type: MarkdownWord_Type.image);
-              word.attribs['alt'] = altText;
+              word.attribs['alt'] = MarkdownParagraph.unescape(altText);
 
               word.stickToNext = charAt(text, match.end) != ' ';
               words.add(word);
@@ -1260,29 +1287,22 @@ class MarkdownDecoration
           final c = current[i];
           final p = prev[i];
 
-          /*if (c.decoration != p.decoration)
+          if (c.decoration != '>')
           {
-            return true;
-          }
-          else*/
-          {
-            if (c.decoration != '>')
+            if ((c.column - p.column).abs() < 2)
             {
-              if ((c.column - p.column).abs() < 2)
-              {
-                c.column = p.column;
-                c.level = p.level;
-                c.count = p.count + 1;
-              }
-              else if (c.column > p.column)
-              {
-                c.level = p.level + 1;
-                return true;
-              }
-              else
-              {
-                return false;
-              }
+              c.column = p.column;
+              c.level = p.level;
+              c.count = p.count + 1;
+            }
+            else if (c.column > p.column)
+            {
+              c.level = p.level + 1;
+              return true;
+            }
+            else
+            {
+              return false;
             }
           }
         }
@@ -1362,10 +1382,13 @@ class MarkdownWord
 
     if (data != null)
     {
-      attribs[attrib] = data;
+      attribs[attrib] = MarkdownParagraph.unescape(data);
     }
   }
 
+  ///
+  /// Vytvari image, nebo link pomoci vysledku hledani vzoru LinkPattern
+  ///
   factory MarkdownWord.fromMatch(Match match, List<String> styleStack, {String? text})
   {
     final result = MarkdownWord()

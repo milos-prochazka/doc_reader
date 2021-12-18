@@ -6,7 +6,8 @@ dart-prep --enable-all .\
 
 git add --all
 git commit --all -m %1
-git push origin master --force
+rem git push origin master --force
+git push --recurse-submodules=check --progress "origin" HEAD:refs/heads/master --force
 pause
 
 git gc

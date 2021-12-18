@@ -1,2 +1,2 @@
-Před odkazem[to je obrazek](pngegg.png 'title' 'voice' 10em x 20em left .myclass)za odkazem
-
+Před odkazem<mujmail@email.eml>za odkazem
+To<http://www.seznam.lnk>je seznam

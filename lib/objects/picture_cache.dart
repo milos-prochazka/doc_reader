@@ -168,19 +168,14 @@ class PictureCacheInfo
   bool use = true;
   Map<int, ui.Image>? sizedImages;
 
-  // TODO Odstranit debug CNT
-  int debugCnt = 0;
-
+ 
   bool get hasInfo => !width.isNaN && !height.isNaN;
 
   bool get hasPicture => hasImage | hasDrawable;
   bool get hasImage => image != null;
   bool get hasDrawable => drawableRoot != null;
 
-  PictureCacheInfo() 
-  {
-    debugCnt = 1;
-  }
+  PictureCacheInfo(); 
 
   void setImage(Object? image) 
   {
@@ -224,7 +219,6 @@ class PictureCacheInfo
       sizedImages?[sizeDescriptor] = result;
     }
 
-    debugCnt++;
     return result;
   }
 

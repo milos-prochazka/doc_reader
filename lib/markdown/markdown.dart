@@ -1364,7 +1364,7 @@ class MarkdownWord
   _matchAttrib(String attrib, Match match, int index) 
   {
     final data = match[index];
-
+    
     if (data != null) 
     {
       attribs[attrib] = data;

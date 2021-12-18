@@ -77,7 +77,7 @@ class LinkPattern with AllMatches implements Pattern
       break;
 
       case TYPE_LINKED_IMAGE_REFERENCE:
-      //break;
+      //break; -- neimplementovano
 
       case TYPE_LINK:
       default:
@@ -85,7 +85,7 @@ class LinkPattern with AllMatches implements Pattern
       break;
     }
 
-    final pMatch = pattern.firstMatch(string.substring(start));
+    final pMatch = pattern.firstMatch(string.substring(start)); // pattern.matchAsPrefix(string,start) nefunguje ?
     if (pMatch != null) 
     {
       // Vyraz nalezen

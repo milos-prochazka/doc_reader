@@ -1,7 +1,3 @@
-> 1. T1
->>   1. T1.1
->>   1. T1.2
->>   1. T1.2
-> 1. T2
-> 1. T3
-> 1. AAAA
+# Nadpis
+
+Text~sub±script~mezi^superscript^

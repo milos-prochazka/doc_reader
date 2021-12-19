@@ -54,13 +54,16 @@ final _idImageRegExp = RegExp(r'\!\[([^\]]+)\]\[([^\]]+)\]', multiLine: false);
 final _attributeLikRegExp = RegExp(r'\{([\.\#\*])([^}]+)\}');
 
 /// Url link: http://www.any.org nebo <http://www.any.org>
-final _urlRegExp = RegExp(r'\<?([a-zA-Z0-9]{2,32}:\/\/[a-zA-Z0-9@:%\._\\+~#?&\/=\u00A0-\uD7FF\uE000-\uE080]{2,256})\>?',
-  multiLine: false);
+final _urlRegExp = RegExp
+(
+  r'(\`)?\<?([a-zA-Z0-9]{2,32}:\/\/[a-zA-Z0-9@:%\._\\+~#?&\/=\u00A0-\uD7FF\uE000-\uE080]{2,256})\>?(\`)?',
+  multiLine: false
+);
 
 /// Email link: aaaa@dddd.org nebo <aaaa@dddd.org>
 final _emailRegExp = RegExp
 (
-  r'\<?([a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9\u00A0-\uD7FF\uE000-\uE080)]+(?:\.[a-zA-Z0-9-]+)*)\>?',
+  r'(\`)?\<?([a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9\u00A0-\uD7FF\uE000-\uE080)]+(?:\.[a-zA-Z0-9-]+)*)\>?(\`)?',
   multiLine: false
 );
 
@@ -160,7 +163,7 @@ class Markdown
         {
           // Link
           //paragraphs.add(MarkdownParagraph.referenceLink(name, data));
-          namedLinks[name] = MarkdownWord.fromMatch(match, []);
+          namedLinks[name] = MarkdownWord.fromMatch(match, _StyleStack.empty);
         }
       }
       else if (_hrRegExp.hasMatch(line))
@@ -746,10 +749,25 @@ class MarkdownParagraph
     {
       builder.write('.\u2022');
     }
-
-    if (link)
+    else
     {
-      builder.write('@');
+      switch (word?.script)
+      {
+        case MarkdownScript.subscript:
+        builder.write('~');
+        break;
+
+        case MarkdownScript.superscript:
+        builder.write('^');
+        break;
+
+        default:
+        break;
+      }
+      if (link)
+      {
+        builder.write('@');
+      }
     }
 
     return builder.toString();
@@ -887,13 +905,14 @@ class MarkdownParagraph
     return builder.toString();
   }
 
-  MarkdownWord makeWord(String text, List<String> styleStack,
+  MarkdownWord makeWord(String text, _StyleStack styleStack,
     {MarkdownWord_Type type = MarkdownWord_Type.word, bool stickToNext = false, Map<String, String?>? attr})
   {
     final result = MarkdownWord()
     ..type = type
     ..text = MarkdownParagraph.unescape(text)
-    ..style = styleStack.isEmpty ? '' : styleStack.last
+    ..style = styleStack.currentStyle
+    ..script = styleStack.script
     ..stickToNext = stickToNext;
 
     if (attr != null)
@@ -914,7 +933,7 @@ class MarkdownParagraph
   /// - [wordBuffer] - Text slova
   /// - [styleStack] - Stack stylu znaku (*, **, _, __ apod)
   /// - [stickToNext] - Prilepit k nasledujicimu slovu (bez mezery)
-  void writeWord(StringBuffer wordBuffer, List<String> styleStack, bool stickToNext)
+  void writeWord(StringBuffer wordBuffer, _StyleStack styleStack, bool stickToNext)
   {
     if (wordBuffer.isNotEmpty)
     {
@@ -922,7 +941,8 @@ class MarkdownParagraph
       (
         MarkdownWord()
         ..text = MarkdownParagraph.unescape(wordBuffer.toString())
-        ..style = styleStack.isEmpty ? '' : styleStack.last
+        ..style = styleStack.currentStyle
+        ..script = styleStack.script
         ..stickToNext = stickToNext
       );
       wordBuffer.clear();
@@ -945,7 +965,7 @@ class MarkdownParagraph
     const ATTRIBUTE = 6;
 
     final wordBuffer = StringBuffer();
-    final styleStack = <String>[];
+    final styleStack = _StyleStack();
     int readIndex = 0;
     final List<Match?> lineMatches = List.filled(text.length, null);
     final List<int> lineMatchType = List.filled(text.length, MATCH_NONE);
@@ -1044,11 +1064,19 @@ class MarkdownParagraph
           case URL_LINK:
           {
             final match = lineMatches[readIndex]!;
-            final text = match[1] ?? '';
+            final text = match[2] ?? '';
+            final MarkdownWord word;
 
-            final word = makeWord(text, styleStack, type: MarkdownWord_Type.link, attr: {'link': text});
+            if (match[1] == '`' && match[3] == '`')
+            {
+              word = makeWord(text, styleStack);
+            }
+            else
+            {
+              word = makeWord(text, styleStack, type: MarkdownWord_Type.link, attr: {'link': text});
+            }
+
             word.stickToNext = charAt(text, match.end) != ' ';
-
             words.add(word);
           }
           break;
@@ -1097,14 +1125,38 @@ class MarkdownParagraph
               break;
 
               case ' ': // mezera
-              writeWord(wordBuffer, styleStack, false);
-              readIndex++;
+              {
+                writeWord(wordBuffer, styleStack, false);
+                readIndex++;
+              }
               break;
 
               case '\n': // Novy radek
-              writeWord(wordBuffer, styleStack, false);
-              words.add(MarkdownWord.newLine());
-              readIndex++;
+              {
+                writeWord(wordBuffer, styleStack, false);
+                words.add(MarkdownWord.newLine());
+                readIndex++;
+              }
+              break;
+
+              case '~':
+              {
+                writeWord(wordBuffer, styleStack, !hasSpaceAtIndex(text, readIndex + 1));
+                styleStack.script = (styleStack.script == MarkdownScript.subscript)
+                ? MarkdownScript.normal
+                : MarkdownScript.subscript;
+                readIndex++;
+              }
+              break;
+
+              case '^':
+              {
+                writeWord(wordBuffer, styleStack, !hasSpaceAtIndex(text, readIndex + 1));
+                styleStack.script = (styleStack.script == MarkdownScript.superscript)
+                ? MarkdownScript.normal
+                : MarkdownScript.superscript;
+                readIndex++;
+              }
               break;
 
               default: // Jiny znak
@@ -1117,18 +1169,18 @@ class MarkdownParagraph
                   readIndex += match.end - match.start;
                   final mValue = matchVal(match);
 
-                  if (styleStack.isNotEmpty && compareClass(styleStack.last, mValue))
+                  if (styleStack.stack.isNotEmpty && compareClass(styleStack.stack.last, mValue))
                   {
                     // konec stylu
                     final ch = charAt(text, readIndex);
                     writeWord(wordBuffer, styleStack, ch != ' ' && ch != '');
-                    styleStack.removeLast();
+                    styleStack.stack.removeLast();
                   }
                   else
                   {
                     // zacatek stylu
                     writeWord(wordBuffer, styleStack, true);
-                    styleStack.add(matchVal(match));
+                    styleStack.stack.add(matchVal(match));
                   }
                 }
                 else
@@ -1183,7 +1235,7 @@ class MarkdownParagraph
   }
 
   /// Seznam slov vztahujicich se k jednomu nalezenemu linku pro obrazek uklada jendine slovo
-  MarkdownWord linkWordsFromMatch(Match match, List<String> styleStack)
+  MarkdownWord linkWordsFromMatch(Match match, _StyleStack styleStack)
   {
     final MarkdownWord result;
 
@@ -1358,6 +1410,7 @@ class MarkdownWord
   String text = '';
   bool lineBreak = false;
   final attribs = <String, String?>{};
+  MarkdownScript script = MarkdownScript.normal;
 
   MarkdownWord();
 
@@ -1379,11 +1432,12 @@ class MarkdownWord
   ///
   /// Vytvari image, nebo link pomoci vysledku hledani vzoru LinkPattern
   ///
-  factory MarkdownWord.fromMatch(Match match, List<String> styleStack, {String? text})
+  factory MarkdownWord.fromMatch(Match match, _StyleStack styleStack, {String? text})
   {
     final result = MarkdownWord()
     ..type = (match[LinkPattern.GR_EXCLAMATION] == '!') ? MarkdownWord_Type.image : MarkdownWord_Type.link
-    ..style = styleStack.isEmpty ? '' : styleStack.last;
+    ..style = styleStack.currentStyle
+    ..script = styleStack.script;
 
     result.text = MarkdownParagraph.unescape(text ?? match[LinkPattern.GR_ALT] ?? '');
     result._matchAttrib('width', match, LinkPattern.GR_WIDTH);
@@ -1412,7 +1466,9 @@ class MarkdownWord
   {
     final s = stickToNext ? '+' : ' ';
     final t = lineBreak ? '<break>' : text;
-    final builder = StringBuffer("[$style]$s '$t' ${type.toString().replaceAll('MarkdownWord_Type.', '')}");
+
+    final builder =
+    StringBuffer("[$style]$s '$t' ${enum_ToString(script.toString())} ${enum_ToString(type.toString())}");
 
     for (final attr in attribs.entries)
     {
@@ -1424,3 +1480,14 @@ class MarkdownWord
 }
 
 enum MarkdownWord_Type { word, link, image, link_image, reference_definition }
+
+class _StyleStack
+{
+  static final empty = _StyleStack();
+  final stack = <String>[];
+  var script = MarkdownScript.normal;
+
+  String get currentStyle => (stack.isEmpty) ? '' : stack.last;
+}
+
+enum MarkdownScript { normal, subscript, superscript }

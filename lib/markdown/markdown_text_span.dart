@@ -132,10 +132,6 @@ class MarkdownTextSpan implements IDocumentSpan
         text = '   ${dec.count + 1}. ';
         break;
 
-        case '>':
-        text = '>';
-        break;
-
         default:
         bullet = true;
         text = config.get(['bullets', dec.level], defValue: '  -');
@@ -147,22 +143,15 @@ class MarkdownTextSpan implements IDocumentSpan
         _blockquotes ??= _Blockquotes(config, paragraph.blockquoteLevel);
         left += _blockquotes?.intent ?? 0;
       }
-      /*if (text == '>')
-      {
-        _blockquotes ??= _Blockquotes(config, paragraph.blockquoteLevel);
-        left += _blockquotes?.intent ?? 0;
-      }
-      else*/
-      {
-        final style = config.getTextStyle(paragraph, word: paragraph.words[0], bullet: bullet);
-        final span = _Text(text, style.textStyle, false).calcMetrics(parameters);
-        span.yOffset = style.yOffseet;
-        span.xOffset = left + dec.level * config._bulletIntent(parameters, paragraph, paragraph.words[0]);
 
-        _spans.add(span);
-        line.add(span);
-        left = span.width + span.xOffset;
-      }
+      final style = config.getTextStyle(paragraph, word: paragraph.words[0], bullet: bullet);
+      final span = _Text(text, style.textStyle, false).calcMetrics(parameters);
+      span.yOffset = style.yOffseet;
+      span.xOffset = left + dec.level * config._bulletIntent(parameters, paragraph, paragraph.words[0]);
+
+      _spans.add(span);
+      line.add(span);
+      left = span.width + span.xOffset;
     }
 
     // Vytvoreni seznamu spanu k zalomeni ----------------------------------------------------------------------------
@@ -189,6 +178,7 @@ class MarkdownTextSpan implements IDocumentSpan
       }
 
       span.lineBreak = word.lineBreak;
+      span.script = word.script;
 
       switch (span.align)
       {
@@ -221,6 +211,7 @@ class MarkdownTextSpan implements IDocumentSpan
 
     double leftLeft = left;
     double leftHeight = y;
+
     for (final span in leftSpans)
     {
       span.xOffset = left;
@@ -647,10 +638,23 @@ class MarkdownTextConfig
         styleInfo.fontSize *= 0.3333;
         styleInfo.yOffset = -styleInfo.fontSize * 0.3333;
       }
-
-      if (linkStyle)
+      else
       {
-        styleInfo.textDecoration = TextDecoration.underline;
+        switch (word?.script ?? MarkdownScript.normal)
+        {
+          case MarkdownScript.subscript:
+          case MarkdownScript.superscript:
+          styleInfo.fontSize *= 0.7;
+          break;
+
+          default:
+          break;
+        }
+
+        if (linkStyle)
+        {
+          styleInfo.textDecoration = TextDecoration.underline;
+        }
       }
 
       result = _WordStyle(styleInfo);
@@ -748,6 +752,7 @@ class _Span
   double height = 0;
   double width = 0;
   bool lineBreak = false;
+  MarkdownScript script = MarkdownScript.normal;
   int align = _Span.ALIGN_INLINE;
 
   bool get textBaseLine => false;
@@ -1465,7 +1470,21 @@ class _Line
       {
         if (word.textBaseLine)
         {
-          word.yOffset += asc - word.baseLine;
+          switch (word.script)
+          {
+            //
+            case MarkdownScript.superscript:
+            word.yOffset = 0;
+            break;
+            //
+            case MarkdownScript.subscript:
+            word.yOffset = height - word.height;
+            break;
+            //
+            default:
+            word.yOffset += asc - word.baseLine;
+            break;
+          }
         }
       }
 

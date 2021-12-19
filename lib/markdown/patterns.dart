@@ -1,5 +1,7 @@
 // ignore_for_file: constant_identifier_names
 
+import 'package:doc_reader/objects/utils.dart';
+
 import 'markdown.dart';
 
 class LinkPattern with AllMatches implements Pattern
@@ -192,7 +194,7 @@ class StringPattern with AllMatches implements Pattern
   @override
   Match? matchAsPrefix(String string, [int start = 0])
   {
-    while (start < string.length && ' \t\v\u00a0'.contains(string[start]))
+    while (start < string.length && hasSpaceAtIndex(string, start))
     {
       start++;
     }

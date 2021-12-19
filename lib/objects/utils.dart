@@ -10,6 +10,18 @@ String enum_ToString(Object param)
   return (i > 0) ? str.substring(i + 1) : str;
 }
 
+bool hasSpaceAtIndex(String string, int index)
+{
+  if (index < 0 || index >= string.length)
+  {
+    return false;
+  }
+  else
+  {
+    return ' \t\v\u00a0'.contains(string.substring(index, index + 1));
+  }
+}
+
 String numberToCharacters(int param, String charList)
 {
   String result = '';

@@ -612,20 +612,17 @@ class MarkdownTextConfig
 
       if (!wordStyle)
       {
-        switch (word?.style)
+        switch (word?.style.length)
         {
-          case '_':
-          case '*':
+          case 1:
           styleInfo.fontStyle = FontStyle.italic;
           break;
 
-          case '__':
-          case '**':
+          case 2:
           styleInfo.fontWeight = FontWeight.bold;
           break;
 
-          case '___':
-          case '***':
+          case 3:
           styleInfo.fontStyle = FontStyle.italic;
           styleInfo.fontWeight = FontWeight.bold;
           break;
@@ -644,7 +641,7 @@ class MarkdownTextConfig
         {
           case MarkdownScript.subscript:
           case MarkdownScript.superscript:
-          styleInfo.fontSize *= 0.7;
+          styleInfo.fontSize *= 0.58;
           break;
 
           default:
@@ -1450,6 +1447,7 @@ class _Line
   {
     if (_words.isNotEmpty)
     {
+      print('calcPosition --------------------------------------------------');
       //double y = 0;
       double asc = 0;
       double desc = 0;
@@ -1468,17 +1466,18 @@ class _Line
 
       for (var word in _words)
       {
+        print('word:${(word as _Text).text}');
         if (word.textBaseLine)
         {
           switch (word.script)
           {
             //
             case MarkdownScript.superscript:
-            word.yOffset = 0;
+            // word.yOffset = word.yOffset;
             break;
             //
             case MarkdownScript.subscript:
-            word.yOffset = height - word.height;
+            word.yOffset += height - word.height;
             break;
             //
             default:

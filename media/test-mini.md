@@ -1,3 +1,1 @@
-# Nadpis
-
-Text~sub±script~mezi^superscript^
+~~~underline~~~. ~~stike~~

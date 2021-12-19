@@ -37,7 +37,8 @@ final _indentBlockRegExp = RegExp(r'^\s{4,}', multiLine: false);
 final _blockRegExp = RegExp(r'^\s*(\`{3,})(\w*)\s*$', multiLine: false);
 
 /// Trida znaku (italic,bold a dalsi)
-final _charClassRegExp = RegExp(r'((\_{1,3})|(\*{1,3}))|(\`{3}(@\w+\s))', multiLine: false);
+//final _charClassRegExp = RegExp(r'((\_{1,3})|(\*{1,3}))|(\`{3}(@\w+\s))', multiLine: false);
+final _charClassRegExp = RegExp(r'([\_\*]{1,3})|(\`{3}(.\w+\s)?)', multiLine: false);
 
 /// Dlouhy link (obsahuje URL)
 final _longLinkRegExp = LinkPattern(LinkPattern.TYPE_LINK);
@@ -913,6 +914,7 @@ class MarkdownParagraph
     ..text = MarkdownParagraph.unescape(text)
     ..style = styleStack.currentStyle
     ..script = styleStack.script
+    ..decoration = styleStack.decoration
     ..stickToNext = stickToNext;
 
     if (attr != null)
@@ -943,6 +945,7 @@ class MarkdownParagraph
         ..text = MarkdownParagraph.unescape(wordBuffer.toString())
         ..style = styleStack.currentStyle
         ..script = styleStack.script
+        ..decoration = styleStack.decoration
         ..stickToNext = stickToNext
       );
       wordBuffer.clear();
@@ -1141,17 +1144,37 @@ class MarkdownParagraph
 
               case '~':
               {
-                writeWord(wordBuffer, styleStack, !hasSpaceAtIndex(text, readIndex + 1));
-                styleStack.script = (styleStack.script == MarkdownScript.subscript)
-                ? MarkdownScript.normal
-                : MarkdownScript.subscript;
-                readIndex++;
+                writeWord(wordBuffer, styleStack, !text.hasSpaceAtIndex(readIndex + 1));
+                if (charAt(text, readIndex + 1) == '~')
+                {
+                  if (charAt(text, readIndex + 2) == '~')
+                  {
+                    styleStack.decoration = (styleStack.decoration == MarkdownDecoration.underline)
+                    ? MarkdownDecoration.none
+                    : MarkdownDecoration.underline;
+                    readIndex += 3;
+                  }
+                  else
+                  {
+                    styleStack.decoration = (styleStack.decoration == MarkdownDecoration.striketrough)
+                    ? MarkdownDecoration.none
+                    : MarkdownDecoration.striketrough;
+                    readIndex += 2;
+                  }
+                }
+                else
+                {
+                  styleStack.script = (styleStack.script == MarkdownScript.subscript)
+                  ? MarkdownScript.normal
+                  : MarkdownScript.subscript;
+                  readIndex++;
+                }
               }
               break;
 
               case '^':
               {
-                writeWord(wordBuffer, styleStack, !hasSpaceAtIndex(text, readIndex + 1));
+                writeWord(wordBuffer, styleStack, !text.hasSpaceAtIndex(readIndex + 1));
                 styleStack.script = (styleStack.script == MarkdownScript.superscript)
                 ? MarkdownScript.normal
                 : MarkdownScript.superscript;
@@ -1218,7 +1241,7 @@ class MarkdownParagraph
 
   static bool compareClass(String push, String pop)
   {
-    return (push == pop) || (pop == '```' && push.startsWith('```@'));
+    return (push == pop) || (push == pop.swap()) || (pop == '```' && push.startsWith('```.'));
   }
 
   static String charAt(String text, int index)
@@ -1411,6 +1434,7 @@ class MarkdownWord
   bool lineBreak = false;
   final attribs = <String, String?>{};
   MarkdownScript script = MarkdownScript.normal;
+  MarkdownDecoration decoration = MarkdownDecoration.none;
 
   MarkdownWord();
 
@@ -1437,7 +1461,8 @@ class MarkdownWord
     final result = MarkdownWord()
     ..type = (match[LinkPattern.GR_EXCLAMATION] == '!') ? MarkdownWord_Type.image : MarkdownWord_Type.link
     ..style = styleStack.currentStyle
-    ..script = styleStack.script;
+    ..script = styleStack.script
+    ..decoration = styleStack.decoration;
 
     result.text = MarkdownParagraph.unescape(text ?? match[LinkPattern.GR_ALT] ?? '');
     result._matchAttrib('width', match, LinkPattern.GR_WIDTH);
@@ -1467,8 +1492,10 @@ class MarkdownWord
     final s = stickToNext ? '+' : ' ';
     final t = lineBreak ? '<break>' : text;
 
-    final builder =
-    StringBuffer("[$style]$s '$t' ${enum_ToString(script.toString())} ${enum_ToString(type.toString())}");
+    final builder = StringBuffer
+    (
+      "[$style]$s '$t' ${enum_ToString(script.toString())} ${enum_ToString(decoration.toString())} ${enum_ToString(type.toString())}"
+    );
 
     for (final attr in attribs.entries)
     {
@@ -1486,8 +1513,29 @@ class _StyleStack
   static final empty = _StyleStack();
   final stack = <String>[];
   var script = MarkdownScript.normal;
+  var decoration = MarkdownDecoration.none;
 
-  String get currentStyle => (stack.isEmpty) ? '' : stack.last;
+  String get currentStyle
+  {
+    if (stack.isEmpty)
+    {
+      return '';
+    }
+    else
+    {
+      final style = stack.last;
+
+      if (style.startsWith('```.'))
+      {
+        return style.substring(4);
+      }
+      else
+      {
+        return stack.last;
+      }
+    }
+  }
 }
 
 enum MarkdownScript { normal, subscript, superscript }
+enum MarkdownDecoration { none, striketrough, underline }

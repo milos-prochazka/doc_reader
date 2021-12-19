@@ -10,18 +10,40 @@ String enum_ToString(Object param)
   return (i > 0) ? str.substring(i + 1) : str;
 }
 
-bool hasSpaceAtIndex(String string, int index)
+extension StringExt on String
 {
-  if (index < 0 || index >= string.length)
+  /// Test mezery na posizi v retezci
+  /// - true pokud na pozici [index] je mezera (tabulator,vertikalni mezera, nedelitelna mezera)
+  /// - false pokud na pozici [index] neni mezera
+  /// - false pokud [index] nelezi v rozsahu retezce
+  bool hasSpaceAtIndex(int index)
   {
-    return false;
+    if (index < 0 || index >= length)
+    {
+      return false;
+    }
+    else
+    {
+      return ' \t\v\u00a0'.contains(substring(index, index + 1));
+    }
   }
-  else
+
+  /// Porohozeni znaku ABC => CBA
+  String swap()
   {
-    return ' \t\v\u00a0'.contains(string.substring(index, index + 1));
+    var chars = codeUnits;
+    var result = List.filled(chars.length, chars.length);
+
+    for (int i = 0; i < chars.length; i++)
+    {
+      result[result.length - i - 1] = chars[i];
+    }
+
+    return String.fromCharCodes(result);
   }
 }
 
+/// Konverze na cislo
 String numberToCharacters(int param, String charList)
 {
   String result = '';

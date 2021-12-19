@@ -194,7 +194,7 @@ class StringPattern with AllMatches implements Pattern
   @override
   Match? matchAsPrefix(String string, [int start = 0])
   {
-    while (start < string.length && hasSpaceAtIndex(string, start))
+    while (start < string.length && string.hasSpaceAtIndex(start))
     {
       start++;
     }

@@ -174,7 +174,7 @@ class Markdown
         {
           case '=':
           case '-':
-          if (paragraphs.isNotEmpty && paragraphs.last.words.isNotEmpty)
+          if (paragraphs.isNotEmpty && paragraphs.last.isNotEmpty)
           {
             paragraphs.last.masterClass = ch == '=' ? 'h1' : 'h2';
           }
@@ -407,10 +407,7 @@ class Markdown
       }
 
       // Odstraneni linku bez odkazu
-      for (final word in remove)
-      {
-        para.words.remove(word);
-      }
+      para.removeAll(remove);
     }
   }
 
@@ -439,7 +436,7 @@ class Markdown
         mergeCls.contains('${prevPara.masterClass}.${para.masterClass}')
       )
       {
-        prevPara.words.add(MarkdownWord.newLine());
+        prevPara.add(MarkdownWord.newLine());
         prevPara.copyWords(para);
         paragraphs.removeAt(i);
       }
@@ -480,7 +477,7 @@ class Markdown
                     final indentPara = paragraphs[k];
                     _indentParas.add(indentPara);
                     indentPara.masterClass = 'indent';
-                    indentPara.words.add(MarkdownWord.newLine());
+                    indentPara.add(MarkdownWord.newLine());
                   }
                 }
                 break;
@@ -545,13 +542,13 @@ class Markdown
           }
           else
           {
-            prevPara.words.add(MarkdownWord.newLine());
+            prevPara.add(MarkdownWord.newLine());
           }
         }
       }
       else if (prevPara.isEmpty)
       {
-        prevPara.words.add(MarkdownWord.newLine());
+        prevPara.add(MarkdownWord.newLine());
       }
     }
   }
@@ -705,7 +702,7 @@ class MarkdownParagraph
   String masterClass;
   String subclass;
   final anchors = <String>[];
-  final words = <MarkdownWord>[];
+  final _words = <MarkdownWord>[];
   final attributes = <String, String>{};
   bool lastInClass = true;
   bool firstInClass = true;
@@ -729,6 +726,16 @@ class MarkdownParagraph
 
   ///
   //String get linkUrl => subclass;
+
+  MarkdownWord operator [](int index)
+  {
+    return _words[index];
+  }
+
+  Iterable<MarkdownWord> get words
+  {
+    return _words;
+  }
 
   String fullClassName([MarkdownWord? word, bool bullet = false, bool link = false])
   {
@@ -760,6 +767,19 @@ class MarkdownParagraph
 
         case MarkdownScript.superscript:
         builder.write('^');
+        break;
+
+        default:
+        break;
+      }
+      switch (word?.decoration)
+      {
+        case MarkdownDecoration.striketrough:
+        builder.write('-');
+        break;
+
+        case MarkdownDecoration.underline:
+        builder.write('_');
         break;
 
         default:
@@ -869,7 +889,7 @@ class MarkdownParagraph
     {
       builder.write('Decorations: $listIndent\r\n');
       builder.write('\r\n');
-      label = words.isNotEmpty;
+      label = _words.isNotEmpty;
     }
 
     if (anchors.isNotEmpty)
@@ -880,7 +900,7 @@ class MarkdownParagraph
         builder.write(' ${dec.toString()}');
       }
       builder.write('\r\n');
-      label = words.isNotEmpty;
+      label = _words.isNotEmpty;
     }
 
     if (attributes.isNotEmpty)
@@ -898,9 +918,9 @@ class MarkdownParagraph
       builder.write('Words:\r\n');
     }
 
-    for (int i = 0; i < words.length; i++)
+    for (int i = 0; i < _words.length; i++)
     {
-      final word = words[i].toString();
+      final word = _words[i].toString();
       builder.write('  $i: $word\r\n');
     }
     return builder.toString();
@@ -929,7 +949,7 @@ class MarkdownParagraph
     return result;
   }
 
-  /// Zapis slova do seznamu [words]
+  /// Zapis slova do seznamu [_words]
   /// - Zapisuje text z [wordBuffer]
   /// - Pokud je wordBuffer prazdny nezpisuje nic
   /// - [wordBuffer] - Text slova
@@ -939,7 +959,7 @@ class MarkdownParagraph
   {
     if (wordBuffer.isNotEmpty)
     {
-      words.add
+      add
       (
         MarkdownWord()
         ..text = MarkdownParagraph.unescape(wordBuffer.toString())
@@ -1039,7 +1059,7 @@ class MarkdownParagraph
               }
 
               word.stickToNext = charAt(text, match.end) != ' ';
-              words.add(word);
+              add(word);
             }
           }
           break;
@@ -1058,7 +1078,7 @@ class MarkdownParagraph
               word.attribs['alt'] = MarkdownParagraph.unescape(altText);
 
               word.stickToNext = charAt(text, match.end) != ' ';
-              words.add(word);
+              add(word);
             }
           }
           break;
@@ -1080,7 +1100,7 @@ class MarkdownParagraph
             }
 
             word.stickToNext = charAt(text, match.end) != ' ';
-            words.add(word);
+            add(word);
           }
           break;
 
@@ -1137,7 +1157,7 @@ class MarkdownParagraph
               case '\n': // Novy radek
               {
                 writeWord(wordBuffer, styleStack, false);
-                words.add(MarkdownWord.newLine());
+                add(MarkdownWord.newLine());
                 readIndex++;
               }
               break;
@@ -1251,9 +1271,9 @@ class MarkdownParagraph
 
   void copyWords(MarkdownParagraph src)
   {
-    for (var word in src.words)
+    for (var word in src._words)
     {
-      words.add(word);
+      add(word);
     }
   }
 
@@ -1265,7 +1285,7 @@ class MarkdownParagraph
     if (match[LinkPattern.GR_EXCLAMATION] == '!')
     {
       result = MarkdownWord.fromMatch(match, styleStack);
-      words.add(result);
+      add(result);
     }
     else
     {
@@ -1281,18 +1301,48 @@ class MarkdownParagraph
         final strWord = descWords[i] + (stick ? ' ' : '');
         final word = MarkdownWord.fromMatch(match, styleStack, text: strWord);
         word.stickToNext = stick;
-        words.add(word);
+        add(word);
       }
 
-      result = words.last;
+      result = _words.last;
     }
 
     return result;
   }
 
-  bool get isBlankLine => masterClass == 'p' && words.isEmpty;
+  bool get isBlankLine => masterClass == 'p' && _words.isEmpty;
 
-  bool get isEmpty => words.isEmpty;
+  bool get isEmpty => _words.isEmpty;
+
+  bool get isNotEmpty => _words.isNotEmpty;
+
+  remove(MarkdownWord word) => _words.remove(word);
+
+  removeAll(Iterable<MarkdownWord> removeList)
+  {
+    for (var word in removeList)
+    {
+      _words.remove(word);
+    }
+  }
+
+  add(MarkdownWord word)
+  {
+    MarkdownWord prev;
+    if
+    (
+      _words.isNotEmpty &&
+      (prev = _words.last).decoration != MarkdownDecoration.none &&
+      prev.decoration == word.decoration
+    )
+    {
+      prev.text += ' ' + word.text;
+    }
+    else
+    {
+      _words.add(word);
+    }
+  }
 }
 
 enum MarkdownParagraphType { normalParagraph, linkReferece }

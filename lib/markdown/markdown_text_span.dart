@@ -11,10 +11,10 @@ import '../objects/text_load_provider.dart';
 import '../objects/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:path/path.dart' as path;
 import 'package:flutter_svg/flutter_svg.dart';
 import '../document.dart';
 import 'markdown.dart';
+import 'package:path/path.dart' as path;
 import 'dart:math' as math;
 
 final _decimalNumberRegEx = RegExp(r'(\-?\d+(\.\d+)?)', multiLine: false);
@@ -112,7 +112,7 @@ class MarkdownTextSpan implements IDocumentSpan
     _height = y;
 
     // Odsazeni a decorace zleva
-    if (paragraph.words.isNotEmpty && paragraph.listIndent != null)
+    if (paragraph.isNotEmpty && paragraph.listIndent != null)
     {
       final dec = paragraph.listIndent!;
       bool bullet = false;
@@ -144,10 +144,10 @@ class MarkdownTextSpan implements IDocumentSpan
         left += _blockquotes?.intent ?? 0;
       }
 
-      final style = config.getTextStyle(paragraph, word: paragraph.words[0], bullet: bullet);
+      final style = config.getTextStyle(paragraph, word: paragraph[0], bullet: bullet);
       final span = _Text(text, style.textStyle, false).calcMetrics(parameters);
       span.yOffset = style.yOffseet;
-      span.xOffset = left + dec.level * config._bulletIntent(parameters, paragraph, paragraph.words[0]);
+      span.xOffset = left + dec.level * config._bulletIntent(parameters, paragraph, paragraph[0]);
 
       _spans.add(span);
       line.add(span);
@@ -382,7 +382,7 @@ final _defaultConfig =
   },
   'classes':
   {
-    '':
+    'p':
     {
       'fontSize': 20,
       'fontStyle': 'normal', // normal, bold, bold_italic
@@ -648,6 +648,20 @@ class MarkdownTextConfig
           break;
         }
 
+        switch (word?.decoration)
+        {
+          case MarkdownDecoration.striketrough:
+          styleInfo.textDecoration = TextDecoration.lineThrough;
+          break;
+
+          case MarkdownDecoration.underline:
+          styleInfo.textDecoration = TextDecoration.underline;
+          break;
+
+          default:
+          break;
+        }
+
         if (linkStyle)
         {
           styleInfo.textDecoration = TextDecoration.underline;
@@ -767,9 +781,9 @@ class _Text extends _Span
   TextPainter? _painter;
   final String text;
   final TextStyle style;
-  final bool stickToText;
+  final bool stickToNext;
 
-  _Text(this.text, this.style, this.stickToText);
+  _Text(this.text, this.style, this.stickToNext);
 
   @override
   bool get textBaseLine => true;
@@ -804,7 +818,7 @@ class _Text extends _Span
       if (ml.isNotEmpty)
       {
         final metrics = ml.first;
-        wordSpace = stickToText ? 0 : (style.wordSpacing ?? p.height / 3);
+        wordSpace = stickToNext ? 0 : (style.wordSpacing ?? p.height / 3);
 
         baseLine = metrics.ascent;
         height = metrics.height;

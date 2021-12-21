@@ -71,15 +71,14 @@ class MarkdownTextSpan implements IDocumentSpan
 
   void _updateText(PaintParameters parameters)
   {
-    final line = _Line(paragraph, config);
-
     _spans.clear();
     _height = 0;
     _width = 0;
 
     appLog('_updateText:\n$paragraph\n');
 
-    var paraStyle = config.getTextStyle(paragraph);
+    final paraStyle = config.getTextStyle(paragraph);
+    final line = _Line(paraStyle);
 
     double left = paraStyle.leftMargin;
     double right = parameters.size.width - paraStyle.rightMargin;
@@ -389,6 +388,7 @@ final _defaultConfig =
     {
       'fontSize': 20,
       'fontStyle': 'normal', // normal, bold, bold_italic
+      'align': 'justify',
     },
     'qaqa': {'color': 'cyan', 'borderColor': 'blue'},
     'indent':
@@ -576,6 +576,20 @@ class MarkdownTextConfig
       );
       styleInfo.borderRadius = get<double>(['borderRadius'], defValue: styleInfo.borderRadius, config: cfg);
 
+      const alignCases =
+      {
+        'default': _WordStyle.ALIGN_DEFAULT,
+        'left': _WordStyle.ALIGN_LEFT,
+        'right': _WordStyle.ALIGN_RIGHT,
+        'center': _WordStyle.ALIGN_CENTER,
+        'justify': _WordStyle.ALIGN_JUSTIFY
+      };
+      final alignStr = get<String?>(['align'], config: cfg);
+      if (alignStr != null)
+      {
+        styleInfo.align = alignCases[alignStr] ?? styleInfo.align;
+      }
+
       result = true;
     }
 
@@ -716,10 +730,17 @@ class _WordStyleInfo
   double borderPadding = 0.0;
   Color borderColor = Colors.grey;
   double borderRadius = 0.0;
+  int align = _WordStyle.ALIGN_DEFAULT;
 }
 
 class _WordStyle
 {
+  static const ALIGN_DEFAULT = 0;
+  static const ALIGN_LEFT = 1;
+  static const ALIGN_RIGHT = 2;
+  static const ALIGN_CENTER = 3;
+  static const ALIGN_JUSTIFY = 4;
+
   TextStyle textStyle;
   double yOffseet;
   double leftMargin;
@@ -727,6 +748,7 @@ class _WordStyle
   double borderPadding;
   Color borderColor;
   double borderRadius;
+  int align;
 
   _WordStyle(_WordStyleInfo wsInfo)
   : leftMargin = wsInfo.leftMargin,
@@ -735,6 +757,7 @@ class _WordStyle
   borderPadding = wsInfo.borderPadding,
   borderRadius = wsInfo.borderRadius,
   yOffseet = wsInfo.yOffset,
+  align = wsInfo.align,
   textStyle = TextStyle
   (
     color: wsInfo.color,
@@ -1456,32 +1479,12 @@ class _Image extends _Span
 
 class _Line
 {
-  static const ALIGN_DEFAULT = 0;
-  static const ALIGN_LEFT = 1;
-  static const ALIGN_RIGHT = 2;
-  static const ALIGN_CENTER = 3;
-  static const ALIGN_JUSTIFY = 4;
-
   final _words = <_Span>[];
-  late int align;
+  final int align;
 
   void add(_Span word) => _words.add(word);
 
-  _Line(final MarkdownParagraph paragraph, final MarkdownTextConfig config)
-  {
-    final aStr = config.get<String>(['classes', paragraph.masterClass, 'align'],
-      defValue: 'justify', config: config.config).toLowerCase();
-    const cases =
-    {
-      'default': ALIGN_DEFAULT,
-      'left': ALIGN_LEFT,
-      'right': ALIGN_RIGHT,
-      'center': ALIGN_CENTER,
-      'justify': ALIGN_JUSTIFY
-    };
-
-    align = cases[aStr] ?? ALIGN_DEFAULT;
-  }
+  _Line(final _WordStyle paraStyle) : align = paraStyle.align;
 
   double calcPosition(MarkdownTextSpan span, PaintParameters parameters, double left, double right, bool lastLine)
   {
@@ -1531,7 +1534,7 @@ class _Line
         final textRight = _words.last.xOffset + _words.last.width;
         switch (align)
         {
-          case ALIGN_RIGHT:
+          case _WordStyle.ALIGN_RIGHT:
           {
             final offset = right - textRight;
             for (final word in _words)
@@ -1541,7 +1544,7 @@ class _Line
           }
           break;
 
-          case ALIGN_CENTER:
+          case _WordStyle.ALIGN_CENTER:
           {
             final offset = 0.5 * (right - textRight);
             for (final word in _words)
@@ -1551,9 +1554,9 @@ class _Line
           }
           break;
 
-          case ALIGN_JUSTIFY:
+          case _WordStyle.ALIGN_JUSTIFY:
           {
-            if (_words.length > 2 && !lastLine && (textRight - left) > 0.5 * (right - left))
+            if (_words.length >= 4 && !lastLine && (textRight - left) > 0.75 * (right - left))
             {
               final step = (right - textRight) / (_words.length - 1);
               var offset = 0.0;

@@ -10,7 +10,6 @@ import '../objects/picture_cache.dart';
 import '../objects/text_load_provider.dart';
 import '../objects/utils.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../document.dart';
 import 'markdown.dart';
@@ -72,7 +71,7 @@ class MarkdownTextSpan implements IDocumentSpan
 
   void _updateText(PaintParameters parameters)
   {
-    final line = _Line();
+    final line = _Line(paragraph, config);
 
     _spans.clear();
     _height = 0;
@@ -222,12 +221,14 @@ class MarkdownTextSpan implements IDocumentSpan
     }
 
     double x = leftLeft;
+    double lineLeft = x;
+    double lineWidth = sizeWidth;
 
     // inline spany
     for (final span in prepSpans)
     {
       final spanWidth = span.width;
-      final lineWidth = y > rightHeight ? right : sizeWidth;
+      lineWidth = y > rightHeight ? right : sizeWidth;
       var wordSpace = span.wordSpace;
 
       if (span.lineBreak)
@@ -240,18 +241,20 @@ class MarkdownTextSpan implements IDocumentSpan
         }
         else
         {
-          y = line.calcPosition(this, parameters);
+          y = line.calcPosition(this, parameters, lineLeft, lineWidth, false);
         }
 
         x = y > leftHeight ? left : leftLeft;
+        lineLeft = x;
       }
       else
       {
         // Normalni text
         if ((x + spanWidth) > lineWidth)
         {
-          y = line.calcPosition(this, parameters);
+          y = line.calcPosition(this, parameters, lineLeft, lineWidth, false);
           x = y > leftHeight ? left : leftLeft;
+          lineLeft = x;
         }
 
         span.xOffset = x;
@@ -262,7 +265,7 @@ class MarkdownTextSpan implements IDocumentSpan
       }
     }
 
-    line.calcPosition(this, parameters);
+    line.calcPosition(this, parameters, lineLeft, lineWidth, true);
     _width = parameters.size.width;
 
     _height = math.max(leftHeight, math.max(_height, rightHeight));
@@ -1453,20 +1456,42 @@ class _Image extends _Span
 
 class _Line
 {
+  static const ALIGN_DEFAULT = 0;
+  static const ALIGN_LEFT = 1;
+  static const ALIGN_RIGHT = 2;
+  static const ALIGN_CENTER = 3;
+  static const ALIGN_JUSTIFY = 4;
+
   final _words = <_Span>[];
+  late int align;
 
   void add(_Span word) => _words.add(word);
 
-  double calcPosition(MarkdownTextSpan span, PaintParameters parameters)
+  _Line(final MarkdownParagraph paragraph, final MarkdownTextConfig config)
+  {
+    final aStr = config.get<String>(['classes', paragraph.masterClass, 'align'],
+      defValue: 'justify', config: config.config).toLowerCase();
+    const cases =
+    {
+      'default': ALIGN_DEFAULT,
+      'left': ALIGN_LEFT,
+      'right': ALIGN_RIGHT,
+      'center': ALIGN_CENTER,
+      'justify': ALIGN_JUSTIFY
+    };
+
+    align = cases[aStr] ?? ALIGN_DEFAULT;
+  }
+
+  double calcPosition(MarkdownTextSpan span, PaintParameters parameters, double left, double right, bool lastLine)
   {
     if (_words.isNotEmpty)
     {
-      print('calcPosition --------------------------------------------------');
       //double y = 0;
       double asc = 0;
       double desc = 0;
 
-      for (var word in _words)
+      for (final word in _words)
       {
         //y = math.max(y,word.yOffset);
         if (word.textBaseLine)
@@ -1498,6 +1523,48 @@ class _Line
             word.yOffset += asc - word.baseLine;
             break;
           }
+        }
+      }
+
+      if (_words.isNotEmpty)
+      {
+        final textRight = _words.last.xOffset + _words.last.width;
+        switch (align)
+        {
+          case ALIGN_RIGHT:
+          {
+            final offset = right - textRight;
+            for (final word in _words)
+            {
+              word.xOffset += offset;
+            }
+          }
+          break;
+
+          case ALIGN_CENTER:
+          {
+            final offset = 0.5 * (right - textRight);
+            for (final word in _words)
+            {
+              word.xOffset += offset;
+            }
+          }
+          break;
+
+          case ALIGN_JUSTIFY:
+          {
+            if (_words.length > 2 && !lastLine && (textRight - left) > 0.5 * (right - left))
+            {
+              final step = (right - textRight) / (_words.length - 1);
+              var offset = 0.0;
+              for (final word in _words)
+              {
+                word.xOffset += offset;
+                offset += step;
+              }
+            }
+          }
+          break;
         }
       }
 

@@ -1,3 +1,4 @@
+import 'markdown/markdown_text_config.dart';
 import 'objects/asset_text_load.dart';
 import 'document.dart';
 import 'markdown/markdown.dart';

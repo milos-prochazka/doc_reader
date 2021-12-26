@@ -53,7 +53,7 @@ class DocTouch
     if (isDown)
     {
       isDown = false;
-      document.onTouchUpDown?.call(true, upPoint.dx, upPoint.dy);
+      document.onTouchUpDown?.call(false, upPoint.dx, upPoint.dy);
     }
   }
 

@@ -117,6 +117,7 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
                         ()
                         {
                             document?.position += 1;
+                            document?.markPosition = double.infinity;
                         }
                     );
                 }
@@ -152,17 +153,21 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
 
     void onTouchUpDown(bool down, double widgetX, double widgetY)
     {
-        if (down)
-        {
-            setState
-            (
-                ()
+        setState
+        (
+            ()
+            {
+                if (down)
                 {
-                    document?.markPosition = widgetY;
-                    document?.markSize = 100;
+                    document?.markPosition = 0;
+                    document?.markSize = screenSize.height;
                 }
-            );
-        }
+                else
+                {
+                    document?.markPosition = double.infinity;
+                }
+            }
+        );
     }
 
     bool onRepaint_run = false;

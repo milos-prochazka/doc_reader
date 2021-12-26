@@ -1,4 +1,3 @@
-
 // ignore_for_file: constant_identifier_names
 
 import 'dart:ui' as ui;
@@ -204,10 +203,10 @@ class MarkdownTextConfig
     if (cfg != null)
     {
       final fontSize = get<double>(['fontSize'], defValue: -1.0, config: cfg);
-      if (fontSize > 0 )
+      if (fontSize > 0)
       {
         styleInfo.fontSize = fontSize;
-        styleInfo.bulletIntent = 3*fontSize;
+        styleInfo.bulletIntent = 3 * fontSize;
       }
 
       styleInfo.styleStr = get<String>(['fontStyle'], defValue: styleInfo.styleStr, config: cfg);
@@ -239,8 +238,6 @@ class MarkdownTextConfig
       {
         styleInfo.align = alignCases[alignStr] ?? styleInfo.align;
       }
-
-
 
       result = true;
     }
@@ -354,7 +351,6 @@ class MarkdownTextConfig
     }
   }*/
 
-  
 }
 
 class _WordStyleInfo
@@ -418,4 +414,3 @@ class _MarkdownTextConfigState
   double? bulletIntent;
   final textStyles = <String, WordStyle>{};
 }
-

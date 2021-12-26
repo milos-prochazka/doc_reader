@@ -146,7 +146,7 @@ class MarkdownTextSpan implements IDocumentSpan
       final style = config.getTextStyle(paragraph, word: paragraph[0], bullet: bullet);
       final span = _Text(text, style.textStyle, false).calcMetrics(parameters);
       span.yOffset = style.yOffseet;
-      span.xOffset = left + dec.level * paraStyle.bulletIntent; 
+      span.xOffset = left + dec.level * paraStyle.bulletIntent;
 
       _spans.add(span);
       line.add(span);
@@ -371,8 +371,6 @@ class MarkdownTextSpan implements IDocumentSpan
     return result;
   }
 }
-
-
 
 class _Span
 {

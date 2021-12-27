@@ -142,8 +142,8 @@ class DocTouch
 
   void onPanCancel()
   {
-    appLog('onPanCancel:');
-    _up(_downPoint);
+    //appLog('onPanCancel:');
+    //_up(_downPoint);
   }
 
   void onTapUp(TapUpDetails details)
@@ -153,7 +153,7 @@ class DocTouch
       'onTapUp:'
       'lx=${details.localPosition.dx.toStringAsFixed(1)} ly=${details.localPosition.dy.toStringAsFixed(1)} '
       'gx=${details.globalPosition.dx.toStringAsFixed(1)} gy=${details.globalPosition.dy.toStringAsFixed(1)} '
-      'kind=${details.kind}'
+      'kind=${details.kind} '
     );
 
     if (_downPoint.isFinite && document.actualWidgetSize.isFinite)

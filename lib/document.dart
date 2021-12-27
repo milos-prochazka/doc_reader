@@ -1,3 +1,4 @@
+import 'package:doc_reader/objects/utils.dart';
 import 'package:flutter/widgets.dart';
 import 'doc_span/doc_span_interface.dart';
 
@@ -42,6 +43,12 @@ class Document
   /// Relativni vyska vertikalni znacky v dokumentu
   double markSize = 0.0;
 
+  /// Rychlost animace FPS
+  double animateFPS = 1000.0;
+
+  /// Doba zmeny stranky
+  double pageAnimation = 0.3;
+
   /*PaintParameters getPaintParameters(Canvas canvas, Size size)
   {
     if (paintParameters?.size != size)
@@ -55,11 +62,6 @@ class Document
   /// Cesta k obrazkum
   String imagePath = '';
 
-  double frac(double x)
-  {
-    return x - x.floorToDouble();
-  }
-
   bool movePosition(double absoluteMove)
   {
     bool changePosition = false;
@@ -72,7 +74,7 @@ class Document
         final spanIndex = position.floor();
         final height = docSpans[spanIndex].span.height(paintParameters!);
         final relativeMove = absoluteMove / height;
-        final fpos = frac(position);
+        final fpos = position.frac();
 
         if (relativeMove < 0)
         {
@@ -80,6 +82,7 @@ class Document
           {
             if (position <= 0)
             {
+              changePosition = false;
               break;
             }
             else
@@ -116,6 +119,7 @@ class Document
           {
             if ((position + 1.99) >= docSpans.length)
             {
+              changePosition = false;
               break;
             }
             else
@@ -136,7 +140,16 @@ class Document
     return changePosition;
   }
 
-  void repaint()
+  alignPosition(bool nextLine)
+  {
+    final spanIndex = position.floor();
+    if (spanIndex >= 0 && spanIndex <= docSpans.length)
+    {
+      position = docSpans[spanIndex].span.alignYPosition(position, nextLine);
+    }
+  }
+
+  repaint()
   {
     paintParameters?.newKey();
     onRepaint?.call();

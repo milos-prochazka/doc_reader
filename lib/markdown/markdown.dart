@@ -458,13 +458,13 @@ class Markdown
       final para = paragraphs[i];
       if (_indentParas.contains(para))
       {
-        print('indent: $para');
+        //print('indent: $para');
         int j = i + 1;
         if (j < paragraphs.length)
         {
           if (paragraphs[j].isEmpty)
           {
-            print('empty: ${paragraphs[j]}');
+            //print('empty: ${paragraphs[j]}');
             for (; j < paragraphs.length; j++)
             {
               final nextPara = paragraphs[j];

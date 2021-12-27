@@ -1,4 +1,4 @@
-// ignore_for_file: non_constant_identifier_names
+// ignore_for_file: non_constant_identifier_names, unnecessary_this
 
 import 'i_cloneable.dart';
 
@@ -10,6 +10,17 @@ String enum_ToString(Object param)
   return (i > 0) ? str.substring(i + 1) : str;
 }
 
+extension DoubleExt on double
+{
+  /// Desetinna cast cisla
+  /// * -10.75.frac() => -0.75
+  /// *  10.75.frac() => 0.75
+  double frac()
+  {
+    return this - this.floorToDouble();
+  }
+}
+
 extension StringExt on String
 {
   /// Test mezery na posizi v retezci
@@ -18,13 +29,13 @@ extension StringExt on String
   /// - false pokud [index] nelezi v rozsahu retezce
   bool hasSpaceAtIndex(int index)
   {
-    if (index < 0 || index >= length)
+    if (index < 0 || index >= this.length)
     {
       return false;
     }
     else
     {
-      return ' \t\v\u00a0'.contains(substring(index, index + 1));
+      return ' \t\v\u00a0'.contains(this.substring(index, index + 1));
     }
   }
 

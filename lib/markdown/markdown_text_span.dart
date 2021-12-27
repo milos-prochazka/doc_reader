@@ -28,6 +28,7 @@ class MarkdownTextSpan implements IDocumentSpan
   final _spans = <_Span>[];
   double _width = 0;
   double _height = 0;
+  final _linePositions = <double>[];
   final Document document;
   _Blockquotes? _blockquotes;
 
@@ -343,6 +344,33 @@ class MarkdownTextSpan implements IDocumentSpan
     return _width;
   }
 
+  @override
+  double alignYPosition(double position, bool nextLine)
+  {
+    double pos = position.frac() * _height;
+    int i = 0;
+
+    while ((i < _linePositions.length) && (_linePositions[i] < pos))
+    {
+      i++;
+    }
+
+    if (!nextLine)
+    {
+      i--;
+    }
+
+    if (i < _linePositions.length)
+    {
+      if (i >= 0)
+      {
+        position = position.floorToDouble() + _linePositions[i] / _height;
+      }
+    }
+
+    return position;
+  }
+
   static Future<bool> fileOpen(String name, Document document, config) async
   {
     bool result = false;
@@ -354,7 +382,7 @@ class MarkdownTextSpan implements IDocumentSpan
     markdown.writeMarkdownString(text);
 
     final textConfig = document.config as MarkdownTextConfig;
-    print(markdown.toString());
+    //print(markdown.toString());
 
     final ms = MarkdownTextSpan.create(markdown, textConfig, document);
 
@@ -1090,6 +1118,7 @@ class _Line
       //double y = 0;
       double asc = 0;
       double desc = 0;
+      double linePositon = double.maxFinite;
 
       for (final word in _words)
       {
@@ -1099,13 +1128,21 @@ class _Line
           asc = math.max(asc, word.baseLine);
           desc = math.max(desc, word.height - word.baseLine);
         }
+
+        linePositon = math.min(linePositon, word.yOffset);
+      }
+
+      if (linePositon < double.maxFinite)
+      {
+        span._linePositions.add(linePositon);
+        appLog('line position:$linePositon');
       }
 
       final double height = asc + desc;
 
       for (var word in _words)
       {
-        print('word:${(word as _Text).text}');
+        //print('word:${(word as _Text).text}');
         if (word.textBaseLine)
         {
           switch (word.script)

@@ -1,3 +1,5 @@
+import 'package:doc_reader/objects/utils.dart';
+
 import 'markdown/markdown_text_config.dart';
 import 'objects/asset_text_load.dart';
 import 'document.dart';
@@ -91,10 +93,7 @@ class _MyHomePageState extends State<MyHomePage>
             // the App.build method, and use it to set our appbar title.
             title: Text(widget.title),
           ),
-          body: Center
-          (
-            child: DocTouch.build(context: context, documentProperty: documentProperty),
-          ),
+          body: Center(child: DocTouch.build(context: context, documentProperty: documentProperty)),
         );
       }
     );

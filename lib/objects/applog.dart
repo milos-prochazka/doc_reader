@@ -1,3 +1,4 @@
+//#define -FULL_NAME
 import 'dart:developer';
 
 // ignore_for_file: non_constant_identifier_names
@@ -42,17 +43,22 @@ String getLocation()
 
     if (m1 != null)
     {
-      final m2 = _stackRegEx2.firstMatch(m1.input.substring(m1.start, m1.end));
+      name = m1[0];
+      final m2 = _stackRegEx2.firstMatch(name ?? '');
       if (m2 != null)
       {
+//#if FULL_NAME
+        name = m2[0];
+//#else
         final s = m2.input.substring(m2.start, m2.end);
         final p = s.lastIndexOf('/');
         name = (p > 0) ? s.substring(p + 1) : s;
+//#end if line:51
       }
     }
     return name ?? '';
   }
-//#end if line:12
+//#end if line:14
 }
 
 void appLog([Object? msg])

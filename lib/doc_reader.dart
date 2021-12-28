@@ -32,6 +32,12 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
   double animateStep = 0.0;
   int animateCount = 0;
 
+  double animationTimestamp = 0.0;
+  double animationSpeed = 1.0;
+  double animationValue = 0.0;
+  double animationDirection = 1;
+
+
   _DocReaderState();
 
   int get topSpanIndex => math.min(document?.position.floor() ?? 0, (document?.docSpans.length ?? 0) - 1);
@@ -121,6 +127,65 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
         }
     }*/
 
+  double animationTime()
+  {
+    double nowTime = new DateTime.now().millisecondsSinceEpoch.toDouble();
+
+    if (animationTimestamp == 0 )
+    {
+        animationTimestamp = nowTime;
+        return 0;
+    }
+    else
+    {
+        final result =  math.max(nowTime - animationTimestamp,0.0);
+        animationTimestamp = nowTime;
+        return result;
+    }
+  }
+
+  bool pageAnimateStep()
+  {
+    bool result = false;
+    bool needRefresh = animationDirection != 0.0;
+    final time = animationTime();
+    var step = time * animationSpeed;
+
+
+    if (animationValue > 0)
+    {
+        result = true;
+        if (step>animationValue)
+        {
+            step = animationValue;
+            animationValue = 0.0;
+        }
+        else
+        {
+          animationValue -= step;
+        }
+    }
+
+    if (result && step > 1e-3)
+    {
+      result = document?.movePosition(step*animationDirection) ?? false;
+    }
+
+    if (!result)
+    {
+      document?.alignPosition(animateStep < 0);
+      animationDirection = 0;
+    }
+
+    if (needRefresh)
+    {
+      setState(() {});
+    }
+    
+    return result;
+  }
+
+  // TODO zrusit
   animatePage(int fps, Document document)
   {
     final document = this.document!;
@@ -154,27 +219,37 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
 
   toNextPage()
   {
-    if (timer == null && document != null)
+    if (animationDirection == 0 && document != null)
     {
-      final document = this.document;
+      /*final document = this.document;
       final fps = document!.animateFPS.toInt();
       animateCount = (document.animateFPS * document.pageAnimation).toInt();
       animateStep = 1 / animateCount * document.actualWidgetSize.height;
 
-      animatePage(fps, document);
+      animatePage(fps, document);*/
+      animationValue = document!.actualWidgetSize.height;
+      animationSpeed = 1.0;
+      animationDirection = 1.0;
+      animationTimestamp = 0.0;
+      pageAnimateStep();
     }
   }
 
   toPrevPage()
   {
-    if (timer == null && document != null)
+    if (animationDirection == 0 && document != null)
     {
-      final document = this.document;
+      /*final document = this.document;
       final fps = document!.animateFPS.toInt();
       animateCount = (document.animateFPS * document.pageAnimation).toInt();
       animateStep = -1 / animateCount * document.actualWidgetSize.height;
 
-      animatePage(fps, document);
+      animatePage(fps, document);*/
+      animationValue = document!.actualWidgetSize.height;
+      animationSpeed = 1.0;
+      animationDirection = -1.0;
+      animationTimestamp = 0.0;
+      pageAnimateStep();
     }
   }
 
@@ -312,6 +387,11 @@ class DocumentPainter extends CustomPainter
   {
     try
     {
+      if (state.animationDirection != 0.0)
+      {
+        Future.microtask(() => state.pageAnimateStep());
+      }
+
       // TODO predelat ziskavani PaintParameters do document
       if (document.paintParameters == null || document.actualWidgetSize != size)
       {

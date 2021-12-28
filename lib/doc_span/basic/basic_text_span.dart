@@ -116,6 +116,12 @@ class BasicTextSpan implements IDocumentSpan
     _updateSize(params);
     return _width;
   }
+
+  @override
+  double alignYPosition(double position, bool nextLine) 
+  {
+    return position;
+  }
 }
 
 class _Word

@@ -43,11 +43,14 @@ class Document
   /// Relativni vyska vertikalni znacky v dokumentu
   double markSize = 0.0;
 
-  /// Rychlost animace FPS
-  double animateFPS = 1000.0;
-
-  /// Doba zmeny stranky
+  /// Doba zmeny stranky (v sekundach)
   double pageAnimation = 0.3;
+
+  /// Prvni zobrazeny span (index)
+  int topSpanIndex=0;
+
+  /// Posledni zobrazeny span (index)
+  int bottomSpanIndex=0;
 
   /*PaintParameters getPaintParameters(Canvas canvas, Size size)
   {
@@ -140,14 +143,6 @@ class Document
     return changePosition;
   }
 
-  alignPosition(bool nextLine)
-  {
-    final spanIndex = position.floor();
-    if (spanIndex >= 0 && spanIndex <= docSpans.length)
-    {
-      position = docSpans[spanIndex].span.alignYPosition(position, nextLine);
-    }
-  }
 
   repaint()
   {

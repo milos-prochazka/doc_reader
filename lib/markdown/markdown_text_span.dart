@@ -76,6 +76,7 @@ class MarkdownTextSpan implements IDocumentSpan
     _spans.clear();
     _height = 0;
     _width = 0;
+    _linePositions.clear();
 
     appLog('_updateText:\n$paragraph\n');
 
@@ -345,30 +346,39 @@ class MarkdownTextSpan implements IDocumentSpan
   }
 
   @override
-  double alignYPosition(double position, bool nextLine)
+  double correctYPosition(double yPosition, bool alignTop) 
   {
-    double pos = position.frac() * _height;
     int i = 0;
+    int max = _linePositions.length-1;
 
-    while ((i < _linePositions.length) && (_linePositions[i] < pos))
+    while ((i < max) && ((_linePositions[i+1]+1e-3) < yPosition))
     {
       i++;
     }
-
-    if (!nextLine)
+    
+    if  (i<_linePositions.length)
     {
-      i--;
-    }
-
-    if (i < _linePositions.length)
-    {
-      if (i >= 0)
+      if (alignTop)
       {
-        position = position.floorToDouble() + _linePositions[i] / _height;
+        return _linePositions[i] - yPosition;
+      }
+      else
+      {
+        if ((_linePositions[i]+1e-3) > yPosition)
+        {
+          return 0.0;
+        }
+        else
+        {
+          final h = ((i+1) < _linePositions.length) ? _linePositions[i+1] : _height;
+          return h-yPosition;
+        }
       }
     }
-
-    return position;
+    else
+    {
+      return 0.0;
+    }
   }
 
   static Future<bool> fileOpen(String name, Document document, config) async
@@ -398,6 +408,7 @@ class MarkdownTextSpan implements IDocumentSpan
 
     return result;
   }
+
 }
 
 class _Span

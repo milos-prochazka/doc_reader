@@ -7,7 +7,7 @@ abstract class IDocumentSpan
   double width(PaintParameters params);
   void paint(PaintParameters parameters, double xOffset, double yOffset);
   void calcSize(PaintParameters parameters);
-  double alignYPosition(double position, bool nextLine);
+  double correctYPosition(double yPosition, bool alignTop);
 }
 
 class DocumentSpanContainer

@@ -28,21 +28,19 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
   double devicePixelRatio = 2.0;
   double textScale = 1.0;
   Size screenSize = const Size(512, 512);
-  Timer? timer;
-  double animateStep = 0.0;
-  int animateCount = 0;
 
   double animationTimestamp = 0.0;
   double animationSpeed = 1.0;
   double animationValue = 0.0;
-  double animationDirection = 1;
+  double animationDirection = 0;
+  double bottomCorrect = 0.0;
 
 
   _DocReaderState();
 
   int get topSpanIndex => math.min(document?.position.floor() ?? 0, (document?.docSpans.length ?? 0) - 1);
 
-  double get TopSpanOffset
+  double get topSpanOffset
   {
     double result = 0.0;
 
@@ -129,7 +127,7 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
 
   double animationTime()
   {
-    double nowTime = new DateTime.now().millisecondsSinceEpoch.toDouble();
+    double nowTime = DateTime.now().millisecondsSinceEpoch.toDouble();
 
     if (animationTimestamp == 0 )
     {
@@ -147,91 +145,80 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
   bool pageAnimateStep()
   {
     bool result = false;
-    bool needRefresh = animationDirection != 0.0;
-    final time = animationTime();
-    var step = time * animationSpeed;
 
-
-    if (animationValue > 0)
+    if (document!=null)
     {
-        result = true;
-        if (step>animationValue)
+      final document = this.document!;
+      bool needRefresh = animationDirection != 0.0;
+      final time = animationTime();
+      var step = time * animationSpeed;
+
+
+      if (animationValue > 0)
+      {
+          result = true;
+          if (step>animationValue)
+          {
+              step = animationValue;
+              animationValue = 0.0;
+          }
+          else
+          {
+            animationValue -= step;
+          }
+      }
+
+      if (result && step > 1e-3)
+      {
+        final move = step*animationDirection;
+        document?.markPosition -= move;
+        result = document.movePosition(move);
+      }
+
+      if (!result)
+      {
+        if (animationDirection<0)
         {
-            step = animationValue;
-            animationValue = 0.0;
+          final spanIndex = document.position.truncate();
+          if (spanIndex<document.docSpans.length)
+          {
+            final move = document.docSpans[spanIndex].span.correctYPosition(-topSpanOffset, false);
+            document.movePosition(move);
+          }
         }
-        else
-        {
-          animationValue -= step;
-        }
+        animationDirection = 0;
+        document?.markPosition = double.infinity;
+      }
+
+      if (needRefresh)
+      {
+        setState(() {});
+      }
     }
 
-    if (result && step > 1e-3)
-    {
-      result = document?.movePosition(step*animationDirection) ?? false;
-    }
-
-    if (!result)
-    {
-      document?.alignPosition(animateStep < 0);
-      animationDirection = 0;
-    }
-
-    if (needRefresh)
-    {
-      setState(() {});
-    }
-    
     return result;
   }
 
-  // TODO zrusit
-  animatePage(int fps, Document document)
+  animatePage(double direction)
   {
-    final document = this.document!;
-    final fps = document.animateFPS.toInt();
-
-    timer = Timer.periodic
-    (
-      Duration(microseconds: 1000000 ~/ fps), (timer)
+      animationValue = document!.actualWidgetSize.height;
+      if (direction >0)
       {
-        setState
-        (
-          ()
-          {
-            final move = document.movePosition(animateStep);
-            if (!move || --animateCount <= 0)
-            {
-              document.alignPosition(animateStep < 0);
-              timer.cancel();
-              this.timer = null;
-              document.markPosition = double.infinity;
-            }
-            else
-            {
-              document.markPosition -= animateStep;
-            }
-          }
-        );
+        animationValue += bottomCorrect;
       }
-    );
+
+      animationSpeed = 1e-3*animationValue/document!.pageAnimation;
+      animationDirection = direction;
+      animationTimestamp = 0.0;
+      pageAnimateStep();
+
   }
 
   toNextPage()
   {
     if (animationDirection == 0 && document != null)
     {
-      /*final document = this.document;
-      final fps = document!.animateFPS.toInt();
-      animateCount = (document.animateFPS * document.pageAnimation).toInt();
-      animateStep = 1 / animateCount * document.actualWidgetSize.height;
-
-      animatePage(fps, document);*/
-      animationValue = document!.actualWidgetSize.height;
-      animationSpeed = 1.0;
-      animationDirection = 1.0;
-      animationTimestamp = 0.0;
-      pageAnimateStep();
+      animatePage(1.0);
     }
   }
 
@@ -239,17 +226,7 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
   {
     if (animationDirection == 0 && document != null)
     {
-      /*final document = this.document;
-      final fps = document!.animateFPS.toInt();
-      animateCount = (document.animateFPS * document.pageAnimation).toInt();
-      animateStep = -1 / animateCount * document.actualWidgetSize.height;
-
-      animatePage(fps, document);*/
-      animationValue = document!.actualWidgetSize.height;
-      animationSpeed = 1.0;
-      animationDirection = -1.0;
-      animationTimestamp = 0.0;
-      pageAnimateStep();
+      animatePage(-1.0);
     }
   }
 
@@ -293,12 +270,16 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
       {
         if (down)
         {
-          document?.markPosition = 0;
-          document?.markSize = screenSize.height;
+          if (document != null)
+          {
+            final document = this.document!;
+            document.markPosition = 0;
+            document.markSize = document.actualWidgetSize.height;
+          }
         }
         else
         {
-          if (timer == null)
+          if (animationDirection == 0.0)
           {
             document?.markPosition = double.infinity;
           }
@@ -411,21 +392,32 @@ class DocumentPainter extends CustomPainter
       int spanIndex = state.topSpanIndex; //math.min(document.position.floor(), docSpans.length - 1);
       if (spanIndex >= 0)
       {
-        double offset = state.TopSpanOffset;
-        //-(document.position - document.position.floorToDouble()) * docSpans[spanIndex].span.height(params);
+        double offset = state.topSpanOffset;
+        double top = offset;
+
+        document.topSpanIndex = spanIndex;
+        int bottomIndex = spanIndex;
 
         for (; spanIndex < docSpans.length && offset < size.height; spanIndex++)
         {
+          top = offset;
+          bottomIndex = spanIndex;
           final container = docSpans[spanIndex];
           container.span.paint(params, container.xPosition, offset);
           offset += container.span.height(params);
+        }
+
+        document.bottomSpanIndex = bottomIndex;
+
+        if (bottomIndex < docSpans.length)
+        {
+          state.bottomCorrect = docSpans[bottomIndex].span.correctYPosition(size.height-top, true);
         }
 
         if (document.markPosition.isFinite)
         {
           final markPaint = Paint()..color = const Color.fromARGB(100, 128, 138, 160);
           canvas.drawRect(Rect.fromLTWH(0, document.markPosition, size.width, document.markSize), markPaint);
-          appLog('MarkSize=${document.markSize}');
         }
       }
     }

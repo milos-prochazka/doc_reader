@@ -261,7 +261,7 @@ class MarkdownTextConfig
         if (!_setInfoByStyle(styleInfo, para.fullClassName(null, bullet)))
         {
           _setInfoByStyle(styleInfo, para.masterClass);
-          _setInfoByStyle(styleInfo, para.subclass);
+          _setInfoByStyle(styleInfo, para.subClass);
         }
         if (word != null)
         {

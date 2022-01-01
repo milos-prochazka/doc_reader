@@ -35,7 +35,6 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
   double animationDirection = 0;
   double bottomCorrect = 0.0;
 
-
   _DocReaderState();
 
   int get topSpanIndex => math.min(document?.position.floor() ?? 0, (document?.docSpans.length ?? 0) - 1);
@@ -129,16 +128,16 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
   {
     double nowTime = DateTime.now().millisecondsSinceEpoch.toDouble();
 
-    if (animationTimestamp == 0 )
+    if (animationTimestamp == 0)
     {
-        animationTimestamp = nowTime;
-        return 0;
+      animationTimestamp = nowTime;
+      return 0;
     }
     else
     {
-        final result =  math.max(nowTime - animationTimestamp,0.0);
-        animationTimestamp = nowTime;
-        return result;
+      final result = math.max(nowTime - animationTimestamp, 0.0);
+      animationTimestamp = nowTime;
+      return result;
     }
   }
 
@@ -146,41 +145,40 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
   {
     bool result = false;
 
-    if (document!=null)
+    if (document != null)
     {
       final document = this.document!;
       bool needRefresh = animationDirection != 0.0;
       final time = animationTime();
       var step = time * animationSpeed;
 
-
       if (animationValue > 0)
       {
-          result = true;
-          if (step>animationValue)
-          {
-              step = animationValue;
-              animationValue = 0.0;
-          }
-          else
-          {
-            animationValue -= step;
-          }
+        result = true;
+        if (step > animationValue)
+        {
+          step = animationValue;
+          animationValue = 0.0;
+        }
+        else
+        {
+          animationValue -= step;
+        }
       }
 
       if (result && step > 1e-3)
       {
-        final move = step*animationDirection;
+        final move = step * animationDirection;
         document?.markPosition -= move;
         result = document.movePosition(move);
       }
 
       if (!result)
       {
-        if (animationDirection<0)
+        if (animationDirection < 0)
         {
           final spanIndex = document.position.truncate();
-          if (spanIndex<document.docSpans.length)
+          if (spanIndex < document.docSpans.length)
           {
             final move = document.docSpans[spanIndex].span.correctYPosition(-topSpanOffset, false);
             document.movePosition(move);
@@ -201,17 +199,16 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
 
   animatePage(double direction)
   {
-      animationValue = document!.actualWidgetSize.height;
-      if (direction >0)
-      {
-        animationValue += bottomCorrect;
-      }
+    animationValue = document!.actualWidgetSize.height;
+    if (direction > 0)
+    {
+      animationValue += bottomCorrect;
+    }
 
-      animationSpeed = 1e-3*animationValue/document!.pageAnimation;
-      animationDirection = direction;
-      animationTimestamp = 0.0;
-      pageAnimateStep();
-
+    animationSpeed = 1e-3 * animationValue / document!.pageAnimation;
+    animationDirection = direction;
+    animationTimestamp = 0.0;
+    pageAnimateStep();
   }
 
   toNextPage()
@@ -411,7 +408,7 @@ class DocumentPainter extends CustomPainter
 
         if (bottomIndex < docSpans.length)
         {
-          state.bottomCorrect = docSpans[bottomIndex].span.correctYPosition(size.height-top, true);
+          state.bottomCorrect = docSpans[bottomIndex].span.correctYPosition(size.height - top, true);
         }
 
         if (document.markPosition.isFinite)

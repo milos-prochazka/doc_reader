@@ -12,32 +12,32 @@ String getLocation()
   final stack = StackTrace.current.toString();
 
 //#if WEB
-//##  {
-//##    int start = 0;
-//##    int end = 0;
-//##
-//##    for (int c = 0; c < 4; c++)
-//##    {
-//##      end = stack.indexOf('\n', start);
-//##      if (end == -1)
-//##      {
-//##        end = stack.length;
-//##        break;
-//##      }
-//##      else
-//##      {
-//##        if (c < 3)
-//##        {
-//##          start = end + 1;
-//##        }
-//##      }
-//##    }
-//##
-//##    final stackLine = stack.substring(start, end);
-//##
-//##    return stackLine;
-//##  }
-//##//#else
+  {
+    int start = 0;
+    int end = 0;
+
+    for (int c = 0; c < 4; c++)
+    {
+      end = stack.indexOf('\n', start);
+      if (end == -1)
+      {
+        end = stack.length;
+        break;
+      }
+      else
+      {
+        if (c < 3)
+        {
+          start = end + 1;
+        }
+      }
+    }
+
+    final stackLine = stack.substring(start, end);
+
+    return stackLine;
+  }
+//#else
   {
     final m1 = _stackRegEx1.firstMatch(stack);
     String? name;
@@ -49,8 +49,8 @@ String getLocation()
       if (m2 != null)
       {
 //#if FULL_NAME
-//##        name = m2[0];
-//##//#else
+        name = m2[0];
+//#else
         final s = m2.input.substring(m2.start, m2.end);
         final p = s.lastIndexOf('/');
         name = (p > 0) ? s.substring(p + 1) : s;
@@ -65,35 +65,35 @@ String getLocation()
 void appLog([Object? msg])
 {
 //#if -DISABLE_LOG
-//##  log(msg?.toString() ?? '', name: getLocation());
+  log(msg?.toString() ?? '', name: getLocation());
 //#end if line:67
 }
 
 void appLog_always([Object? msg])
 {
 //#if -DISABLE_LOG
-//##  log(msg?.toString() ?? '', name: getLocation());
+  log(msg?.toString() ?? '', name: getLocation());
 //#end if line:74
 }
 
 void appLog_warnig([Object? msg])
 {
 //#if -DISABLE_LOG
-//##  log(msg?.toString() ?? '', name: 'WARN:${getLocation()}');
+  log(msg?.toString() ?? '', name: 'WARN:${getLocation()}');
 //#end if line:81
 }
 
 void appLog_error([Object? msg])
 {
 //#if -DISABLE_LOG
-//##  log(msg?.toString() ?? '', name: 'ERR:${getLocation()}');
+  log(msg?.toString() ?? '', name: 'ERR:${getLocation()}');
 //#end if line:88
 }
 
 void appLog_debug([Object? msg])
 {
 //#if -DISABLE_LOG
-//##  log(msg?.toString() ?? '', name: getLocation());
+  log(msg?.toString() ?? '', name: getLocation());
 //#end if line:95
 }
 

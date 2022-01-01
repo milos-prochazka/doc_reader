@@ -2,6 +2,8 @@
 
 import 'dart:ui';
 
+import 'package:doc_reader/objects/json_utils.dart';
+
 import 'patterns.dart';
 import '../objects/applog.dart';
 import '../objects/text_load_provider.dart';
@@ -119,6 +121,8 @@ class Markdown
   final classes = <String, Map<String, Object?>>{};
   // Vsechny odstavce odsazene pomoci mezerer
   final _indentParas = <MarkdownParagraph>{};
+
+  Markdown();
 
   writeMarkdownString(String text)
   {
@@ -431,7 +435,7 @@ class Markdown
         !para.isBlankLine &&
         para.lineDecoration.isEmpty &&
         prevPara.lineDecoration.isNotEmpty &&
-        para.subclass.isEmpty &&
+        para.subClass.isEmpty &&
         para.anchors.isEmpty &&
         mergeCls.contains('${prevPara.masterClass}.${para.masterClass}')
       )
@@ -691,16 +695,67 @@ class Markdown
     }
     return builder.toString();
   }
+
+  dynamic toJson([bool compress = false])
+  {
+    final paraList = <dynamic>[];
+    for (final para in paragraphs)
+    {
+      paraList.add(para.toJson(compress));
+    }
+
+    final links = <String, dynamic>{};
+
+    for (final link in namedLinks.entries)
+    {
+      links[link.key.toString()] = link.value.toJson(compress);
+    }
+
+    final result = <String, dynamic>{};
+
+    if (!compress || paraList.isNotEmpty)
+    {
+      result['para'] = paraList;
+    }
+
+    if (!compress || links.isNotEmpty)
+    {
+      result['links'] = links;
+    }
+
+    return result;
+  }
+
+  Markdown.fromJson(dynamic json)
+  {
+    final paraList = json['para'];
+    if (paraList is List)
+    {
+      for (final para in paraList)
+      {
+        paragraphs.add(MarkdownParagraph.fromJson(para));
+      }
+    }
+
+    final links = json['links'];
+    if (links is Map)
+    {
+      for (final link in links.entries)
+      {
+        namedLinks[link.key.toString()] = MarkdownWord.fromJson(link.value);
+      }
+    }
+  }
 }
 
 class MarkdownParagraph
 {
   // TODO nevyuziva se
-  MarkdownParagraphType type = MarkdownParagraphType.normalParagraph;
+//MarkdownParagraphType type = MarkdownParagraphType.normalParagraph;
   String lineDecoration = '';
   MarkdownListIndentation? listIndent;
   String masterClass;
-  String subclass;
+  String subClass;
   final anchors = <String>[];
   final _words = <MarkdownWord>[];
   final attributes = <String, String>{};
@@ -710,16 +765,16 @@ class MarkdownParagraph
 
   MarkdownParagraph({required String text, this.lineDecoration = '', pargraphClass = ''})
   : masterClass = pargraphClass.isEmpty ? 'p' : pargraphClass,
-  subclass = ''
+  subClass = ''
   {
     writeText(text);
   }
 
   // TODO nevyuziva se
-  MarkdownParagraph.referenceLink(String linkName, String linkUrl)
+  /*MarkdownParagraph.referenceLink(String linkName, String linkUrl)
   : type = MarkdownParagraphType.linkReferece,
   masterClass = linkName,
-  subclass = linkUrl;
+  subclass = linkUrl;*/
 
   ///
   //String get linkName => masterClass;
@@ -741,10 +796,10 @@ class MarkdownParagraph
   {
     final builder = StringBuffer(masterClass);
 
-    if (subclass.isNotEmpty)
+    if (subClass.isNotEmpty)
     {
       builder.write('.');
-      builder.write(subclass);
+      builder.write(subClass);
     }
 
     if (word?.style.isNotEmpty ?? false)
@@ -871,18 +926,9 @@ class MarkdownParagraph
   @override
   String toString()
   {
-    final builder = StringBuffer('Paragraph: type=${enum_ToString(type)} ');
+    final builder = StringBuffer('Paragraph:  ');
 
-    switch (type)
-    {
-      //case MarkdownParagraphType.linkReferece:
-      //builder.write("name='$linkName' link='$linkUrl'\r\n");
-      //break;
-
-      default:
-      builder.write("start='$lineDecoration' class='$masterClass' '$subclass'\r\n");
-      break;
-    }
+    builder.write("start='$lineDecoration' class='$masterClass' '$subClass'\r\n");
     var label = false;
 
     if (listIndent != null)
@@ -1114,7 +1160,7 @@ class MarkdownParagraph
               switch (type)
               {
                 case '.':
-                subclass = text;
+                subClass = text;
                 break;
 
                 case '#':
@@ -1343,6 +1389,111 @@ class MarkdownParagraph
       _words.add(word);
     }
   }
+
+  dynamic toJson([bool compress = false])
+  {
+    final result = <String, dynamic>
+    {
+      'class': masterClass,
+    };
+
+    if (!compress || subClass.isNotEmpty)
+    {
+      result['subClass'] = subClass;
+    }
+
+    if (!compress || _words.isNotEmpty)
+    {
+      final words = <dynamic>[];
+
+      for (final word in _words)
+      {
+        words.add(word.toJson(compress));
+      }
+
+      result['words'] = words;
+    }
+
+    if (!compress || anchors.isNotEmpty)
+    {
+      result['anchors'] = anchors;
+    }
+
+    if (!compress || attributes.isNotEmpty)
+    {
+      result['attributes'] = attributes;
+    }
+
+    if (!compress || !firstInClass)
+    {
+      result['firstInClass'] = firstInClass;
+    }
+
+    if (!compress || !lastInClass)
+    {
+      result['lastInClass'] = lastInClass;
+    }
+
+    if (!compress || lineDecoration != '')
+    {
+      result['lineDecoration'] = lineDecoration;
+    }
+
+    if (!compress || blockquoteLevel > 0)
+    {
+      result['blockquoteLevel'] = blockquoteLevel;
+    }
+
+    if (!compress || listIndent != null)
+    {
+      result['listIndent'] = listIndent?.toJson();
+    }
+
+    return result;
+  }
+
+  MarkdownParagraph.fromJson(dynamic json)
+  : masterClass = JsonUtils.getValue(json, 'class', ''),
+  subClass = JsonUtils.getValue(json, 'subClass', '')
+  {
+    final jsonWords = json['words'];
+    if (jsonWords != null)
+    {
+      for (final jsonWord in jsonWords)
+      {
+        _words.add(MarkdownWord.fromJson(jsonWord));
+      }
+    }
+
+    final jsonAnchors = json['anchors'];
+    if (jsonAnchors != null)
+    {
+      for (final jsonAnchor in jsonAnchors)
+      {
+        anchors.add(jsonAnchor.toString());
+      }
+    }
+
+    final jsonAttributes = json['attributes'];
+    if (jsonAttributes is Map)
+    {
+      for (final jsonAttrribute in jsonAttributes.entries)
+      {
+        attributes[jsonAttrribute.key.toString()] = jsonAttrribute.value.toString();
+      }
+    }
+
+    firstInClass = JsonUtils.getValue(json, 'firstInClass', true);
+    lastInClass = JsonUtils.getValue(json, 'lastInClass', true);
+    lineDecoration = JsonUtils.getValue(json, 'lineDecoration', '');
+    blockquoteLevel = JsonUtils.getValue(json, 'blockquoteLevel', 0);
+
+    final jsonIntent = json['listIndent'];
+    if (jsonIntent != null)
+    {
+      listIndent = MarkdownListIndentation.fromJson(jsonIntent);
+    }
+  }
 }
 
 enum MarkdownParagraphType { normalParagraph, linkReferece }
@@ -1473,6 +1624,21 @@ class MarkdownListIndentation
     }
     return result;
   }
+
+  dynamic toJson()
+  {
+    final result = <String, dynamic>{'decoration': decoration, 'level': level, 'column': column, 'count': count};
+
+    return result;
+  }
+
+  MarkdownListIndentation.fromJson(dynamic json)
+  {
+    decoration = JsonUtils.getValue(json, 'decoration', decoration);
+    level = JsonUtils.getValue(json, 'level', level);
+    column = JsonUtils.getValue(json, 'column', column);
+    count = JsonUtils.getValue(json, 'count', count);
+  }
 }
 
 class MarkdownWord
@@ -1553,6 +1719,95 @@ class MarkdownWord
     }
 
     return builder.toString();
+  }
+
+  dynamic toJson([bool compress = false])
+  {
+    final result = <String, dynamic>{};
+    if (!compress || type != MarkdownWord_Type.word)
+    {
+      result['type'] = enum_ToString(type);
+    }
+
+    if (!compress || decoration != MarkdownDecoration.none)
+    {
+      result['decoration'] = enum_ToString(decoration);
+    }
+
+    if (!compress || script != MarkdownScript.normal)
+    {
+      result['script'] = enum_ToString(script);
+    }
+
+    if (!compress || style.isNotEmpty)
+    {
+      result['style'] = style;
+    }
+
+    if (!compress || text.isNotEmpty)
+    {
+      result['text'] = text;
+    }
+
+    if (!compress || stickToNext)
+    {
+      result['stickToNext'] = stickToNext;
+    }
+
+    if (!compress || lineBreak)
+    {
+      result['lineBreak'] = lineBreak;
+    }
+
+    if (!compress || attribs.isNotEmpty)
+    {
+      result['attribs'] = attribs;
+    }
+
+    return result;
+  }
+
+  MarkdownWord.fromJson(dynamic json)
+  {
+    const typeMap =
+    {
+      'word': MarkdownWord_Type.word,
+      'link': MarkdownWord_Type.link,
+      'image': MarkdownWord_Type.image,
+      'link_image': MarkdownWord_Type.link_image,
+      'reference_definition': MarkdownWord_Type.reference_definition
+    };
+
+    const decorMap =
+    {
+      'none': MarkdownDecoration.none,
+      'striketrough': MarkdownDecoration.striketrough,
+      'underline': MarkdownDecoration.underline
+    };
+
+    const scriptMap =
+    {
+      'normal': MarkdownScript.normal,
+      'subscript': MarkdownScript.subscript,
+      'superscript': MarkdownScript.superscript
+    };
+
+    type = JsonUtils.getEnum(json, 'type', typeMap, type);
+    decoration = JsonUtils.getEnum(json, 'decoration', decorMap, decoration);
+    script = JsonUtils.getEnum(json, 'script', scriptMap, script);
+    style = JsonUtils.getValue(json, 'style', style);
+    text = JsonUtils.getValue(json, 'text', text);
+    stickToNext = JsonUtils.getValue(json, 'stickToNext', stickToNext);
+    lineBreak = JsonUtils.getValue(json, 'lineBreak', lineBreak);
+
+    final jsonAttribs = json['attribs'];
+    if (jsonAttribs is Map)
+    {
+      for (final jsonAttrib in jsonAttribs.entries)
+      {
+        attribs[jsonAttrib.key.toString()] = jsonAttrib.value?.toString();
+      }
+    }
   }
 }
 

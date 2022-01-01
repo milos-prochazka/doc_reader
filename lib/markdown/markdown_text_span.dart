@@ -1,6 +1,10 @@
 // ignore_for_file: constant_identifier_names, unnecessary_this
 
+import 'dart:convert';
+import 'dart:io';
 import 'dart:ui' as ui;
+
+import 'package:doc_reader/objects/json_utils.dart';
 
 import '../doc_span/color_text.dart';
 import '../doc_span/doc_span_interface.dart';
@@ -346,17 +350,17 @@ class MarkdownTextSpan implements IDocumentSpan
   }
 
   @override
-  double correctYPosition(double yPosition, bool alignTop) 
+  double correctYPosition(double yPosition, bool alignTop)
   {
     int i = 0;
-    int max = _linePositions.length-1;
+    int max = _linePositions.length - 1;
 
-    while ((i < max) && ((_linePositions[i+1]+1e-3) < yPosition))
+    while ((i < max) && ((_linePositions[i + 1] + 1e-3) < yPosition))
     {
       i++;
     }
-    
-    if  (i<_linePositions.length)
+
+    if (i < _linePositions.length)
     {
       if (alignTop)
       {
@@ -364,14 +368,14 @@ class MarkdownTextSpan implements IDocumentSpan
       }
       else
       {
-        if ((_linePositions[i]+1e-3) > yPosition)
+        if ((_linePositions[i] + 1e-3) > yPosition)
         {
           return 0.0;
         }
         else
         {
-          final h = ((i+1) < _linePositions.length) ? _linePositions[i+1] : _height;
-          return h-yPosition;
+          final h = ((i + 1) < _linePositions.length) ? _linePositions[i + 1] : _height;
+          return h - yPosition;
         }
       }
     }
@@ -394,6 +398,25 @@ class MarkdownTextSpan implements IDocumentSpan
     final textConfig = document.config as MarkdownTextConfig;
     //print(markdown.toString());
 
+    // TODO Test smazat
+    final json = markdown.toJson(true);
+    final s = jsonEncode(json);
+    //final directory = await getApplicationDocumentsDirectory();
+    final File file = File('my_file.json');
+    final p = file.absolute;
+    await file.writeAsString(s);
+    final bfile = File('my_file.cbj');
+    final b = CBJ.encode(json);
+    await bfile.writeAsBytes(b);
+    final File file1 = File('my_file1.json');
+    final js1 = jsonEncode(CBJ.decode(b));
+    await file1.writeAsString(js1);
+
+    final md1 = Markdown.fromJson(jsonDecode(js1));
+    final File file2 = File('my_file2.json');
+    final js2 = jsonEncode(md1.toJson(true));
+    await file2.writeAsString(js2);
+
     final ms = MarkdownTextSpan.create(markdown, textConfig, document);
 
     document.docSpans.clear();
@@ -408,7 +431,6 @@ class MarkdownTextSpan implements IDocumentSpan
 
     return result;
   }
-
 }
 
 class _Span

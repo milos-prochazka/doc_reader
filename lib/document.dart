@@ -47,10 +47,10 @@ class Document
   double pageAnimation = 0.3;
 
   /// Prvni zobrazeny span (index)
-  int topSpanIndex=0;
+  int topSpanIndex = 0;
 
   /// Posledni zobrazeny span (index)
-  int bottomSpanIndex=0;
+  int bottomSpanIndex = 0;
 
   /*PaintParameters getPaintParameters(Canvas canvas, Size size)
   {
@@ -142,7 +142,6 @@ class Document
 
     return changePosition;
   }
-
 
   repaint()
   {

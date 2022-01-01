@@ -117,9 +117,8 @@ class BasicTextSpan implements IDocumentSpan
     return _width;
   }
 
-
   @override
-  double correctYPosition(double yPosition, bool alighTop) 
+  double correctYPosition(double yPosition, bool alighTop)
   {
     return 0;
   }

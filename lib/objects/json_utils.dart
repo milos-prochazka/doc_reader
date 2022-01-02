@@ -1,4 +1,4 @@
-// ignore_for_file: constant_identifier_names
+// ignore_for_file: constant_identifier_names, camel_case_types
 
 import 'dynamic_byte_buffer.dart';
 
@@ -319,4 +319,235 @@ class CBJ
 
     return _decodeCBJInternal(buffer, <String>[]);
   }
+}
+
+//////////////////////////////////////////////////////////////////
+class DBJ
+{
+  static const _DBJ_SHORT_STRING_MAX = 0xdf;
+  static const _DBJ_MID_STRING_MAX = 0x0dff;
+  static const _DBJ_LONG_STRING = 0xef;
+  static const _DBJ_END_DICT = 0xff;
+
+  static const _DBJ_DICT8_MAX = 0xef;
+
+  static const _DBJ_NULL = 0xf0;
+  static const _DBJ_TRUE = 0xf1;
+  static const _DBJ_FALSE = 0xf2;
+
+  static const _DBJ_STRING8 = 0xf3;
+  static const _DBJ_STRING16 = 0xf4;
+  static const _DBJ_STRING32 = 0xf5;
+
+  static const _DBJ_DICT16 = 0xf6;
+  static const _DBJ_DICT24 = 0xf7;
+
+  static const _DBJ_INT8 = 0xf8;
+  static const _DBJ_INT32 = 0xf9;
+  static const _DBJ_DOUBLE = 0xfa;
+  static const _DBJ_ARRAY = 0xfb;
+  static const _DBJ_MAP = 0xfc;
+  static const _DBJ_END = 0xff;
+
+  static _incrementItem(String text, Map<String, _DBJ_Item> list)
+  {
+    final item = list[text];
+    if (item != null)
+    {
+      item.count++;
+    }
+    else
+    {
+      list[text] = _DBJ_Item(text);
+    }
+  }
+
+  static _getDictionary(dynamic data, Map<String, _DBJ_Item> dictionary)
+  {
+    if (data is String)
+    {
+      _incrementItem(data, dictionary);
+    }
+    else if (data is List)
+    {
+      for (final item in data)
+      {
+        _getDictionary(item, dictionary);
+      }
+    }
+    else if (data is Map)
+    {
+      for (final item in data.entries)
+      {
+        _incrementItem(item.key.toString(), dictionary);
+        _getDictionary(item.value, dictionary);
+      }
+    }
+  }
+
+  static List<String> getDictionary(dynamic data)
+  {
+    final dictionary = <String, _DBJ_Item>{};
+    _getDictionary(data, dictionary);
+
+    //final dictList = dictionary.values.toList();
+    final dictList = <_DBJ_Item>[];
+
+    for (final item in dictionary.values)
+    {
+      if (item.count > 1)
+      {
+        dictList.add(item);
+      }
+    }
+
+    dictList.sort((a, b) => b.count.compareTo(a.count));
+
+    final result = <String>[];
+
+    for (final item in dictList)
+    {
+      print('"${item.text}":${item.count}');
+      result.add(item.text);
+    }
+
+    return result;
+  }
+
+  static _encodeInternal(dynamic data, DynamicByteBuffer buffer, Map<String, int> dictionary)
+  {
+    if (data == null)
+    {
+      buffer.writeUint8(_DBJ_NULL);
+    }
+    else if (data is bool)
+    {
+      buffer.writeUint8(data ? _DBJ_TRUE : _DBJ_FALSE);
+    }
+    else if (data is num)
+    {
+      if (data is int && data >= -128 && data <= 127)
+      {
+        buffer.writeUint8(_DBJ_INT8);
+        buffer.writeInt8(data);
+      }
+      else if (data is int && data >= -2147483648 && data <= 2147483647)
+      {
+        buffer.writeUint8(_DBJ_INT32);
+        buffer.writeInt32(data);
+      }
+      else
+      {
+        buffer.writeUint8(_DBJ_DOUBLE);
+        buffer.writeFloat64(data.toDouble());
+      }
+    }
+    else if (data is String)
+    {
+      final dictIndex = dictionary[data];
+
+      if (dictIndex != null)
+      {
+        if (dictIndex <= _DBJ_DICT8_MAX)
+        {
+          buffer.writeUint8(dictIndex);
+        }
+        else if (dictIndex <= 65535)
+        {
+          buffer.writeUint8(_DBJ_DICT16);
+          buffer.writeUint16(dictIndex);
+        }
+        else if (dictIndex <= 16777215)
+        {
+          buffer.writeUint8(_DBJ_DICT24);
+          buffer.writeUint8((dictIndex >> 16) & 0xff);
+          buffer.writeUint16(dictIndex & 0xffff);
+        }
+      }
+      else
+      {
+        final bytes = DynamicByteBuffer.utf8.encode(data);
+        if (bytes.length <= 255)
+        {
+          buffer.writeUint8(_DBJ_STRING8);
+          buffer.writeUint8(bytes.length);
+        }
+        else if (bytes.length <= 65535)
+        {
+          buffer.writeUint8(_DBJ_STRING16);
+          buffer.writeUint16(bytes.length);
+        }
+        else
+        {
+          buffer.writeUint8(_DBJ_STRING32);
+          buffer.writeUint32(bytes.length);
+        }
+        buffer.writeBytes(bytes);
+      }
+    }
+    else if (data is List)
+    {
+      buffer.writeUint8(_DBJ_ARRAY);
+
+      for (final item in data)
+      {
+        _encodeInternal(item, buffer, dictionary);
+      }
+
+      buffer.writeUint8(_DBJ_END);
+    }
+    else if (data is Map)
+    {
+      buffer.writeUint8(_DBJ_MAP);
+
+      for (final item in data.entries)
+      {
+        _encodeInternal(item.key.toString(), buffer, dictionary);
+        _encodeInternal(item.value, buffer, dictionary);
+      }
+
+      buffer.writeUint8(_DBJ_END);
+    }
+  }
+
+  static List<int> encode(dynamic data)
+  {
+    final buffer = DynamicByteBuffer(1024);
+    final dictList = getDictionary(data);
+    final dictionary = <String, int>{};
+
+    for (final item in dictList)
+    {
+      if (item.length <= _DBJ_SHORT_STRING_MAX)
+      {
+        buffer.writeUint8(item.length);
+      }
+      else if (item.length <= _DBJ_MID_STRING_MAX)
+      {
+        buffer.writeUint8(0xf0 | ((item.length >> 8) & 0xf));
+        buffer.writeUint8(item.length & 0xff);
+      }
+      else
+      {
+        buffer.writeInt8(_DBJ_LONG_STRING);
+        buffer.writeUint32(item.length);
+      }
+      buffer.writeString(item);
+      dictionary[item] = dictionary.length;
+    }
+
+    buffer.writeInt8(_DBJ_END_DICT);
+
+    _encodeInternal(data, buffer, dictionary);
+
+    return buffer.toList();
+  }
+}
+
+class _DBJ_Item
+{
+  String text;
+  int count;
+
+  _DBJ_Item(this.text) : count = 1;
 }

@@ -405,9 +405,15 @@ class MarkdownTextSpan implements IDocumentSpan
     final File file = File('my_file.json');
     final p = file.absolute;
     await file.writeAsString(s);
+
     final bfile = File('my_file.cbj');
     final b = CBJ.encode(json);
     await bfile.writeAsBytes(b);
+
+    final dfile = File('my_file.dbj');
+    final d = DBJ.encode(json);
+    await dfile.writeAsBytes(d);
+
     final File file1 = File('my_file1.json');
     final js1 = jsonEncode(CBJ.decode(b));
     await file1.writeAsString(js1);

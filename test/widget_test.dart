@@ -16,8 +16,8 @@ import 'package:doc_reader/main.dart';
 testCbjCompare(String title, dynamic data)
 {
   final json1 = jsonEncode(data);
-  final cbj = CBJ.encode(data);
-  final data1 = CBJ.decode(cbj);
+  final cbj = DBJ.encode(data, dictionaryCountTreshold: 1);
+  final data1 = DBJ.decode(cbj);
   final json2 = jsonEncode(data1);
 
   print('TEST:$title');

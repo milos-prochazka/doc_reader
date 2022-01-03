@@ -409,7 +409,7 @@ class DBJ
 
     for (final item in dictList)
     {
-      print('"${item.text}":${item.count}');
+      //print('"${item.text}":${item.count}');
       result.add(item.text);
     }
 
@@ -531,21 +531,22 @@ class DBJ
 
       for (final item in dictList)
       {
-        if (item.length <= _DBJ_SHORT_STRING_MAX)
+        final bytes = DynamicByteBuffer.utf8.encode(item);
+        if (bytes.length <= _DBJ_SHORT_STRING_MAX)
         {
-          buffer.writeUint8(item.length);
+          buffer.writeUint8(bytes.length);
         }
-        else if (item.length <= _DBJ_MID_STRING_MAX)
+        else if (bytes.length <= _DBJ_MID_STRING_MAX)
         {
-          buffer.writeUint8(0xf0 | ((item.length >> 8) & 0xf));
-          buffer.writeUint8(item.length & 0xff);
+          buffer.writeUint8(0xf0 | ((bytes.length >> 8) & 0xf));
+          buffer.writeUint8(bytes.length & 0xff);
         }
         else
         {
           buffer.writeInt8(_DBJ_LONG_STRING);
-          buffer.writeUint32(item.length);
+          buffer.writeUint32(bytes.length);
         }
-        buffer.writeString(item);
+        buffer.writeBytes(bytes);
         dictionary[item] = dictionary.length;
       }
     }

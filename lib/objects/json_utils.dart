@@ -329,12 +329,14 @@ class DBJ
   static const _DBJ_LONG_STRING = 0xef;
   static const _DBJ_END_DICT = 0xff;
 
-  static const _DBJ_DICT8_MAX = 0xef;
+  static const _DBJ_DICT8_MAX = 0xbf;
 
   static const _DBJ_NULL = 0xf0;
   static const _DBJ_TRUE = 0xf1;
   static const _DBJ_FALSE = 0xf2;
 
+  static const _DBJ_SHORT_STRING = 0xc0;
+  static const _DBJ_SHORT_STRING_MAX_LEN = 47;
   static const _DBJ_STRING8 = 0xf3;
   static const _DBJ_STRING16 = 0xf4;
   static const _DBJ_STRING32 = 0xf5;
@@ -385,7 +387,7 @@ class DBJ
     }
   }
 
-  static List<String> getDictionary(dynamic data)
+  static List<String> getDictionary(dynamic data, dictionaryCountTreshold)
   {
     final dictionary = <String, _DBJ_Item>{};
     _getDictionary(data, dictionary);
@@ -395,7 +397,7 @@ class DBJ
 
     for (final item in dictionary.values)
     {
-      if (item.count > 1)
+      if (item.count >= dictionaryCountTreshold)
       {
         dictList.add(item);
       }
@@ -466,8 +468,16 @@ class DBJ
       }
       else
       {
+        if (data.isNotEmpty)
+        {
+          dictionary[data] = dictionary.length;
+        }
         final bytes = DynamicByteBuffer.utf8.encode(data);
-        if (bytes.length <= 255)
+        if (bytes.length <= _DBJ_SHORT_STRING_MAX_LEN)
+        {
+          buffer.writeUint8(_DBJ_SHORT_STRING + bytes.length);
+        }
+        else if (bytes.length <= 255)
         {
           buffer.writeUint8(_DBJ_STRING8);
           buffer.writeUint8(bytes.length);
@@ -510,30 +520,34 @@ class DBJ
     }
   }
 
-  static List<int> encode(dynamic data)
+  static List<int> encode(dynamic data, {dictionaryCountTreshold = 3})
   {
     final buffer = DynamicByteBuffer(1024);
-    final dictList = getDictionary(data);
     final dictionary = <String, int>{};
 
-    for (final item in dictList)
+    if (dictionaryCountTreshold > 0)
     {
-      if (item.length <= _DBJ_SHORT_STRING_MAX)
+      final dictList = getDictionary(data, dictionaryCountTreshold);
+
+      for (final item in dictList)
       {
-        buffer.writeUint8(item.length);
+        if (item.length <= _DBJ_SHORT_STRING_MAX)
+        {
+          buffer.writeUint8(item.length);
+        }
+        else if (item.length <= _DBJ_MID_STRING_MAX)
+        {
+          buffer.writeUint8(0xf0 | ((item.length >> 8) & 0xf));
+          buffer.writeUint8(item.length & 0xff);
+        }
+        else
+        {
+          buffer.writeInt8(_DBJ_LONG_STRING);
+          buffer.writeUint32(item.length);
+        }
+        buffer.writeString(item);
+        dictionary[item] = dictionary.length;
       }
-      else if (item.length <= _DBJ_MID_STRING_MAX)
-      {
-        buffer.writeUint8(0xf0 | ((item.length >> 8) & 0xf));
-        buffer.writeUint8(item.length & 0xff);
-      }
-      else
-      {
-        buffer.writeInt8(_DBJ_LONG_STRING);
-        buffer.writeUint32(item.length);
-      }
-      buffer.writeString(item);
-      dictionary[item] = dictionary.length;
     }
 
     buffer.writeInt8(_DBJ_END_DICT);
@@ -541,6 +555,147 @@ class DBJ
     _encodeInternal(data, buffer, dictionary);
 
     return buffer.toList();
+  }
+
+  static dynamic _decodeInternal(DynamicByteBuffer buffer, List<String> dictionary)
+  {
+    final data = buffer.readUint8();
+    if (data <= _DBJ_DICT8_MAX)
+    {
+      return dictionary[data];
+    }
+    else if (data >= _DBJ_SHORT_STRING && data <= (_DBJ_SHORT_STRING + _DBJ_SHORT_STRING_MAX_LEN))
+    {
+      final result = buffer.readString(data - _DBJ_SHORT_STRING, exactSize: true);
+      if (result.isNotEmpty)
+      {
+        dictionary.add(result);
+      }
+      return result;
+    }
+    else
+    {
+      switch (data)
+      {
+        case _DBJ_NULL:
+        {
+          return null;
+        }
+
+        case _DBJ_TRUE:
+        {
+          return true;
+        }
+
+        case _DBJ_FALSE:
+        {
+          return false;
+        }
+
+        case _DBJ_STRING8:
+        {
+          final result = buffer.readString(buffer.readUint8(), exactSize: true);
+          dictionary.add(result);
+          return result;
+        }
+
+        case _DBJ_STRING16:
+        {
+          final result = buffer.readString(buffer.readUint16(), exactSize: true);
+          dictionary.add(result);
+          return result;
+        }
+
+        case _DBJ_STRING32:
+        {
+          final result = buffer.readString(buffer.readUint32(), exactSize: true);
+          dictionary.add(result);
+          return result;
+        }
+
+        case _DBJ_DICT16:
+        {
+          return dictionary[buffer.readUint16()];
+        }
+
+        case _DBJ_DICT24:
+        {
+          final int index = (buffer.readUint8() << 16) + buffer.readUint16();
+          return dictionary[index];
+        }
+
+        case _DBJ_INT8:
+        {
+          return buffer.readInt8();
+        }
+
+        case _DBJ_INT32:
+        {
+          return buffer.readInt32();
+        }
+
+        case _DBJ_DOUBLE:
+        {
+          return buffer.readFloat64();
+        }
+
+        case _DBJ_ARRAY:
+        {
+          final result = <dynamic>[];
+          while (buffer.getUint8(buffer.readOffset) != _DBJ_END)
+          {
+            result.add(_decodeInternal(buffer, dictionary));
+          }
+          buffer.readUint8();
+          return result;
+        }
+
+        case _DBJ_MAP:
+        {
+          final result = <String, dynamic>{};
+
+          while (buffer.getUint8(buffer.readOffset) != _DBJ_END)
+          {
+            final key = _decodeInternal(buffer, dictionary).toString();
+            result[key] = _decodeInternal(buffer, dictionary);
+          }
+          buffer.readUint8();
+          return result;
+        }
+
+        default:
+        {
+          return null;
+        }
+      }
+    }
+  }
+
+  static decode(List<int> data)
+  {
+    final buffer = DynamicByteBuffer(data.length)..writeBytes(data);
+    final dictionary = <String>[];
+
+    int strSz;
+    while ((strSz = buffer.readUint8()) != _DBJ_END_DICT)
+    {
+      if (strSz > _DBJ_SHORT_STRING_MAX)
+      {
+        if (strSz == _DBJ_LONG_STRING)
+        {
+          strSz = buffer.readUint32();
+        }
+        else
+        {
+          strSz = ((strSz & 0xf) << 8) | buffer.readUint8();
+        }
+      }
+
+      final str = buffer.readString(strSz);
+      dictionary.add(str);
+    }
+
+    return _decodeInternal(buffer, dictionary);
   }
 }
 

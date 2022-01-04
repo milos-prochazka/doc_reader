@@ -399,7 +399,7 @@ class MarkdownTextSpan implements IDocumentSpan
     //print(markdown.toString());
 
     // TODO Test smazat
-    final json = markdown.toJson(true);
+    /*final json = markdown.toJson(true);
     final s = jsonEncode(json);
     //final directory = await getApplicationDocumentsDirectory();
     final File file = File('my_file.json');
@@ -410,10 +410,6 @@ class MarkdownTextSpan implements IDocumentSpan
     final b = DBJ.encode(json);
     await bfile.writeAsBytes(b);
 
-    /*final dfile = File('my_file.dbj');
-    final d = DBJ.encode(json,dictionaryCountTreshold: 0);
-    await dfile.writeAsBytes(d);*/
-
     final File file1 = File('my_file1.json');
     final js1 = jsonEncode(DBJ.decode(b));
     await file1.writeAsString(js1);
@@ -421,7 +417,8 @@ class MarkdownTextSpan implements IDocumentSpan
     final md1 = Markdown.fromJson(jsonDecode(js1));
     final File file2 = File('my_file2.json');
     final js2 = jsonEncode(md1.toJson(true));
-    await file2.writeAsString(js2);
+    await file2.writeAsString(js2);*/
+    //////////////////////////////////////////
 
     final ms = MarkdownTextSpan.create(markdown, textConfig, document);
 

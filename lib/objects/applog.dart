@@ -1,5 +1,5 @@
 //#define -FULL_NAME
-//#define DISABLE_LOG
+//#define -DISABLE_LOG
 import 'dart:developer';
 
 // ignore_for_file: non_constant_identifier_names

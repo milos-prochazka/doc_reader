@@ -41,7 +41,7 @@ class MyApp extends StatelessWidget
     (
       () async
       {
-        await document.openFile('media/bible.md');
+        await document.openFile('media/maska.md');
       }
     );
   }

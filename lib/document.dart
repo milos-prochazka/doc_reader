@@ -161,7 +161,7 @@ class Document
 }
 
 typedef OnTapHandler = Function(double relativeX, double relativeY);
-typedef OnTouchUpDownHandler = Function(bool down, double widgetX, double widgetY);
+typedef OnTouchUpDownHandler = Function(bool down, double widgetX, double widgetY, double velocityX, double velocityY);
 typedef OnTouchMoveHandler = Function(double deltaX, double deltaY);
 typedef OnRepaintHandler = Function();
 typedef OnOpenHandler = Future<bool> Function(String name, Document document, dynamic config);

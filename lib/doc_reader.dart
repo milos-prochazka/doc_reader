@@ -1,7 +1,6 @@
 //#set-tab 2
 // ignore_for_file: unused_import
 
-import 'dart:ui';
 import 'dart:async';
 import 'doc_span/doc_span_interface.dart';
 import 'doc_span/document_word.dart';

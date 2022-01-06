@@ -1,9 +1,10 @@
 //#set-tab 2
 // ignore_for_file: unused_import
 
-import 'dart:ui';
 import 'dart:async';
 import 'doc_span/doc_span_interface.dart';
+import 'doc_span/document_word.dart';
+import 'doc_span/paint_parameters.dart';
 import 'document.dart';
 import 'property_binder.dart';
 import 'package:flutter/material.dart';
@@ -33,7 +34,8 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
   double animationSpeed = 1.0;
   double animationValue = 0.0;
   double animationDirection = 0;
-  double bottomCorrect = 0.0;
+  double bottomLineCorrect = 0.0;
+  double touchDownCorrect = 0.0;
 
   _DocReaderState();
 
@@ -169,7 +171,7 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
       if (result && step > 1e-3)
       {
         final move = step * animationDirection;
-        document?.markPosition -= move;
+        document.markPosition -= move;
         result = document.movePosition(move);
       }
 
@@ -185,7 +187,7 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
           }
         }
         animationDirection = 0;
-        document?.markPosition = double.infinity;
+        document.markPosition = double.infinity;
       }
 
       if (needRefresh)
@@ -197,15 +199,24 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
     return result;
   }
 
-  animatePage(double direction)
+  animatePage(double direction, [double? speed])
   {
-    animationValue = document!.actualWidgetSize.height;
+    final document = this.document!;
+    animationValue = document.actualWidgetSize.height - document.markPosition.abs();
     if (direction > 0)
     {
-      animationValue += bottomCorrect;
+      animationValue += touchDownCorrect;
     }
 
-    animationSpeed = 1e-3 * animationValue / document!.pageAnimation;
+    if (speed != null)
+    {
+      animationSpeed = math.max(1e-3 * speed, 0.1);
+    }
+    else
+    {
+      animationSpeed = 1e-3 * animationValue / document.pageAnimation;
+    }
+
     animationDirection = direction;
     animationTimestamp = 0.0;
     pageAnimateStep();
@@ -215,6 +226,7 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
   {
     if (animationDirection == 0 && document != null)
     {
+      touchDownCorrect = bottomLineCorrect;
       animatePage(1.0);
     }
   }
@@ -223,12 +235,20 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
   {
     if (animationDirection == 0 && document != null)
     {
+      touchDownCorrect = bottomLineCorrect;
       animatePage(-1.0);
     }
   }
 
   void onTap(double relativeX, double relativeY)
   {
+    // TODO Test -------------------------------------------------
+    if (document?.paintParameters != null)
+    {
+      final words = getWordsInfo(0, 100, true);
+      print('${words.length}');
+    }
+    //------------------------------------------------------------
     appLog('onTap: relativeX=${relativeX.toStringAsFixed(4)} relativeY=${relativeY.toStringAsFixed(4)}');
 
     if (relativeY >= 0.75)
@@ -259,7 +279,7 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
     }
   }
 
-  void onTouchUpDown(bool down, double widgetX, double widgetY)
+  void onTouchUpDown(bool down, double widgetX, double widgetY, double velocityX, double velocityY)
   {
     setState
     (
@@ -267,6 +287,7 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
       {
         if (down)
         {
+          touchDownCorrect = bottomLineCorrect;
           if (document != null)
           {
             final document = this.document!;
@@ -278,7 +299,14 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
         {
           if (animationDirection == 0.0)
           {
-            document?.markPosition = double.infinity;
+            if (velocityY.abs() > 50.0)
+            {
+              animatePage(-velocityY.sign, velocityY.abs());
+            }
+            else
+            {
+              document?.markPosition = double.infinity;
+            }
           }
         }
       }
@@ -322,6 +350,42 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
         appLogEx(ex, stackTrace: stackTrace);
       }
     }
+  }
+
+  List<DocumentWordInfo> getWordsInfo(int startIndex, int endIndex,
+    [bool setOffset = false, double xOffset = 0.0, double yOffset = 0.0])
+  {
+    final result = <DocumentWordInfo>[];
+
+    if (document?.paintParameters != null)
+    {
+      final parameters = document!.paintParameters!;
+      final docSpans = document!.docSpans;
+
+      startIndex = math.max(startIndex, 0);
+      endIndex = math.min(endIndex, docSpans.length - 1);
+
+      for (int i = startIndex; i <= endIndex; i++)
+      {
+        final span = docSpans[i].span;
+        if (setOffset)
+        {
+          int sIndex = result.length;
+          span.getSpanWords(result, parameters, i, true);
+          while (sIndex < result.length)
+          {
+            result[sIndex++].translate(xOffset, yOffset);
+          }
+          yOffset += span.height(parameters);
+        }
+        else
+        {
+          span.getSpanWords(result, parameters, i, true);
+        }
+      }
+    }
+
+    return result;
   }
 }
 
@@ -408,7 +472,7 @@ class DocumentPainter extends CustomPainter
 
         if (bottomIndex < docSpans.length)
         {
-          state.bottomCorrect = docSpans[bottomIndex].span.correctYPosition(size.height - top, true);
+          state.bottomLineCorrect = docSpans[bottomIndex].span.correctYPosition(size.height - top, true);
         }
 
         if (document.markPosition.isFinite)

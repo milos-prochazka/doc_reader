@@ -1,10 +1,10 @@
 // ignore_for_file: constant_identifier_names, unnecessary_this
 
-import 'dart:convert';
-import 'dart:io';
 import 'dart:ui' as ui;
 
-import 'package:doc_reader/objects/json_utils.dart';
+import 'package:doc_reader/doc_span/document_word.dart';
+
+import '../doc_span/paint_parameters.dart';
 
 import '../doc_span/color_text.dart';
 import '../doc_span/doc_span_interface.dart';
@@ -433,6 +433,27 @@ class MarkdownTextSpan implements IDocumentSpan
     result = true;
 
     return result;
+  }
+
+  @override
+  void getSpanWords(List<DocumentWordInfo> words, PaintParameters parameters, int id, bool textOnly)
+  {
+    _updateSize(parameters);
+    for (final span in this._spans)
+    {
+      bool textSpan = span is _Text;
+
+      if (!textOnly || textSpan)
+      {
+        final info = DocumentWordInfo()..id = id;
+        info.rect = Rect.fromLTWH(span.xOffset, span.yOffset, span.width, span.height);
+        if (textSpan)
+        {
+          info.text = span.text;
+        }
+        words.add(info);
+      }
+    }
   }
 }
 

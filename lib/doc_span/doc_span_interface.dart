@@ -1,5 +1,6 @@
-import 'dart:ui';
-import 'package:flutter/material.dart';
+import 'package:doc_reader/doc_span/document_word.dart';
+
+import 'paint_parameters.dart';
 
 abstract class IDocumentSpan
 {
@@ -8,6 +9,7 @@ abstract class IDocumentSpan
   void paint(PaintParameters parameters, double xOffset, double yOffset);
   void calcSize(PaintParameters parameters);
   double correctYPosition(double yPosition, bool alignTop);
+  void getSpanWords(List<DocumentWordInfo> words, PaintParameters parameters, int id, bool textOnly);
 }
 
 class DocumentSpanContainer
@@ -17,32 +19,4 @@ class DocumentSpanContainer
   double xPosition = 0.0;
 
   DocumentSpanContainer(this.span);
-}
-
-class PaintParameters
-{
-  final Canvas canvas;
-  final Size size;
-  final Rect rect;
-  final double devicePixelRatio;
-  final double textScale;
-  final Size screenSize;
-  late Key key;
-
-  PaintParameters(this.canvas, this.size, this.devicePixelRatio, this.textScale, this.screenSize)
-  : rect = Rect.fromLTWH(0, 0, size.width, size.height),
-  key = UniqueKey();
-
-  PaintParameters.copyFrom(this.canvas, PaintParameters source)
-  : size = source.size,
-  rect = source.rect,
-  key = source.key,
-  devicePixelRatio = source.devicePixelRatio,
-  textScale = source.textScale,
-  screenSize = source.screenSize;
-
-  void newKey()
-  {
-    key = UniqueKey();
-  }
 }

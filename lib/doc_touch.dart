@@ -42,18 +42,19 @@ class DocTouch
     {
       _downPoint = downPoint;
       isDown = true;
-      document.onTouchUpDown?.call(true, downPoint.dx, downPoint.dy);
+      document.onTouchUpDown?.call(true, downPoint.dx, downPoint.dy, 0, 0);
     }
   }
 
-  void _up(Offset upPoint)
+  void _up(Offset upPoint, Velocity velocity)
   {
     _downPoint = Offset.infinite;
 
     if (isDown)
     {
       isDown = false;
-      document.onTouchUpDown?.call(false, upPoint.dx, upPoint.dy);
+      document.onTouchUpDown
+      ?.call(false, upPoint.dx, upPoint.dy, velocity.pixelsPerSecond.dx, velocity.pixelsPerSecond.dy);
     }
   }
 
@@ -108,7 +109,7 @@ class DocTouch
   {
     appLog_debug('onPanEnd: '
       'velocity=${details.velocity} primaryVelocity=${details.primaryVelocity}');
-    _up(Offset.infinite);
+    _up(Offset.infinite, details.velocity);
   }
 
   void _doTap(double relativeX, double relativeY)
@@ -125,7 +126,7 @@ class DocTouch
     {
       _doTap(_downPoint.dx / document.actualWidgetSize.width, _downPoint.dy / document.actualWidgetSize.height);
     }
-    _up(_downPoint);
+    _up(_downPoint, Velocity.zero);
   }
 
   void onTapDown(TapDownDetails details)
@@ -161,6 +162,6 @@ class DocTouch
       _doTap(_downPoint.dx / document.actualWidgetSize.width, _downPoint.dy / document.actualWidgetSize.height);
     }
 
-    _up(details.localPosition);
+    _up(details.localPosition, Velocity.zero);
   }
 }

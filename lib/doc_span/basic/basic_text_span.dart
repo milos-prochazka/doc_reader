@@ -1,8 +1,11 @@
 import 'dart:ui';
 import 'dart:math' as math;
+import 'package:doc_reader/doc_span/document_word.dart';
+
 import '../doc_span_interface.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import '../paint_parameters.dart';
 
 // ignore_for_file: unnecessary_getters_setters
 class BasicTextSpan implements IDocumentSpan
@@ -121,6 +124,12 @@ class BasicTextSpan implements IDocumentSpan
   double correctYPosition(double yPosition, bool alighTop)
   {
     return 0;
+  }
+
+  @override
+  void getSpanWords(List<DocumentWordInfo> words, PaintParameters parameters, int id, bool textOnly)
+  {
+    // TODO: implement getSpanWords
   }
 }
 

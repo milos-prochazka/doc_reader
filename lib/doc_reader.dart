@@ -4,6 +4,8 @@
 import 'dart:ui';
 import 'dart:async';
 import 'doc_span/doc_span_interface.dart';
+import 'doc_span/document_word.dart';
+import 'doc_span/paint_parameters.dart';
 import 'document.dart';
 import 'property_binder.dart';
 import 'package:flutter/material.dart';
@@ -241,6 +243,13 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
 
   void onTap(double relativeX, double relativeY)
   {
+    // TODO Test -------------------------------------------------
+    if (document?.paintParameters != null)
+    {
+      final words = getWordsInfo(0, 100, true);
+      print('${words.length}');
+    }
+    //------------------------------------------------------------
     appLog('onTap: relativeX=${relativeX.toStringAsFixed(4)} relativeY=${relativeY.toStringAsFixed(4)}');
 
     if (relativeY >= 0.75)
@@ -342,6 +351,42 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
         appLogEx(ex, stackTrace: stackTrace);
       }
     }
+  }
+
+  List<DocumentWordInfo> getWordsInfo(int startIndex, int endIndex,
+    [bool setOffset = false, double xOffset = 0.0, double yOffset = 0.0])
+  {
+    final result = <DocumentWordInfo>[];
+
+    if (document?.paintParameters != null)
+    {
+      final parameters = document!.paintParameters!;
+      final docSpans = document!.docSpans;
+
+      startIndex = math.max(startIndex, 0);
+      endIndex = math.min(endIndex, docSpans.length - 1);
+
+      for (int i = startIndex; i <= endIndex; i++)
+      {
+        final span = docSpans[i].span;
+        if (setOffset)
+        {
+          int sIndex = result.length;
+          span.getSpanWords(result, parameters, i, true);
+          while (sIndex < result.length)
+          {
+            result[sIndex++].translate(xOffset, yOffset);
+          }
+          yOffset += span.height(parameters);
+        }
+        else
+        {
+          span.getSpanWords(result, parameters, i, true);
+        }
+      }
+    }
+
+    return result;
   }
 }
 

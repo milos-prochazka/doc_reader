@@ -1,6 +1,7 @@
-import 'package:doc_reader/objects/utils.dart';
+import 'objects/utils.dart';
 import 'package:flutter/widgets.dart';
 import 'doc_span/doc_span_interface.dart';
+import 'doc_span/paint_parameters.dart';
 
 class Document
 {

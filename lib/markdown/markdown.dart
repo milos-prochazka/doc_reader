@@ -88,10 +88,10 @@ final _namedAttributeRegExp = RegExp(r'\s([-_%\w]+)\=', multiLine: false);
 final _escapeCharRegExp = RegExp(r'\\[\x21-0x2f\x3a-\x40\x5b-\x60\x7b-\x7e]', multiLine: false);
 
 /// Vyhledani escapovanych znaku
-final _escapedCharRegExp = RegExp(r'[\uE000-\uE0FF]', multiLine: false);
+final _escapedCharRegExp = RegExp(r'[\uE000-\uE0FF]', multiLine: false, unicode: true);
 
-/// Vyhledani mezer (vyhleda bloky vice mezer za sebou mezer), hlevne pro split
-final _spacesRegEx = RegExp(r'\s+');
+/// Vyhledani mezer (vyhleda bloky vice mezer za sebou mezer), hlavne pro split
+final _spacesRegEx = RegExp(r'\s+', multiLine: true, unicode: true);
 
 /// Escapovane znaky:
 /// \ E0C0
@@ -648,6 +648,43 @@ class Markdown
 
       text = builder.toString();
     }
+
+    return text;
+  }
+
+  /// Oprava umisteni interpunkcnich znamenek
+  /// - Vice mezer zameni za jednu mezeru (kromne zacatku radku)
+  /// - Mezery pred teckou, carkou a dvojteckou
+  static String spellCorrect(String text)
+  {
+    // Slouceni mezer
+    final multispace = RegExp(r'([^\s\r\n])([^\S\r\n\t]{2,})([\S\r\n$])', multiLine: true, unicode: true);
+    text = text.replaceAllMapped
+    (
+      multispace, (Match m) => (m[3] == '\r' || m[3] == '\n') ? '${m[1]}${m[3]}' : '${m[1]} ${m[3]}'
+    );
+
+    final canAfterDot = RegExp(r"[\d\s\r\n\u0022\']");
+    final dot = RegExp(r'(.)([\.\,\:])(.|\r|\n)', multiLine: true);
+    text = text.replaceAllMapped
+    (
+      dot, (Match m)
+      {
+        var first = m[1];
+        if (first == ' ')
+        {
+          first = '';
+        }
+
+        var last = m[3] ?? '';
+        if (!canAfterDot.hasMatch(last))
+        {
+          last = ' ' + last;
+        }
+
+        return '$first${m[2]}$last';
+      }
+    );
 
     return text;
   }

@@ -10,6 +10,11 @@ import 'objects/applog.dart';
 import 'doc_touch.dart';
 import 'markdown/markdown_text_span.dart';
 
+const test = '''Tohle je   Motor ." a hos  text
+
+     odsazeny    text .
+''';
+
 void main()
 {
   /*final sp = StringPattern();
@@ -21,6 +26,8 @@ void main()
   print(word.toString());*/
 
   appLog('Testovaci log');
+  final t = Markdown.spellCorrect(test);
+  print(t.replaceAll(' ', '_'));
   runApp(MyApp());
 }
 

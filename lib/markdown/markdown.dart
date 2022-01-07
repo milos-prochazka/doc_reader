@@ -111,6 +111,20 @@ final _spacesRegEx = RegExp(r'\s+', multiLine: true, unicode: true);
 /// | E07C
 /// : E03A
 
+/// Vyhleda apostrof
+final quotationMarkRegEx = RegExp
+(
+  r'[\u00AB\u20239\u00BB\u203A\u201E\u201C\u201F\u201D\u2019\u0022'
+  r'\u0027\u275D\u275E\u276E\u276F\u2E42\u301D\u301E\u301F\uFF02\u201A'
+  r'\u2018\u201B\u275B\u275C\u275F]',
+  unicode: true,
+  multiLine: true
+);
+
+/// Vyhleda dvojity apostrof
+const doubleQuation = '\u00AB\u00BB\u201E\u201C\u201F\u201D\u0022\u275D\u275E\u301D\u301E\u301F\uFF02';
+
+//final doubleQuationMarkRegEx = RegExp(r'\u00AB\u00BB\u201E\u201C\u201F\u201D\u0022\u275D\u275E\u301D\u301E\u301F\uFF02',unicode: true, multiLine: true);
 class Markdown
 {
   // Vsechny odstavce dokumentu
@@ -354,7 +368,8 @@ class Markdown
     // Nalezeni odkazu na kratke linky (liny uvnitr dokumentu)
     compileLinks();
 
-    //MarkdownDecoration.create(paragraphs);
+    //
+    makeQuatotions('„', '“', '‚', '‘');
   }
 
   /// Nalezeni odkazu na kratke linky (liny uvnitr dokumentu)
@@ -600,6 +615,15 @@ class Markdown
     MarkdownListIndentation.create(paragraphs);
   }
 
+  /// Nastaveni uvozovek
+  makeQuatotions(String doubleOpen, String doubleClose, String signleOpen, String singleClose)
+  {
+    for (final paragraph in paragraphs)
+    {
+      paragraph.makeQuatotions(doubleOpen, doubleClose, signleOpen, singleClose);
+    }
+  }
+
   /// Načtení markdown textu
   /// - Podporuje TextLoadProvider pro načítání textu
   /// - Podporuje direktivu:
@@ -657,6 +681,9 @@ class Markdown
   /// - Mezery pred teckou, carkou a dvojteckou
   static String spellCorrect(String text)
   {
+    // Apostrofy:
+    // \u00AB\u20239\u00BB\u203A\u201E\u201C\u201F\u201D\u2019\u0022\u0027\u275D\u275E\u276E\u276F\u2E42\u301D\u301E\u301F\uFF02\u201A\u2018\u201B\u275B\u275C\u275F
+
     // Slouceni mezer
     final multispace = RegExp(r'([^\s\r\n])([^\S\r\n\t]{2,})([\S\r\n$])', multiLine: true, unicode: true);
     text = text.replaceAllMapped
@@ -664,8 +691,11 @@ class Markdown
       multispace, (Match m) => (m[3] == '\r' || m[3] == '\n') ? '${m[1]}${m[3]}' : '${m[1]} ${m[3]}'
     );
 
-    final canAfterDot = RegExp(r"[\d\s\r\n\u0022\']");
-    final dot = RegExp(r'(.)([\.\,\:])(.|\r|\n)', multiLine: true);
+    final canAfterDot = RegExp
+    (
+      r'[\d\s\r\n\u00AB\u20239\u00BB\u203A\u201E\u201C\u201F\u201D\u2019\u0022\u0027\u275D\u275E\u276E\u276F\u2E42\u301D\u301E\u301F\uFF02\u201A\u2018\u201B\u275B\u275C\u275F]'
+    );
+    final dot = RegExp(r'(.)([\.\,\:\?\!])(.|\r|\n)', multiLine: true);
     text = text.replaceAllMapped
     (
       dot, (Match m)
@@ -1424,6 +1454,53 @@ class MarkdownParagraph
     else
     {
       _words.add(word);
+    }
+  }
+
+  makeQuatotions(String doubleOpen, String doubleClose, String singleOpen, String singleClose)
+  {
+    bool doubleState = false;
+    bool singleState = false;
+    MarkdownWord? lastWord;
+
+    for (final word in _words)
+    {
+      if (word.type == MarkdownWord_Type.word)
+      {
+        lastWord = word;
+        word.text = word.text.replaceAllMapped
+        (
+          quotationMarkRegEx, (Match m)
+          {
+            String result = m[0] ?? '';
+            if (doubleQuation.contains(result))
+            {
+              result = doubleState ? doubleClose : doubleOpen;
+              doubleState = !doubleState;
+            }
+            else
+            {
+              result = singleState ? singleClose : singleOpen;
+              singleState = !singleState;
+            }
+
+            return result;
+          }
+        );
+      }
+      print(word.text);
+    }
+
+    if (lastWord != null)
+    {
+      if (singleState)
+      {
+        lastWord.text += singleClose;
+      }
+      if (doubleState)
+      {
+        lastWord.text += doubleClose;
+      }
     }
   }
 

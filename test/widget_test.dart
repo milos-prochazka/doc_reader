@@ -5,6 +5,8 @@
 // gestures. You can also use WidgetTester to find child widgets in the widget
 // tree, read text, and verify that the values of widget properties are correct.
 
+// ignore_for_file: curly_braces_in_flow_control_structures
+
 import 'dart:convert';
 
 import 'package:doc_reader/objects/json_utils.dart';
@@ -33,7 +35,7 @@ cbjTestBasic()
   testCbjCompare('-0x1234567', -0x1234567);
   testCbjCompare('3.1415926', 3.1415926);
 
-  testCbjCompare('["a","a","a","a","a","a"]', ["a", "a", "a", "a", "a", "a"]);
+  testCbjCompare('["a","a","a","a","a","a"]', ['a', 'a', 'a', 'a', 'a', 'a']);
   final buff = StringBuffer();
   for (var i = 0; i < 47; i++) buff.writeCharCode(i + 48);
   testCbjCompare('["<string 47>","<string 47>","<string 47>",]', [buff.toString(), buff.toString(), buff.toString()]);

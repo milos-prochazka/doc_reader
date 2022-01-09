@@ -1,8 +1,11 @@
 // ignore_for_file: constant_identifier_names, unnecessary_this
 
+import 'dart:convert';
+import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:doc_reader/doc_span/document_word.dart';
+import 'package:doc_reader/objects/json_utils.dart';
 
 import '../doc_span/paint_parameters.dart';
 
@@ -168,7 +171,7 @@ class MarkdownTextSpan implements IDocumentSpan
     {
       //const style = TextStyle(color: Color.fromARGB(255, 0, 0, 160), fontSize: 20.0, fontFamily: 'Times New Roman', fontWeight: FontWeight.bold);
       final style = config.getTextStyle(paragraph, word: word);
-      _Span span;
+      _Span? span;
 
       switch (word.type)
       {
@@ -177,27 +180,41 @@ class MarkdownTextSpan implements IDocumentSpan
         .calcMetrics(parameters);
         break;
 
-        default:
+        case MarkdownWord_Type.word:
+        case MarkdownWord_Type.link:
         span = _Text(word.text, style.textStyle, word.stickToNext).calcMetrics(parameters);
+        break;
+
+        case MarkdownWord_Type.speech_only:
+        case MarkdownWord_Type.speech_pause:
+        span = _SpeechOnly(word.text, style.textStyle, word.stickToNext);
         break;
       }
 
-      span.lineBreak = word.lineBreak;
-      span.script = word.script;
-
-      switch (span.align)
+      if (span != null)
       {
-        case _Span.ALIGN_LEFT:
-        leftSpans.add(span);
-        break;
+        span.lineBreak = word.lineBreak;
+        span.script = word.script;
+        span.ttsBehavior = word.ttsBehavior;
+        _spans.add(span);
 
-        case _Span.ALIGN_RIGHT:
-        rightSpans.add(span);
-        break;
+        if (span.visible)
+        {
+          switch (span.align)
+          {
+            case _Span.ALIGN_LEFT:
+            leftSpans.add(span);
+            break;
 
-        default:
-        prepSpans.add(span);
-        break;
+            case _Span.ALIGN_RIGHT:
+            rightSpans.add(span);
+            break;
+
+            default:
+            prepSpans.add(span);
+            break;
+          }
+        }
       }
     }
 
@@ -211,7 +228,6 @@ class MarkdownTextSpan implements IDocumentSpan
       sizeWidth = math.min(span.xOffset, sizeWidth);
       span.yOffset = rightHeight;
       rightHeight = math.max(rightHeight, span.yOffset + span.height);
-      _spans.add(span);
     }
 
     double leftLeft = left;
@@ -223,7 +239,6 @@ class MarkdownTextSpan implements IDocumentSpan
       leftLeft = math.max(leftLeft, left + span.width);
       span.yOffset = leftHeight;
       leftHeight += span.height;
-      _spans.add(span);
     }
 
     double x = leftLeft;
@@ -265,7 +280,6 @@ class MarkdownTextSpan implements IDocumentSpan
 
         span.xOffset = x;
         span.yOffset = y;
-        _spans.add(span);
         line.add(span);
         x += spanWidth + wordSpace;
       }
@@ -338,7 +352,10 @@ class MarkdownTextSpan implements IDocumentSpan
     {
       //word.painter.layout();
       //word.painter.paint(params.canvas, Offset(word.xOffset + xOffset, word.yOffset + yOffset));
-      word.paint(params, xOffset, yOffset);
+      if (word.visible)
+      {
+        word.paint(params, xOffset, yOffset);
+      }
     }
   }
 
@@ -399,7 +416,7 @@ class MarkdownTextSpan implements IDocumentSpan
     //print(markdown.toString());
 
     // TODO Test smazat
-    /*final json = markdown.toJson(true);
+    final json = markdown.toJson(true);
     final s = jsonEncode(json);
     //final directory = await getApplicationDocumentsDirectory();
     final File file = File('my_file.json');
@@ -417,7 +434,7 @@ class MarkdownTextSpan implements IDocumentSpan
     final md1 = Markdown.fromJson(jsonDecode(js1));
     final File file2 = File('my_file2.json');
     final js2 = jsonEncode(md1.toJson(true));
-    await file2.writeAsString(js2);*/
+    await file2.writeAsString(js2);
     //////////////////////////////////////////
 
     final ms = MarkdownTextSpan.create(markdown, textConfig, document);
@@ -447,6 +464,7 @@ class MarkdownTextSpan implements IDocumentSpan
       {
         final info = DocumentWordInfo()..id = id;
         info.rect = Rect.fromLTWH(span.xOffset, span.yOffset, span.width, span.height);
+        info.ttsBehavior = span.ttsBehavior;
         if (textSpan)
         {
           info.text = span.text;
@@ -473,8 +491,11 @@ class _Span
   bool lineBreak = false;
   MarkdownScript script = MarkdownScript.normal;
   int align = _Span.ALIGN_INLINE;
+  int ttsBehavior = DocumentWordInfo.TTS_SPEECH;
 
   bool get textBaseLine => false;
+
+  bool get visible => true;
 
   _Span calcMetrics(PaintParameters parameters)
   {
@@ -552,6 +573,17 @@ class _Text extends _Span
       textPainter.paint(params.canvas, offset);
     }
   }
+}
+
+class _SpeechOnly extends _Text
+{
+  _SpeechOnly(String text, TextStyle style, bool stickToNext) : super(text, style, stickToNext);
+
+  @override
+  TextPainter get painter => throw Exception('Unimplemented');
+
+  @override
+  bool get visible => false;
 }
 
 class _Hr extends _Span

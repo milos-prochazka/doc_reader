@@ -56,6 +56,9 @@ final _idImageRegExp = RegExp(r'\!\[([^\]]+)\]\[([^\]]+)\]', multiLine: false);
 /// Special attributes {.class}  {#anchor} {*name=dddd}
 final _attributeLikRegExp = RegExp(r'\{([\.\#\*])([^}]+)\}');
 
+/// Cas 2.5s g1=>2.5 g3=>s
+final _timeRegExp = RegExp(r'(\d+(.\d+)?)\s*(s|ms)?');
+
 /// Url link: http://www.any.org nebo <http://www.any.org>
 final _urlRegExp = RegExp
 (
@@ -79,7 +82,7 @@ final _hrRegExp = RegExp(r'^\s*(([\*]{3,})|([\-]{3,})|([\_]{3,})|([\=]{3,}))\s*$
 ///  [.myclass]: width=100em height=50em color=#cfa g2=. g3=myclass g4=width=100em height=50em color=#cfa
 final _refLinkLinkRegExp = LinkPattern(LinkPattern.TYPE_LINK_REFERENCE);
 
-// Pojemnovany atroibitu: width=100em  g1=width g2=100em
+// Pojemnovany atributu: width=100em  g1=width g2=100em
 //final _namedAttributeRegExp = RegExp(r'(\w+)\=(\S+)', multiLine: false);
 final _namedAttributeRegExp = RegExp(r'\s([-_%\w]+)\=', multiLine: false);
 
@@ -125,6 +128,37 @@ final quotationMarkRegEx = RegExp
 const doubleQuation = '\u00AB\u00BB\u201E\u201C\u201F\u201D\u0022\u275D\u275E\u301D\u301E\u301F\uFF02';
 
 //final doubleQuationMarkRegEx = RegExp(r'\u00AB\u00BB\u201E\u201C\u201F\u201D\u0022\u275D\u275E\u301D\u301E\u301F\uFF02',unicode: true, multiLine: true);
+
+/// Konec TTS vety (ukonceni vety . : ! ? ." !" a podobne na konci slova)
+final _ttsSentenceEnd = RegExp
+(
+  r'[\.\!\:\?][\u00AB\u20239\u00BB\u203A\u201E\u201C\u201F\u201D\u2019\u0022\u0027\u275D\u275E\u276E\u276F\u2E42\u301D\u301E\u301F\uFF02\u201A\u2018\u201B\u275B\u275C\u275F]*$'
+);
+
+/// Blok TTS textu : *{ toto je tts text }*
+/// Text ktery neni zobrazen, ale prerikan pomoci TTS
+final _ttsOnlyBlockRegExp = RegExp(r'\*\{*([^}]*)\}\*', unicode: true, multiLine: true);
+
+/// Zakaz TTS: -{
+/// Text ktery nebude predcitan pomoci TTS
+final _ttsDisableRegExp = RegExp(r'-\{', unicode: true, multiLine: true);
+
+///  Povoleni TTS: }-
+/// Text ktery bude predcitan pomoci TTS (po preedchozim zakazu '-{' )
+final _ttsEnableRegExp = RegExp(r'\}-', unicode: true, multiLine: true);
+
+/// Test zda text obsahuje znak z RTL jazyka
+final rtlLanguageScriptRegEx = RegExp
+(
+  r'\u05BE\u05C0\u05C3\u05D0-\u05EA\u05F0-\u05F4\u061B\u061F\u0621-\u063A\u0640-\u064A\u066D-\u066F\u0671-\u06D5'
+  '\u06DD\u06E5-\u06E6\u06FA-\u06FE\u0700-\u070D\u0710\u0712-\u072C\u0780-\u07A5\u07B1\u200F\uFB1D\uFB1F-\uFB28'
+  '\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40-\uFB41\uFB43-\uFB44\uFB46-\uFBB1\uFBD3-\uFD3D\uFD50-\uFD8F\uFD92-\uFDC7'
+  '\uFDF0-\uFDFC\uFE70-\uFE74\uFE76-\uFEFC'
+  '',
+  unicode: true,
+  multiLine: true
+);
+
 class Markdown
 {
   // Vsechny odstavce dokumentu
@@ -147,6 +181,7 @@ class Markdown
     for (int i = 0; i < lines.length; i++)
     {
       String line = lines[i].trimRight();
+      print(line);
 
       appLog_debug('line:"$line"');
 
@@ -366,14 +401,14 @@ class Markdown
     _makeDecorations();
 
     // Nalezeni odkazu na kratke linky (liny uvnitr dokumentu)
-    compileLinks();
+    compileLinksAndTTS();
 
     //
     makeQuatotions('„', '“', '‚', '‘');
   }
 
-  /// Nalezeni odkazu na kratke linky (liny uvnitr dokumentu)
-  compileLinks()
+  /// Nalezeni odkazu na kratke linky (liny uvnitr dokumentu) a nalzeni parametru TTS
+  compileLinksAndTTS()
   {
     final remove = <MarkdownWord>[];
 
@@ -416,6 +451,17 @@ class Markdown
               {
                 remove.add(word);
               }
+            }
+          }
+          break;
+
+          // Slovo أين.  أين. المدير؟
+          case MarkdownWord_Type.word:
+          {
+            if ((word.ttsBehavior == MarkdownWord.TTS_SPEECH) &&
+              (_ttsSentenceEnd.hasMatch(word.text) || word == para.words.last))
+            {
+              word.ttsBehavior = MarkdownWord.TTS_SPEECH_END;
             }
           }
           break;
@@ -1068,7 +1114,7 @@ class MarkdownParagraph
   /// - [wordBuffer] - Text slova
   /// - [styleStack] - Stack stylu znaku (*, **, _, __ apod)
   /// - [stickToNext] - Prilepit k nasledujicimu slovu (bez mezery)
-  void writeWord(StringBuffer wordBuffer, _StyleStack styleStack, bool stickToNext)
+  void writeWord(StringBuffer wordBuffer, _StyleStack styleStack, bool stickToNext, bool ttsEnabled)
   {
     if (wordBuffer.isNotEmpty)
     {
@@ -1080,6 +1126,7 @@ class MarkdownParagraph
         ..script = styleStack.script
         ..decoration = styleStack.decoration
         ..stickToNext = stickToNext
+        ..ttsBehavior = ttsEnabled ? MarkdownWord.TTS_SPEECH : MarkdownWord.TTS_IGNORE
       );
       wordBuffer.clear();
     }
@@ -1099,12 +1146,16 @@ class MarkdownParagraph
     const EMAIL_LINK = 4;
     const URL_LINK = 5;
     const ATTRIBUTE = 6;
+    const TTS_ONLY = 7;
+    const TTS_DISABLE = 8;
+    const TTS_ENABLE = 9;
 
     final wordBuffer = StringBuffer();
     final styleStack = _StyleStack();
     int readIndex = 0;
     final List<Match?> lineMatches = List.filled(text.length, null);
     final List<int> lineMatchType = List.filled(text.length, MATCH_NONE);
+    var ttsEnabled = true;
 
     // Nalezeni vsech vzorcu v odstavci
     for
@@ -1117,6 +1168,9 @@ class MarkdownParagraph
         Tuple2(URL_LINK, _urlRegExp),
         Tuple2(LONG_LINK, _longLinkRegExp),
         Tuple2(ATTRIBUTE, _attributeLikRegExp),
+        Tuple2(TTS_ONLY, _ttsOnlyBlockRegExp),
+        Tuple2(TTS_ENABLE, _ttsEnableRegExp),
+        Tuple2(TTS_DISABLE, _ttsDisableRegExp),
       ]
     )
     {
@@ -1138,7 +1192,7 @@ class MarkdownParagraph
       {
         if (type != MATCH_NONE)
         {
-          writeWord(wordBuffer, styleStack, true);
+          writeWord(wordBuffer, styleStack, true, ttsEnabled);
         }
 
         switch (type)
@@ -1243,14 +1297,61 @@ class MarkdownParagraph
                   }
                   else
                   {
-                    final t = text.trim();
-                    attributes[t] = t;
+                    final t = text.trim().toLowerCase();
+                    final timeMatch = _timeRegExp.firstMatch(t);
+                    if (timeMatch != null)
+                    {
+                      var pause = double.tryParse(timeMatch[1] ?? '0') ?? 1;
+                      if (timeMatch[3] == 'ms')
+                      {
+                        pause *= 1e-3;
+                      }
+                      add(MarkdownWord.speechPause(pause));
+                    }
+                    else
+                    {
+                      attributes[t] = t;
+                    }
                   }
                 }
                 break;
               }
             }
           }
+          break;
+
+          case TTS_ONLY:
+          {
+            final text = lineMatches[readIndex]!.group(1)!.trim();
+            final word = MarkdownWord()
+            ..text = text
+            ..type = MarkdownWord_Type.speech_only
+            ..ttsBehavior = MarkdownWord.TTS_SPEECH_END;
+
+            for (int i = _words.length - 1; i >= 0; i--)
+            {
+              final type = _words[i].type;
+              if (type == MarkdownWord_Type.speech_pause)
+              {
+                break;
+              }
+              if ([MarkdownWord_Type.word, MarkdownWord_Type.speech_only].contains(type))
+              {
+                _words[i].ttsBehavior = MarkdownWord.TTS_SPEECH_END;
+                break;
+              }
+            }
+
+            add(word);
+          }
+          break;
+
+          case TTS_ENABLE:
+          ttsEnabled = true;
+          break;
+
+          case TTS_DISABLE:
+          ttsEnabled = false;
           break;
 
           default: // MATCH_NONE
@@ -1262,14 +1363,14 @@ class MarkdownParagraph
 
               case ' ': // mezera
               {
-                writeWord(wordBuffer, styleStack, false);
+                writeWord(wordBuffer, styleStack, false, ttsEnabled);
                 readIndex++;
               }
               break;
 
               case '\n': // Novy radek
               {
-                writeWord(wordBuffer, styleStack, false);
+                writeWord(wordBuffer, styleStack, false, ttsEnabled);
                 add(MarkdownWord.newLine());
                 readIndex++;
               }
@@ -1277,7 +1378,7 @@ class MarkdownParagraph
 
               case '~':
               {
-                writeWord(wordBuffer, styleStack, !text.hasSpaceAtIndex(readIndex + 1));
+                writeWord(wordBuffer, styleStack, !text.hasSpaceAtIndex(readIndex + 1), ttsEnabled);
                 if (charAt(text, readIndex + 1) == '~')
                 {
                   if (charAt(text, readIndex + 2) == '~')
@@ -1307,7 +1408,7 @@ class MarkdownParagraph
 
               case '^':
               {
-                writeWord(wordBuffer, styleStack, !text.hasSpaceAtIndex(readIndex + 1));
+                writeWord(wordBuffer, styleStack, !text.hasSpaceAtIndex(readIndex + 1), ttsEnabled);
                 styleStack.script = (styleStack.script == MarkdownScript.superscript)
                 ? MarkdownScript.normal
                 : MarkdownScript.superscript;
@@ -1329,13 +1430,13 @@ class MarkdownParagraph
                   {
                     // konec stylu
                     final ch = charAt(text, readIndex);
-                    writeWord(wordBuffer, styleStack, ch != ' ' && ch != '');
+                    writeWord(wordBuffer, styleStack, ch != ' ' && ch != '', ttsEnabled);
                     styleStack.stack.removeLast();
                   }
                   else
                   {
                     // zacatek stylu
-                    writeWord(wordBuffer, styleStack, true);
+                    writeWord(wordBuffer, styleStack, true, ttsEnabled);
                     styleStack.stack.add(matchVal(match));
                   }
                 }
@@ -1363,7 +1464,7 @@ class MarkdownParagraph
     }
     while (readIndex < text.length);
 
-    writeWord(wordBuffer, styleStack, false); // Posledni slovo
+    writeWord(wordBuffer, styleStack, false, ttsEnabled); // Posledni slovo
   }
 
   static String matchVal(Match? match)
@@ -1766,11 +1867,23 @@ class MarkdownWord
   MarkdownScript script = MarkdownScript.normal;
   MarkdownDecoration decoration = MarkdownDecoration.none;
 
+  static const TTS_SPEECH_END = 0;
+  static const TTS_SPEECH = -1;
+  static const TTS_IGNORE = -2;
+  int ttsBehavior = TTS_SPEECH;
+
   MarkdownWord();
 
   factory MarkdownWord.newLine()
   {
     return MarkdownWord()..lineBreak = true;
+  }
+
+  factory MarkdownWord.speechPause(double time)
+  {
+    return MarkdownWord()
+    ..text = time.toString()
+    ..type = MarkdownWord_Type.speech_pause;
   }
 
   _matchAttrib(String attrib, Match match, int index)
@@ -1827,6 +1940,11 @@ class MarkdownWord
       "[$style]$s '$t' ${enum_ToString(script.toString())} ${enum_ToString(decoration.toString())} ${enum_ToString(type.toString())}"
     );
 
+    if (ttsBehavior != TTS_SPEECH)
+    {
+      builder.write(' tts=$ttsBehavior');
+    }
+
     for (final attr in attribs.entries)
     {
       builder.write(' ${attr.key}=${attr.value ?? "(null)"}');
@@ -1878,6 +1996,11 @@ class MarkdownWord
       result['attribs'] = attribs;
     }
 
+    if (!compress || ttsBehavior != TTS_SPEECH)
+    {
+      result['ttsBehavior'] = ttsBehavior;
+    }
+
     return result;
   }
 
@@ -1889,7 +2012,9 @@ class MarkdownWord
       'link': MarkdownWord_Type.link,
       'image': MarkdownWord_Type.image,
       'link_image': MarkdownWord_Type.link_image,
-      'reference_definition': MarkdownWord_Type.reference_definition
+      'reference_definition': MarkdownWord_Type.reference_definition,
+      'speech_pause': MarkdownWord_Type.speech_pause,
+      'speech_only': MarkdownWord_Type.speech_only
     };
 
     const decorMap =
@@ -1913,6 +2038,7 @@ class MarkdownWord
     text = JsonUtils.getValue(json, 'text', text);
     stickToNext = JsonUtils.getValue(json, 'stickToNext', stickToNext);
     lineBreak = JsonUtils.getValue(json, 'lineBreak', lineBreak);
+    ttsBehavior = JsonUtils.getValue(json, 'ttsBehavior', ttsBehavior);
 
     final jsonAttribs = json['attribs'];
     if (jsonAttribs is Map)
@@ -1925,7 +2051,7 @@ class MarkdownWord
   }
 }
 
-enum MarkdownWord_Type { word, link, image, link_image, reference_definition }
+enum MarkdownWord_Type { word, link, image, link_image, reference_definition, speech_pause, speech_only }
 
 class _StyleStack
 {

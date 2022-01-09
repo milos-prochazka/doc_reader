@@ -1,12 +1,9 @@
-import 'package:doc_reader/objects/utils.dart';
-
 import 'markdown/markdown_text_config.dart';
 import 'objects/asset_text_load.dart';
 import 'document.dart';
 import 'markdown/markdown.dart';
 import 'property_binder.dart';
 import 'package:flutter/material.dart';
-import 'objects/applog.dart';
 import 'doc_touch.dart';
 import 'markdown/markdown_text_span.dart';
 
@@ -40,7 +37,7 @@ class MyApp extends StatelessWidget
     (
       () async
       {
-        await document.openFile('media/maska.md');
+        await document.openFile('media/test-mini.md');
       }
     );
   }

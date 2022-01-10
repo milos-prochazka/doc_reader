@@ -13,6 +13,8 @@ class DocumentWordInfo
   int id = -1;
   int ttsBehavior = TTS_SPEECH;
 
+  bool get isTssEnd => ttsBehavior >= TTS_SPEECH_END;
+
   translate(double xOffset, double yOffset)
   {
     rect = rect.translate(xOffset, yOffset);

@@ -259,6 +259,42 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
     {
       toPrevPage();
     }
+    else
+    {
+      // TODO test
+      if (document != null)
+      {
+        final document = this.document!;
+        final words = getWordsInfo(topSpanIndex, document.bottomSpanIndex, true, 0, topSpanOffset);
+        final offset =
+        Offset(relativeX * document.actualWidgetSize.width, relativeY * document.actualWidgetSize.height);
+
+        for (var i = 0; i < words.length; i++)
+        {
+          final word = words[i];
+          if (word.rect.contains(offset))
+          {
+            var j = i;
+            var k = i;
+            // ignore: empty_statements, curly_braces_in_flow_control_structures
+            for (; j > 0 && !words[j - 1].isTssEnd; j--);
+            // ignore: empty_statements, curly_braces_in_flow_control_structures
+            for (; k < words.length && !words[k].isTssEnd; k++);
+
+            final builder = StringBuffer();
+            for (var l = j; l <= k; l++)
+            {
+              builder.write(words[l].text);
+              builder.write(' ');
+            }
+            print(builder.toString());
+            var qqq = 1;
+
+            break;
+          }
+        }
+      }
+    }
   }
 
   void onTouchMove(double deltaX, double deltaY)

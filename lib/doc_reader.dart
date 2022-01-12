@@ -2,6 +2,8 @@
 // ignore_for_file: unused_import
 
 import 'dart:async';
+import 'package:doc_reader/objects/speech.dart';
+
 import 'doc_span/doc_span_interface.dart';
 import 'doc_span/document_word.dart';
 import 'doc_span/paint_parameters.dart';
@@ -73,6 +75,7 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
     document.onTouchMove = onTouchMove;
     document.onTouchUpDown = onTouchUpDown;
     document.onRepaint = onRepaint;
+    document.speech.speechEvent = speechEvent;
 
     final painter = DocumentPainter(document, this);
 
@@ -106,6 +109,7 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
     isDisposed = true;
     super.dispose();
     document?.onTap = null;
+    document?.speech.speechEvent = null;
     /*document?.onTouchMove = null;
         document?.onTouchUpDown = null;
         document?.onRepaint = null;*/
@@ -245,7 +249,7 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
     // TODO Test -------------------------------------------------
     if (document?.paintParameters != null)
     {
-      final words = getWordsInfo(0, 100, true);
+      final words = document!.getWordsInfo(0, 100, true);
       print('${words.length}');
     }
     //------------------------------------------------------------
@@ -262,10 +266,12 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
     else
     {
       // TODO test
+      document!.speech.speak('Start předčítání textu');
+//#if 0
       if (document != null)
       {
         final document = this.document!;
-        final words = getWordsInfo(topSpanIndex, document.bottomSpanIndex, true, 0, topSpanOffset);
+        final words = document.getWordsInfo(topSpanIndex, document.bottomSpanIndex, true, 0, topSpanOffset);
         final offset =
         Offset(relativeX * document.actualWidgetSize.width, relativeY * document.actualWidgetSize.height);
 
@@ -294,6 +300,7 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
           }
         }
       }
+//#end if line:270
     }
   }
 
@@ -388,6 +395,7 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
     }
   }
 
+//#if 0
   List<DocumentWordInfo> getWordsInfo(int startIndex, int endIndex,
     [bool setOffset = false, double xOffset = 0.0, double yOffset = 0.0])
   {
@@ -422,6 +430,29 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
     }
 
     return result;
+  }
+//#end if line:397
+  speechEvent(SpeechState oldState, SpeechState newState, String word, int start, int end)
+  {
+    if (newState == SpeechState.stopped)
+    {
+      if (document != null)
+      {
+        Future.microtask
+        (
+          () async
+          {
+            String text = '';
+            while ((text = document!.getTtsSentence()).isEmpty);
+            document!.speech.speak(text);
+            while ((text = document!.getTtsSentence()).isEmpty);
+            document!.speech.speak(text);
+            //while ((text = document!.getTtsSentence()).isEmpty);
+            //document!.speech.speak(text);
+          }
+        );
+      }
+    }
   }
 }
 

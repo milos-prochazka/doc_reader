@@ -416,6 +416,7 @@ class MarkdownTextSpan implements IDocumentSpan
     //print(markdown.toString());
 
     // TODO Test smazat
+//#if 0
     final json = markdown.toJson(true);
     final s = jsonEncode(json);
     //final directory = await getApplicationDocumentsDirectory();
@@ -435,6 +436,7 @@ class MarkdownTextSpan implements IDocumentSpan
     final File file2 = File('my_file2.json');
     final js2 = jsonEncode(md1.toJson(true));
     await file2.writeAsString(js2);
+//#end if line:419
     //////////////////////////////////////////
 
     final ms = MarkdownTextSpan.create(markdown, textConfig, document);

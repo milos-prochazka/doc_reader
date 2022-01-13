@@ -1,5 +1,13 @@
 # Maska červené smrti أين المدير؟
 
+DODATEK
+
+Tak jak se - to zobrazí nebo přečte.
+
+A v této komnatě stály u západní stěny ohromné ebenové hodiny. Jejich kyvadlo se houpalo s temným, těžkým, jednotvárným řinčením, a když minutová ručička opsala kruh ciferníku a hodiny začaly odbíjet, vydral se z kovových plic stroje zvuk, který byl sice jasný a zvučný, hluboký i harmonický, ale přitom tak podivně jímavý a naléhavý, že hudebníci v orchestru hodinu co hodinu přestávali na chvilenku hrát a naslouchali odbíjení; a tak se i tančící páry bezděky přestávaly otáčet a celá ta veselá společnost trochu zrozpačitěla, a jak hodiny odzváněly, bylo vidět, že ti nejrozmařilejší pobledli a ti starší, usedlejší, si rukou přejeli čelo jakoby v zmateném zasnění či zamyšlení; jakmile však údery dozněly, obecenstvo znovu propuklo v bezstarostný smích; hudebníci na sebe pohlédli a usmáli se vlastnímu zneklidnění a bláhovosti, a šeptem se navzájem ujišťovali, že při příštím odbíjení se už nedají tak dojmout a zmást - a pak uplynulo šedesát minut (do nichž se vejde tři tisíce šest set vteřin prchavého času), hodiny začaly vyzvánět znovu, a znovu se přikradly rozpaky, neklid a zamyšlení jako předtím. 
+
+KONEC DODATKU
+
 "Červená smrt" již dlouho pustošila zemi. Dosud žádná morová rána nebyla tak vražedná a tak obludná. Krev byla jejím zhmotněným znakem a pečetí - červeň a úděsnost krve. Přicházely pronikavé bolesti, pak náhlé mrákoty, pak prudké krvácení z pórů a konec. Šarlatovými skvrnami na těle a hlavně na tváři odsuzoval mor svou oběť do klatby, zavíral jí dveře před pomocí a soucitem bližních. Choroba člověka zachvátila, rdousila a v půlhodině sklála. 
 
 Avšak princ Prospero byl šťastný, neohrožený a prozíravý. Když byla jeho říše již napůl vylidněna, vybral si ze všech svých rytířů a dvorních dam tisíc zdravých a veselých přátel a uchýlil se s nimi do ústraní za vysoké zdi a cimbuří odlehlého kláštera. Byla to rozsáhlá a nádherná budova - výtvor princova vlastního výstředního, ale vznešeného vkusu. Byla obehnána mohutnou zdí. Ve zdi byly železné brány. Když sem dvořané přišli, přinesli s sebou kovářské výhně a těžká kladiva a zatavili závory. Chtěli se opevnit proti náhlým záchvatům zoufalství zvenčí a šílenství zevnitř. Klášter měl bohaté zásoby. Dvořané byli tedy zabezpečeni a mohli směle vzdorovat nákaze. Svět venku ať se o sebe postará! Jen blázen by se teď rmoutil a přemýšlel. Princ pamatoval na rozmanité radovánky. Opatřil šašky, komedianty, byly tu baletky, byli tu hudebníci, byly tu krásky a bylo tu víno. To všechno a ještě k tomu bezpečí - bylo uvnitř. Venku - Červená smrt. 

@@ -266,7 +266,7 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
     else
     {
       // TODO test
-      document!.speech.speak('Start předčítání textu');
+      Future.microtask(() async => await document!.speech.speak('Start předčítání textu'));
 //#if 0
       if (document != null)
       {
@@ -431,7 +431,7 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
 
     return result;
   }
-//#end if line:397
+//#end if line:398
   speechEvent(SpeechState oldState, SpeechState newState, String word, int start, int end)
   {
     if (newState == SpeechState.stopped)
@@ -444,9 +444,14 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
           {
             String text = '';
             while ((text = document!.getTtsSentence()).isEmpty);
-            document!.speech.speak(text);
-            while ((text = document!.getTtsSentence()).isEmpty);
-            document!.speech.speak(text);
+            await document!.speech.speak(text);
+            while (document!.speech.sentenceCounter < 3)
+            {
+              while ((text = document!.getTtsSentence()).isEmpty);
+              await document!.speech.speak(text);
+            }
+            //while ((text = document!.getTtsSentence()).isEmpty);
+            //await document!.speech.speak(text);
             //while ((text = document!.getTtsSentence()).isEmpty);
             //document!.speech.speak(text);
           }

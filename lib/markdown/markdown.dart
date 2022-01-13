@@ -132,7 +132,7 @@ const doubleQuation = '\u00AB\u00BB\u201E\u201C\u201F\u201D\u0022\u275D\u275E\u3
 /// Konec TTS vety (ukonceni vety . : ! ? ." !" a podobne na konci slova)
 final _ttsSentenceEnd = RegExp
 (
-  r'[\.\!\:\?][\u00AB\u20239\u00BB\u203A\u201E\u201C\u201F\u201D\u2019\u0022\u0027\u275D\u275E\u276E\u276F\u2E42\u301D\u301E\u301F\uFF02\u201A\u2018\u201B\u275B\u275C\u275F]*$'
+  r'[\-\.\!\:\?][\u00AB\u20239\u00BB\u203A\u201E\u201C\u201F\u201D\u2019\u0022\u0027\u275D\u275E\u276E\u276F\u2E42\u301D\u301E\u301F\uFF02\u201A\u2018\u201B\u275B\u275C\u275F]*$'
 );
 
 /// Blok TTS textu : *{ toto je tts text }*

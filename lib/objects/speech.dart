@@ -17,6 +17,7 @@ class Speech
   //double rate = 0.5;
   double rate = 0.7;
   bool _updateParameters = true;
+  int sentenceCounter = 0;
 
   SpeechEvent? speechEvent;
 
@@ -55,6 +56,10 @@ class Speech
         {
           print("Complete");
           final old = speechState;
+          if (sentenceCounter > 0)
+          {
+            sentenceCounter--;
+          }
           speechState = SpeechState.stopped;
           speechEvent?.call(old, speechState, '', 0, 0);
         }
@@ -67,6 +72,7 @@ class Speech
           print("Cancel");
           final old = speechState;
           speechState = SpeechState.stopped;
+          sentenceCounter = 0;
           speechEvent?.call(old, speechState, '', 0, 0);
         }
       );
@@ -123,30 +129,52 @@ class Speech
     await flutterTts?.awaitSpeakCompletion(true);
   }
 
+  bool _speakWait = false;
+
   Future speak(String? text) async
   {
-    init();
-    if (flutterTts != null)
+    try
     {
-      final tts = flutterTts!;
-
-      if (_updateParameters)
+      init();
+      while (_speakWait)
       {
-        await tts.setVolume(volume);
-        await tts.setSpeechRate(rate);
-        await tts.setPitch(pitch);
-        await tts.setQueueMode(1);
+        await Future.delayed(const Duration(milliseconds: 100));
       }
+      _speakWait = true;
 
-      if (text?.isNotEmpty ?? false)
+      if (flutterTts != null)
       {
-        await tts.speak(text!);
+        final tts = flutterTts!;
+
+        if (_updateParameters)
+        {
+          _updateParameters = false;
+          await tts.setVolume(volume);
+          await tts.setSpeechRate(rate);
+          await tts.setPitch(pitch);
+          if (isAndroid)
+          {
+            await tts.setQueueMode(1);
+            tts.awaitSpeakCompletion(true);
+          }
+        }
+
+        if (text?.isNotEmpty ?? false)
+        {
+          sentenceCounter++;
+          await tts.speak(text!);
+        }
       }
+    }
+    finally
+    {
+      _speakWait = false;
     }
   }
 
   Future<bool> stop() async
   {
+    sentenceCounter = 0;
     return await flutterTts?.stop();
   }
 

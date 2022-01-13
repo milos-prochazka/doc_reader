@@ -1,4 +1,5 @@
 import 'doc_span/document_word.dart';
+import 'objects/applog.dart';
 import 'objects/speech.dart';
 import 'objects/utils.dart';
 import 'package:flutter/widgets.dart';
@@ -70,6 +71,10 @@ class Document
 
   /// Indexy slov v prehravanem vete => konverze pocatku slova ve vete na index slova ve spanu
   final ttsWordPosition = <int, int>{};
+
+  /// Flag - probiha prehravani TTS
+  var _ttsPlay = false;
+  bool get ttsPlay => _ttsPlay;
 
   /// Engine pro cteni textu
   final speech = Speech();
@@ -231,7 +236,7 @@ class Document
 
     ///
     var words = getWordsInfo(ttsSpanIndex, ttsSpanIndex);
-    ttsPlaySpanWords = words;
+    print("words count: ${words.length}");
 
     if (ttsSpanWordIndex >= words.length)
     {
@@ -239,6 +244,8 @@ class Document
       ttsSpanWordIndex = 0;
       words = getWordsInfo(ttsSpanIndex, ttsSpanIndex);
     }
+
+    ttsPlaySpanWords = words;
 
     final builder = StringBuffer();
     var wordIndex = ttsSpanWordIndex;
@@ -249,6 +256,7 @@ class Document
       final txt = word.text ?? '';
 
       ttsWordPosition[builder.length] = wordIndex;
+      print('WORD INDEX: $wordIndex');
 
       builder.write(txt);
 
@@ -310,33 +318,76 @@ class Document
 
   playNextSentence()
   {
-    Future.microtask
-    (
-      () async
-      {
-        DocumentSentence text;
-        bool repeat = true;
-
-        await _playPause();
-
-        do
+    if (_ttsPlay)
+    {
+      Future.microtask
+      (
+        () async
         {
-          text = getTtsSentence();
-          _speechPause = math.min(text.pause, 5000).toInt();
+          DocumentSentence text;
+          bool repeat = true;
 
-          if (text.text.isNotEmpty)
+          await _playPause();
+
+          do
           {
-            await speech.speak(text.text);
-            repeat = false;
+            text = getTtsSentence();
+            _speechPause = math.min(text.pause, 5000).toInt();
+
+            if (text.text.isNotEmpty)
+            {
+              await speech.speak(text.text);
+              repeat = false;
+            }
+            else
+            {
+              await _playPause();
+            }
           }
-          else
+          while (repeat && _ttsPlay);
+        }
+      );
+    }
+  }
+
+  ttsStart()
+  {
+    if (!_ttsPlay)
+    {
+      _ttsPlay = true;
+      try
+      {
+        playNextSentence();
+      }
+      catch (ex, stackTrace)
+      {
+        appLogEx(ex, stackTrace: stackTrace);
+      }
+    }
+  }
+
+  ttsStop()
+  {
+    if (_ttsPlay)
+    {
+      _ttsPlay = false;
+      ttsSpanIndex = ttsPlaySpanIndex;
+      ttsSpanWordIndex = 0;
+      Future.microtask
+      (
+        () async
+        {
+          try
           {
-            await _playPause();
+            await speech.stop();
+          }
+          catch (ex, stackTrace)
+          {
+            appLogEx(ex, stackTrace: stackTrace);
           }
         }
-        while (repeat);
-      }
-    );
+      );
+    }
   }
 }
 

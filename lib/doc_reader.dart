@@ -268,7 +268,15 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
     else
     {
       // TODO test
-      Future.microtask(() async => await document!.speech.speak('   ')); //('Start předčítání textu'));
+      //Future.microtask(() async => await document!.speech.speak('Start předčítání textu.'));
+      if (document?.ttsPlay ?? true)
+      {
+        document?.ttsStop();
+      }
+      else
+      {
+        document?.ttsStart();
+      }
     }
   }
 

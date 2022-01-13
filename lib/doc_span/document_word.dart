@@ -14,6 +14,8 @@ class DocumentWordInfo
   int ttsBehavior = TTS_SPEECH;
 
   bool get isTssEnd => ttsBehavior >= TTS_SPEECH_END;
+  bool get isPause => ttsBehavior > TTS_SPEECH_END;
+  int get pause => ttsBehavior;
 
   translate(double xOffset, double yOffset)
   {

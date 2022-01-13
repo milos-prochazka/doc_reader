@@ -15,7 +15,7 @@ class Speech
   double volume = 0.5;
   double pitch = 1.0;
   //double rate = 0.5;
-  double rate = 0.7;
+  double rate = 0.2;
   bool _updateParameters = true;
   int sentenceCounter = 0;
 

@@ -182,12 +182,13 @@ class MarkdownTextSpan implements IDocumentSpan
 
         case MarkdownWord_Type.word:
         case MarkdownWord_Type.link:
-        span = _Text(word.text, style.textStyle, word.stickToNext).calcMetrics(parameters);
+        span = _Text(word.text, style.textStyle, word.stickToNext).calcMetrics(parameters)
+        ..ttsBehavior = word.ttsBehavior;
         break;
 
         case MarkdownWord_Type.speech_only:
         case MarkdownWord_Type.speech_pause:
-        span = _SpeechOnly(word.text, style.textStyle, word.stickToNext);
+        span = _SpeechOnly(word.text, style.textStyle, word.stickToNext)..ttsBehavior = word.ttsBehavior;
         break;
       }
 

@@ -39,6 +39,8 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
   double bottomLineCorrect = 0.0;
   double touchDownCorrect = 0.0;
 
+  int figner = -1;
+
   _DocReaderState();
 
   int get topSpanIndex => math.min(document?.position.floor() ?? 0, (document?.docSpans.length ?? 0) - 1);
@@ -266,41 +268,7 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
     else
     {
       // TODO test
-      Future.microtask(() async => await document!.speech.speak('Start předčítání textu'));
-//#if 0
-      if (document != null)
-      {
-        final document = this.document!;
-        final words = document.getWordsInfo(topSpanIndex, document.bottomSpanIndex, true, 0, topSpanOffset);
-        final offset =
-        Offset(relativeX * document.actualWidgetSize.width, relativeY * document.actualWidgetSize.height);
-
-        for (var i = 0; i < words.length; i++)
-        {
-          final word = words[i];
-          if (word.rect.contains(offset))
-          {
-            var j = i;
-            var k = i;
-            // ignore: empty_statements, curly_braces_in_flow_control_structures
-            for (; j > 0 && !words[j - 1].isTssEnd; j--);
-            // ignore: empty_statements, curly_braces_in_flow_control_structures
-            for (; k < words.length && !words[k].isTssEnd; k++);
-
-            final builder = StringBuffer();
-            for (var l = j; l <= k; l++)
-            {
-              builder.write(words[l].text);
-              builder.write(' ');
-            }
-            print(builder.toString());
-            var qqq = 1;
-
-            break;
-          }
-        }
-      }
-//#end if line:270
+      Future.microtask(() async => await document!.speech.speak('   ')); //('Start předčítání textu'));
     }
   }
 
@@ -395,99 +363,31 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
     }
   }
 
-//#if 0
-  List<DocumentWordInfo> getWordsInfo(int startIndex, int endIndex,
-    [bool setOffset = false, double xOffset = 0.0, double yOffset = 0.0])
-  {
-    final result = <DocumentWordInfo>[];
-
-    if (document?.paintParameters != null)
-    {
-      final parameters = document!.paintParameters!;
-      final docSpans = document!.docSpans;
-
-      startIndex = math.max(startIndex, 0);
-      endIndex = math.min(endIndex, docSpans.length - 1);
-
-      for (int i = startIndex; i <= endIndex; i++)
-      {
-        final span = docSpans[i].span;
-        if (setOffset)
-        {
-          int sIndex = result.length;
-          span.getSpanWords(result, parameters, i, true);
-          while (sIndex < result.length)
-          {
-            result[sIndex++].translate(xOffset, yOffset);
-          }
-          yOffset += span.height(parameters);
-        }
-        else
-        {
-          span.getSpanWords(result, parameters, i, true);
-        }
-      }
-    }
-
-    return result;
-  }
-//#end if line:398
   speechEvent(SpeechState oldState, SpeechState newState, String word, int start, int end)
   {
-    if (newState == SpeechState.stopped)
+    switch (newState)
     {
+      case SpeechState.stopped:
+      print('TTS STOP *****************************************');
+      document?.playNextSentence();
+      break;
+
+      case SpeechState.playing:
       if (document != null)
       {
-        Future.microtask
-        (
-          () async
-          {
-            String text = '';
-            while ((text = document!.getTtsSentence()).isEmpty);
-            await document!.speech.speak(text);
-            while (document!.speech.sentenceCounter < 3)
-            {
-              while ((text = document!.getTtsSentence()).isEmpty);
-              await document!.speech.speak(text);
-            }
-            //while ((text = document!.getTtsSentence()).isEmpty);
-            //await document!.speech.speak(text);
-            //while ((text = document!.getTtsSentence()).isEmpty);
-            //document!.speech.speak(text);
-          }
-        );
+        final document = this.document!;
+        final position = document.ttsWordPosition[start];
+        if (position != null && word.isNotEmpty)
+        {
+          figner = position;
+          print('Word position: $position *****************************************');
+          setState(() {});
+        }
       }
+      break;
     }
   }
 }
-
-/*class DocReaderPainter extends StatefulWidget
-{
-    final String documentProperty;
-    DocReaderPainter({Key? key, required this.documentProperty}) : super(key: key ?? GlobalKey(debugLabel: 'DocReader'));
-
-  @override
-  State<DocReaderPainter> createState() => _DocReaderPainterState();
-}
-
-class _DocReaderPainterState extends State<DocReaderPainter> {
-  @override
-  Widget build(BuildContext context)
-  {
-        final document =
-        PropertyBinder.of(context).getOrCreateProperty<Document>(widget.documentProperty, (binder) => Document());
-
-       final painter = DocumentPainter(document);
-
-        final result =   CustomPaint
-        (
-            painter: painter,
-            child: Container(),
-        );
-
-        return result;
-   }
-}*/
 
 class DocumentPainter extends CustomPainter
 {
@@ -533,9 +433,25 @@ class DocumentPainter extends CustomPainter
 
         for (; spanIndex < docSpans.length && offset < size.height; spanIndex++)
         {
-          top = offset;
           bottomIndex = spanIndex;
           final container = docSpans[spanIndex];
+
+          if
+          (
+            spanIndex == document.ttsSpanIndex &&
+            state.figner >= 0 &&
+            state.figner < document.ttsPlaySpanWords.length
+          )
+          {
+            final info = document.ttsPlaySpanWords[state.figner];
+            final backRect = info.rect.translate(0, offset);
+
+            final markPaint = Paint()
+            ..color = const Color.fromARGB(100, 128, 138, 160)
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0);
+            canvas.drawRect(backRect, markPaint);
+          }
+          top = offset;
           container.span.paint(params, container.xPosition, offset);
           offset += container.span.height(params);
         }

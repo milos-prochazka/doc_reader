@@ -62,6 +62,15 @@ class Document
   /// Index slova prvniho slova ktere bude preteno
   int ttsSpanWordIndex = 0;
 
+  /// Index spanu ktery je cten prehravan
+  int ttsPlaySpanIndex = -1;
+
+  /// Slova spanu ktery se prehrava
+  var ttsPlaySpanWords = <DocumentWordInfo>[];
+
+  /// Indexy slov v prehravanem vete => konverze pocatku slova ve vete na index slova ve spanu
+  final ttsWordPosition = <int, int>{};
+
   /// Engine pro cteni textu
   final speech = Speech();
 
@@ -207,9 +216,13 @@ class Document
     return result;
   }
 
-  String getTtsSentence([bool gotoNext = true])
+  DocumentSentence getTtsSentence([bool gotoNext = true])
   {
-    /// test
+    final result = DocumentSentence();
+
+    ttsWordPosition.clear();
+
+    /// test - skok na zacatek
     if (ttsSpanIndex >= docSpans.length)
     {
       ttsSpanWordIndex = 0;
@@ -218,6 +231,8 @@ class Document
 
     ///
     var words = getWordsInfo(ttsSpanIndex, ttsSpanIndex);
+    ttsPlaySpanWords = words;
+
     if (ttsSpanWordIndex >= words.length)
     {
       ttsSpanIndex++;
@@ -225,35 +240,35 @@ class Document
       words = getWordsInfo(ttsSpanIndex, ttsSpanIndex);
     }
 
-    /*var j = ttsSpanWordIndex;
-        var k = ttsSpanWordIndex;
-        // ignore: empty_statements, curly_braces_in_flow_control_structures
-        //for (; j > 0 && !words[j - 1].isTssEnd; j--);
-        // ignore: empty_statements, curly_braces_in_flow_control_structures
-        for (; k < words.length && !words[k].isTssEnd; k++);
-
-
-        final builder = StringBuffer();
-        for (var l = j; l <= k; l++)
-        {
-          builder.write(words[l].text);
-          builder.write(' ');
-        }
-
-        if (gotoNext)
-        {
-            ttsSpanWordIndex = k+1;
-        }*/
-
     final builder = StringBuffer();
-    var i = ttsSpanWordIndex;
-    for (; i < words.length; i++)
+    var wordIndex = ttsSpanWordIndex;
+
+    for (; wordIndex < words.length; wordIndex++)
     {
-      final txt = words[i].text ?? '';
+      final word = words[wordIndex];
+      final txt = word.text ?? '';
+
+      ttsWordPosition[builder.length] = wordIndex;
+
       builder.write(txt);
-      if (builder.length > 300) break;
-      if (builder.length > 150 && (txt.contains(',') || txt.contains(';'))) break;
-      if (words[i].isTssEnd)
+
+      if (builder.length > 300)
+      {
+        break;
+      }
+
+      if (builder.length > 150 && (txt.contains(',') || txt.contains(';')))
+      {
+        break;
+      }
+
+      if (word.isPause)
+      {
+        result.pause = word.pause.toDouble();
+        break;
+      }
+
+      if (word.isTssEnd)
       {
         break;
       }
@@ -265,13 +280,70 @@ class Document
 
     if (gotoNext)
     {
-      ttsSpanWordIndex = i + 1;
+      ttsSpanWordIndex = wordIndex + 1;
     }
-    var result = builder.toString();
-    print('TTS:$result');
+
+    result.text = builder.toString();
+
+    print('TTS:${result.text}');
 
     return result;
   }
+
+  int _speechPause = 0;
+
+  Future<bool> _playPause() async
+  {
+    bool result = false;
+
+    if (_speechPause > 0)
+    {
+      print('- wait ------------------------');
+      await Future.delayed(Duration(milliseconds: _speechPause));
+      _speechPause = 0;
+      print('>>>>>>>>>>>>>>>>>>>>>');
+      result = true;
+    }
+
+    return result;
+  }
+
+  playNextSentence()
+  {
+    Future.microtask
+    (
+      () async
+      {
+        DocumentSentence text;
+        bool repeat = true;
+
+        await _playPause();
+
+        do
+        {
+          text = getTtsSentence();
+          _speechPause = math.min(text.pause, 5000).toInt();
+
+          if (text.text.isNotEmpty)
+          {
+            await speech.speak(text.text);
+            repeat = false;
+          }
+          else
+          {
+            await _playPause();
+          }
+        }
+        while (repeat);
+      }
+    );
+  }
+}
+
+class DocumentSentence
+{
+  String text = '';
+  double pause = 0;
 }
 
 typedef OnTapHandler = Function(double relativeX, double relativeY);

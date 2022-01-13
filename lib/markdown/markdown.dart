@@ -1882,7 +1882,7 @@ class MarkdownWord
   factory MarkdownWord.speechPause(double time)
   {
     return MarkdownWord()
-    ..text = time.toString()
+    ..ttsBehavior = (1000.0 * time).toInt()
     ..type = MarkdownWord_Type.speech_pause;
   }
 

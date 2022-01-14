@@ -378,6 +378,7 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
       case SpeechState.stopped:
       print('TTS STOP *****************************************');
       document?.playNextSentence();
+      setState(() {});
       break;
 
       case SpeechState.playing:
@@ -449,23 +450,33 @@ class DocumentPainter extends CustomPainter
           // Zobrazeni prehravani tts
           if (document.ttsPlay)
           {
-            if
-            (
-              spanIndex == document.ttsSpanIndex &&
-              state.figner >= 0 &&
-              state.figner < document.ttsPlaySpanWords.length
-            )
-            {
-              // Ukazatel na slovo
-              final info = document.ttsPlaySpanWords[state.figner];
-              final rect = info.rect.translate(0, offset);
-              ttsTop = rect.top;
-              ttsBottom = rect.bottom + 32;
+            final markPaint = Paint()
+            ..color = const Color.fromARGB(100, 128, 138, 160)
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0);
 
-              final markPaint = Paint()
-              ..color = const Color.fromARGB(100, 128, 138, 160)
-              ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0);
-              canvas.drawRect(Rect.fromLTWH(rect.left, rect.bottom - 10, rect.width, 10), markPaint);
+            if (spanIndex == document.ttsSpanIndex)
+            {
+              // Zobrazeni vety
+              for (var i in document.ttsWordPosition.values)
+              {
+                final info = document.ttsPlaySpanWords[i];
+                final rect = info.rect.translate(0, offset);
+
+                print('word:${info.text} ${rect.left},${rect.top},${rect.width},${rect.height}');
+                canvas.drawRect(Rect.fromLTWH(rect.left, rect.bottom - 10, rect.width, 10), markPaint);
+              }
+
+              // Zobrazeni ukazatele na slovo
+              if (state.figner >= 0 && state.figner < document.ttsPlaySpanWords.length)
+              {
+                // Ukazatel na slovo
+                final info = document.ttsPlaySpanWords[state.figner];
+                final rect = info.rect.translate(0, offset);
+                ttsTop = rect.top;
+                ttsBottom = rect.bottom + 32;
+
+                canvas.drawRect(Rect.fromLTWH(rect.left, rect.bottom - 10, rect.width, 10), markPaint);
+              }
             }
           }
 
@@ -492,7 +503,7 @@ class DocumentPainter extends CustomPainter
 
         if (document.ttsPlay && state.animationDirection == 0.0)
         {
-          // Zarovnani zobrazeni pri prehravani TTS
+          // Posun zobrazeni pri prehravani TTS
 
           if (ttsTop.isFinite && ttsTop < 0)
           {

@@ -221,6 +221,49 @@ class Document
     return result;
   }
 
+  //
+  List<Rect> _makeLines(List<DocumentWordInfo> words)
+  {
+    final result = <Rect>[];
+    double top = double.infinity;
+    double left = double.infinity;
+    double right = double.infinity;
+    double bottom = double.infinity;
+
+    for (var word in words)
+    {
+      final nextLine = bottom.isFinite && word.rect.top + 1 >= bottom;
+      if (nextLine)
+      {
+        result.add(Rect.fromLTRB(left, top, right, bottom));
+        top = double.infinity;
+        left = double.infinity;
+        right = double.infinity;
+        bottom = double.infinity;
+      }
+
+      left = (left.isInfinite || left > word.rect.left) ? word.rect.left : left;
+      right = (right.isInfinite || right < word.rect.right) ? word.rect.right : right;
+      top = (top.isInfinite || top > word.rect.top) ? word.rect.top : top;
+      bottom = (bottom.isInfinite || bottom < word.rect.bottom) ? word.rect.bottom : bottom;
+
+      if (word == words.last)
+      {
+        if (top.isFinite)
+        {
+          result.add(Rect.fromLTRB(left, top, right, bottom));
+        }
+      }
+    }
+
+    for (var line in result)
+    {
+      print('Line : ${line.left} ${line.top} ${line.right} ${line.bottom} ');
+    }
+
+    return result;
+  }
+
   DocumentSentence getTtsSentence([bool gotoNext = true])
   {
     final result = DocumentSentence();
@@ -250,12 +293,14 @@ class Document
 
     final builder = StringBuffer();
     var wordIndex = ttsSpanWordIndex;
+    final selectedWords = <DocumentWordInfo>[];
 
     for (; wordIndex < words.length; wordIndex++)
     {
       final word = words[wordIndex];
       final txt = word.text ?? '';
 
+      selectedWords.add(word);
       ttsWordPosition[builder.length] = wordIndex;
       print('WORD INDEX: $wordIndex');
 
@@ -291,6 +336,8 @@ class Document
     {
       ttsSpanWordIndex = wordIndex + 1;
     }
+
+    _makeLines(selectedWords);
 
     result.text = builder.toString();
 

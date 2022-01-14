@@ -245,6 +245,7 @@ class Document
       words = getWordsInfo(ttsSpanIndex, ttsSpanIndex);
     }
 
+    ttsPlaySpanIndex = ttsSpanIndex;
     ttsPlaySpanWords = words;
 
     final builder = StringBuffer();

@@ -434,7 +434,9 @@ class DocumentPainter extends CustomPainter
       if (spanIndex >= 0)
       {
         double offset = state.topSpanOffset;
-        double top = offset;
+        double bottomTop = offset;
+        double ttsBottom = double.infinity;
+        double ttsTop = double.infinity;
 
         document.topSpanIndex = spanIndex;
         int bottomIndex = spanIndex;
@@ -444,22 +446,31 @@ class DocumentPainter extends CustomPainter
           bottomIndex = spanIndex;
           final container = docSpans[spanIndex];
 
-          if
-          (
-            spanIndex == document.ttsSpanIndex &&
-            state.figner >= 0 &&
-            state.figner < document.ttsPlaySpanWords.length
-          )
+          // Zobrazeni prehravani tts
+          if (document.ttsPlay)
           {
-            final info = document.ttsPlaySpanWords[state.figner];
-            final backRect = info.rect.translate(0, offset);
+            if
+            (
+              spanIndex == document.ttsSpanIndex &&
+              state.figner >= 0 &&
+              state.figner < document.ttsPlaySpanWords.length
+            )
+            {
+              // Ukazatel na slovo
+              final info = document.ttsPlaySpanWords[state.figner];
+              final rect = info.rect.translate(0, offset);
+              ttsTop = rect.top;
+              ttsBottom = rect.bottom + 32;
 
-            final markPaint = Paint()
-            ..color = const Color.fromARGB(100, 128, 138, 160)
-            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0);
-            canvas.drawRect(backRect, markPaint);
+              final markPaint = Paint()
+              ..color = const Color.fromARGB(100, 128, 138, 160)
+              ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0);
+              canvas.drawRect(Rect.fromLTWH(rect.left, rect.bottom - 10, rect.width, 10), markPaint);
+            }
           }
-          top = offset;
+
+          // Vykresleni spanu
+          bottomTop = offset;
           container.span.paint(params, container.xPosition, offset);
           offset += container.span.height(params);
         }
@@ -468,13 +479,46 @@ class DocumentPainter extends CustomPainter
 
         if (bottomIndex < docSpans.length)
         {
-          state.bottomLineCorrect = docSpans[bottomIndex].span.correctYPosition(size.height - top, true);
+          // Korekce pro prechod na dalsi stranku
+          state.bottomLineCorrect = docSpans[bottomIndex].span.correctYPosition(size.height - bottomTop, true);
         }
 
-        if (document.markPosition.isFinite)
+        if (!document.ttsPlay && document.markPosition.isFinite)
         {
+          // Zobrazeni oznaceni presouvane stranky
           final markPaint = Paint()..color = const Color.fromARGB(100, 128, 138, 160);
           canvas.drawRect(Rect.fromLTWH(0, document.markPosition, size.width, document.markSize), markPaint);
+        }
+
+        if (document.ttsPlay && state.animationDirection == 0.0)
+        {
+          // Zarovnani zobrazeni pri prehravani TTS
+
+          if (ttsTop.isFinite && ttsTop < 0)
+          {
+            state.bottomLineCorrect = 0;
+            document.markPosition = size.height + ttsTop;
+            Future.microtask(() => state.toPrevPage());
+          }
+          else if (ttsBottom.isFinite && ttsBottom > size.height)
+          {
+            state.bottomLineCorrect = math.max(ttsBottom - 2 * size.height, -0.75 * size.height);
+            document.markPosition = 0;
+            Future.microtask(() => state.toNextPage());
+          }
+          else if (document.ttsPlaySpanIndex < state.topSpanIndex)
+          {
+            document.position = document.ttsPlaySpanIndex.toDouble();
+            state.onRepaint();
+          }
+          else if (bottomIndex < docSpans.length)
+          {
+            if (bottomIndex < document.ttsPlaySpanIndex)
+            {
+              document.markPosition = 0;
+              Future.microtask(() => state.toNextPage());
+            }
+          }
         }
       }
     }

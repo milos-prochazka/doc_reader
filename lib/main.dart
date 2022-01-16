@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:doc_reader/objects/applog.dart';
 import 'package:doc_reader/objects/speech.dart';
 
 import 'markdown/markdown_text_config.dart';
@@ -11,15 +14,21 @@ import 'markdown/markdown_text_span.dart';
 
 void main()
 {
-  /*final sp = StringPattern();
-
-  final patt = LinkPattern(LinkPattern.TYPE_LINK);
-  /// Před odkazem[to  je  odkaz](http://www.seznam.cz)za odkazem
-  var match = patt.firstMatch(r'''Před odkazem[to je odkaz](http://www.seznam.cz)za odkazem''');
-  final word= MarkdownWord.fromMatch(match!);
-  print(word.toString());*/
-
-  runApp(MyApp());
+  runZonedGuarded
+  (
+    ()
+    {
+      WidgetsFlutterBinding.ensureInitialized(); //<= the key is here
+      FlutterError.onError = (FlutterErrorDetails errorDetails)
+      {
+        appLogEx(errorDetails.exception, msg: 'FLUTTER ERROR', stackTrace: errorDetails.stack);
+      };
+      runApp(MyApp()); // starting point of app
+    }, (ex, stackTrace)
+    {
+      appLogEx(ex, msg: 'UNHANDLED EXCEPTION', stackTrace: stackTrace);
+    }
+  );
 }
 
 class MyApp extends StatelessWidget

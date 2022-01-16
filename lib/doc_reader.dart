@@ -376,24 +376,24 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
     switch (newState)
     {
       case SpeechState.stopped:
-      print('TTS STOP *****************************************');
-      document?.playNextSentence();
-      setState(() {});
-      break;
+        print('TTS STOP *****************************************');
+        document?.playNextSentence();
+        setState(() {});
+        break;
 
       case SpeechState.playing:
-      if (document != null)
-      {
-        final document = this.document!;
-        final position = document.ttsWordPosition[start];
-        if (position != null && word.isNotEmpty)
+        if (document != null)
         {
-          figner = position;
-          print('Word position: $position *****************************************');
-          setState(() {});
+          final document = this.document!;
+          final position = document.ttsWordPosition[start];
+          if (position != null && word.isNotEmpty)
+          {
+            figner = position;
+            print('Word position: $position *****************************************');
+            setState(() {});
+          }
         }
-      }
-      break;
+        break;
     }
   }
 }
@@ -415,9 +415,9 @@ class DocumentPainter extends CustomPainter
         Future.microtask(() => state.pageAnimateStep());
       }
 
-      // TODO predelat ziskavani PaintParameters do document
       if (document.paintParameters == null || document.actualWidgetSize != size)
       {
+        document.resetPaintState();
         document.actualWidgetSize = size;
         document.paintParameters =
         PaintParameters(canvas, size, state.devicePixelRatio, state.textScale, state.screenSize);
@@ -456,15 +456,26 @@ class DocumentPainter extends CustomPainter
 
             if (spanIndex == document.ttsSpanIndex)
             {
-              // Zobrazeni vety
-              for (var i in document.ttsWordPosition.values)
+              if (document.ttsPlaySpanLines.isNotEmpty)
+              {
+                ttsTop = document.ttsPlaySpanLines.first.top + offset;
+                ttsBottom = document.ttsPlaySpanLines.last.top + offset;
+                // Zobrayeni vety - jako zvyrazenne radky
+                for (var line in document.ttsPlaySpanLines)
+                {
+                  canvas.drawRect(line.translate(0, offset), markPaint);
+                }
+              }
+
+              // Zobrazeni vety - jako zvyraznena slova
+              /*for (var i in document.ttsWordPosition.values)
               {
                 final info = document.ttsPlaySpanWords[i];
                 final rect = info.rect.translate(0, offset);
 
                 print('word:${info.text} ${rect.left},${rect.top},${rect.width},${rect.height}');
                 canvas.drawRect(Rect.fromLTWH(rect.left, rect.bottom - 10, rect.width, 10), markPaint);
-              }
+              }*/
 
               // Zobrazeni ukazatele na slovo
               if (state.figner >= 0 && state.figner < document.ttsPlaySpanWords.length)
@@ -472,8 +483,8 @@ class DocumentPainter extends CustomPainter
                 // Ukazatel na slovo
                 final info = document.ttsPlaySpanWords[state.figner];
                 final rect = info.rect.translate(0, offset);
-                ttsTop = rect.top;
-                ttsBottom = rect.bottom + 32;
+                //ttsTop = rect.top;
+                //ttsBottom = rect.bottom + 32;
 
                 canvas.drawRect(Rect.fromLTWH(rect.left, rect.bottom - 10, rect.width, 10), markPaint);
               }

@@ -220,95 +220,95 @@ class CBJ
       switch (data)
       {
         case _CBJ_NULL:
-        {
-          return null;
-        }
+          {
+            return null;
+          }
 
         case _CBJ_TRUE:
-        {
-          return true;
-        }
+          {
+            return true;
+          }
 
         case _CBJ_FALSE:
-        {
-          return false;
-        }
+          {
+            return false;
+          }
 
         case _CBJ_STRING8:
-        {
-          final result = buffer.readString(buffer.readUint8(), exactSize: true);
-          dictionary.add(result);
-          return result;
-        }
+          {
+            final result = buffer.readString(buffer.readUint8(), exactSize: true);
+            dictionary.add(result);
+            return result;
+          }
 
         case _CBJ_STRING16:
-        {
-          final result = buffer.readString(buffer.readUint16(), exactSize: true);
-          dictionary.add(result);
-          return result;
-        }
+          {
+            final result = buffer.readString(buffer.readUint16(), exactSize: true);
+            dictionary.add(result);
+            return result;
+          }
 
         case _CBJ_STRING32:
-        {
-          final result = buffer.readString(buffer.readUint32(), exactSize: true);
-          dictionary.add(result);
-          return result;
-        }
+          {
+            final result = buffer.readString(buffer.readUint32(), exactSize: true);
+            dictionary.add(result);
+            return result;
+          }
 
         case _CBJ_DICT16:
-        {
-          return dictionary[buffer.readUint16()];
-        }
+          {
+            return dictionary[buffer.readUint16()];
+          }
 
         case _CBJ_DICT24:
-        {
-          final int index = (buffer.readUint8() << 16) + buffer.readUint16();
-          return dictionary[index];
-        }
+          {
+            final int index = (buffer.readUint8() << 16) + buffer.readUint16();
+            return dictionary[index];
+          }
 
         case _CBJ_INT8:
-        {
-          return buffer.readInt8();
-        }
+          {
+            return buffer.readInt8();
+          }
 
         case _CBJ_INT32:
-        {
-          return buffer.readInt32();
-        }
+          {
+            return buffer.readInt32();
+          }
 
         case _CBJ_DOUBLE:
-        {
-          return buffer.readFloat64();
-        }
+          {
+            return buffer.readFloat64();
+          }
 
         case _CBJ_ARRAY:
-        {
-          final result = <dynamic>[];
-          while (buffer.getUint8(buffer.readOffset) != _CBJ_END)
           {
-            result.add(_decodeCBJInternal(buffer, dictionary));
+            final result = <dynamic>[];
+            while (buffer.getUint8(buffer.readOffset) != _CBJ_END)
+            {
+              result.add(_decodeCBJInternal(buffer, dictionary));
+            }
+            buffer.readUint8();
+            return result;
           }
-          buffer.readUint8();
-          return result;
-        }
 
         case _CBJ_MAP:
-        {
-          final result = <String, dynamic>{};
-
-          while (buffer.getUint8(buffer.readOffset) != _CBJ_END)
           {
-            final key = _decodeCBJInternal(buffer, dictionary).toString();
-            result[key] = _decodeCBJInternal(buffer, dictionary);
+            final result = <String, dynamic>{};
+
+            while (buffer.getUint8(buffer.readOffset) != _CBJ_END)
+            {
+              final key = _decodeCBJInternal(buffer, dictionary).toString();
+              result[key] = _decodeCBJInternal(buffer, dictionary);
+            }
+            buffer.readUint8();
+            return result;
           }
-          buffer.readUint8();
-          return result;
-        }
 
         default:
-        {
-          return null;
-        }
+          {
+            return null;
+          }
       }
     }
   }
@@ -579,95 +579,95 @@ class DBJ
       switch (data)
       {
         case _DBJ_NULL:
-        {
-          return null;
-        }
+          {
+            return null;
+          }
 
         case _DBJ_TRUE:
-        {
-          return true;
-        }
+          {
+            return true;
+          }
 
         case _DBJ_FALSE:
-        {
-          return false;
-        }
+          {
+            return false;
+          }
 
         case _DBJ_STRING8:
-        {
-          final result = buffer.readString(buffer.readUint8(), exactSize: true);
-          dictionary.add(result);
-          return result;
-        }
+          {
+            final result = buffer.readString(buffer.readUint8(), exactSize: true);
+            dictionary.add(result);
+            return result;
+          }
 
         case _DBJ_STRING16:
-        {
-          final result = buffer.readString(buffer.readUint16(), exactSize: true);
-          dictionary.add(result);
-          return result;
-        }
+          {
+            final result = buffer.readString(buffer.readUint16(), exactSize: true);
+            dictionary.add(result);
+            return result;
+          }
 
         case _DBJ_STRING32:
-        {
-          final result = buffer.readString(buffer.readUint32(), exactSize: true);
-          dictionary.add(result);
-          return result;
-        }
+          {
+            final result = buffer.readString(buffer.readUint32(), exactSize: true);
+            dictionary.add(result);
+            return result;
+          }
 
         case _DBJ_DICT16:
-        {
-          return dictionary[buffer.readUint16()];
-        }
+          {
+            return dictionary[buffer.readUint16()];
+          }
 
         case _DBJ_DICT24:
-        {
-          final int index = (buffer.readUint8() << 16) + buffer.readUint16();
-          return dictionary[index];
-        }
+          {
+            final int index = (buffer.readUint8() << 16) + buffer.readUint16();
+            return dictionary[index];
+          }
 
         case _DBJ_INT8:
-        {
-          return buffer.readInt8();
-        }
+          {
+            return buffer.readInt8();
+          }
 
         case _DBJ_INT32:
-        {
-          return buffer.readInt32();
-        }
+          {
+            return buffer.readInt32();
+          }
 
         case _DBJ_DOUBLE:
-        {
-          return buffer.readFloat64();
-        }
+          {
+            return buffer.readFloat64();
+          }
 
         case _DBJ_ARRAY:
-        {
-          final result = <dynamic>[];
-          while (buffer.getUint8(buffer.readOffset) != _DBJ_END)
           {
-            result.add(_decodeInternal(buffer, dictionary));
+            final result = <dynamic>[];
+            while (buffer.getUint8(buffer.readOffset) != _DBJ_END)
+            {
+              result.add(_decodeInternal(buffer, dictionary));
+            }
+            buffer.readUint8();
+            return result;
           }
-          buffer.readUint8();
-          return result;
-        }
 
         case _DBJ_MAP:
-        {
-          final result = <String, dynamic>{};
-
-          while (buffer.getUint8(buffer.readOffset) != _DBJ_END)
           {
-            final key = _decodeInternal(buffer, dictionary).toString();
-            result[key] = _decodeInternal(buffer, dictionary);
+            final result = <String, dynamic>{};
+
+            while (buffer.getUint8(buffer.readOffset) != _DBJ_END)
+            {
+              final key = _decodeInternal(buffer, dictionary).toString();
+              result[key] = _decodeInternal(buffer, dictionary);
+            }
+            buffer.readUint8();
+            return result;
           }
-          buffer.readUint8();
-          return result;
-        }
 
         default:
-        {
-          return null;
-        }
+          {
+            return null;
+          }
       }
     }
   }

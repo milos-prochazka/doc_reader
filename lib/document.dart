@@ -72,6 +72,9 @@ class Document
   /// Indexy slov v prehravanem vete => konverze pocatku slova ve vete na index slova ve spanu
   final ttsWordPosition = <int, int>{};
 
+  /// Radky prehravaneho stavu
+  var ttsPlaySpanLines = <Rect>[];
+
   /// Flag - probiha prehravani TTS
   var _ttsPlay = false;
   bool get ttsPlay => _ttsPlay;
@@ -337,7 +340,7 @@ class Document
       ttsSpanWordIndex = wordIndex + 1;
     }
 
-    _makeLines(selectedWords);
+    ttsPlaySpanLines = _makeLines(selectedWords);
 
     result.text = builder.toString();
 
@@ -436,6 +439,13 @@ class Document
         }
       );
     }
+  }
+
+  resetPaintState()
+  {
+    ttsWordPosition.clear();
+    ttsPlaySpanLines.clear();
+    ttsPlaySpanWords.clear();
   }
 }
 

@@ -261,31 +261,31 @@ class DefaultPictureProvider extends IPictureProvider
       switch (path.extension(imgPath))
       {
         case '.svg':
-          {
-            final svgText = await rootBundle.loadString(imgPath);
-            return svg.fromSvgString(svgText, imgPath);
-          }
+        {
+          final svgText = await rootBundle.loadString(imgPath);
+          return svg.fromSvgString(svgText, imgPath);
+        }
 
         case '.xml':
-          {
-            final avdText = await rootBundle.loadString(imgPath);
-            return avd.fromAvdString(avdText, imgPath);
-          }
+        {
+          final avdText = await rootBundle.loadString(imgPath);
+          return avd.fromAvdString(avdText, imgPath);
+        }
 
         default:
-          {
-            final ByteData data = await rootBundle.load(imgPath);
+        {
+          final ByteData data = await rootBundle.load(imgPath);
 
-            final Completer<ui.Image> completer = Completer();
-            ui.decodeImageFromList
-            (
-              Uint8List.view(data.buffer), (ui.Image img)
-              {
-                return completer.complete(img);
-              }
-            );
-            return completer.future;
-          }
+          final Completer<ui.Image> completer = Completer();
+          ui.decodeImageFromList
+          (
+            Uint8List.view(data.buffer), (ui.Image img)
+            {
+              return completer.complete(img);
+            }
+          );
+          return completer.future;
+        }
       }
     }
     catch (ex, stackTrace)

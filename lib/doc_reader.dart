@@ -376,24 +376,24 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
     switch (newState)
     {
       case SpeechState.stopped:
-        print('TTS STOP *****************************************');
-        document?.playNextSentence();
-        setState(() {});
-        break;
+      print('TTS STOP *****************************************');
+      document?.playNextSentence();
+      setState(() {});
+      break;
 
       case SpeechState.playing:
-        if (document != null)
+      if (document != null)
+      {
+        final document = this.document!;
+        final position = document.ttsWordPosition[start];
+        if (position != null && word.isNotEmpty)
         {
-          final document = this.document!;
-          final position = document.ttsWordPosition[start];
-          if (position != null && word.isNotEmpty)
-          {
-            figner = position;
-            print('Word position: $position *****************************************');
-            setState(() {});
-          }
+          figner = position;
+          print('Word position: $position *****************************************');
+          setState(() {});
         }
-        break;
+      }
+      break;
     }
   }
 }
@@ -459,7 +459,7 @@ class DocumentPainter extends CustomPainter
               if (document.ttsPlaySpanLines.isNotEmpty)
               {
                 ttsTop = document.ttsPlaySpanLines.first.top + offset;
-                ttsBottom = document.ttsPlaySpanLines.last.top + offset;
+                ttsBottom = document.ttsPlaySpanLines.last.bottom + offset;
                 // Zobrayeni vety - jako zvyrazenne radky
                 for (var line in document.ttsPlaySpanLines)
                 {
@@ -524,9 +524,12 @@ class DocumentPainter extends CustomPainter
           }
           else if (ttsBottom.isFinite && ttsBottom > size.height)
           {
-            state.bottomLineCorrect = math.max(ttsBottom - 2 * size.height, -0.75 * size.height);
-            document.markPosition = 0;
-            Future.microtask(() => state.toNextPage());
+            if (ttsTop > 1)
+            {
+              state.bottomLineCorrect = math.max(ttsBottom - 2 * size.height, -0.25 * size.height);
+              document.markPosition = 0;
+              Future.microtask(() => state.toNextPage());
+            }
           }
           else if (document.ttsPlaySpanIndex < state.topSpanIndex)
           {

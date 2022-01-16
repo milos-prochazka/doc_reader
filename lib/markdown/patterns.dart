@@ -69,20 +69,20 @@ class LinkPattern with AllMatches implements Pattern
     switch (type)
     {
       case TYPE_LINKED_IMAGE:
-        pattern = _linkedImageRegExp;
-        break;
+      pattern = _linkedImageRegExp;
+      break;
 
       case TYPE_LINK_REFERENCE:
-        pattern = _defineLinkOrImageRegExp;
-        break;
+      pattern = _defineLinkOrImageRegExp;
+      break;
 
       case TYPE_LINKED_IMAGE_REFERENCE:
-        //break; -- neimplementovano
+      //break; -- neimplementovano
 
       case TYPE_LINK:
       default:
-        pattern = _linkOrImageRegExp;
-        break;
+      pattern = _linkOrImageRegExp;
+      break;
     }
 
     final pMatch = pattern.firstMatch(string.substring(start)); // pattern.matchAsPrefix(string,start) nefunguje ?

@@ -259,11 +259,6 @@ class Document
       }
     }
 
-    for (var line in result)
-    {
-      print('Line : ${line.left} ${line.top} ${line.right} ${line.bottom} ');
-    }
-
     return result;
   }
 
@@ -282,7 +277,6 @@ class Document
 
     ///
     var words = getWordsInfo(ttsSpanIndex, ttsSpanIndex);
-    print("words count: ${words.length}");
 
     if (ttsSpanWordIndex >= words.length)
     {
@@ -305,7 +299,6 @@ class Document
 
       selectedWords.add(word);
       ttsWordPosition[builder.length] = wordIndex;
-      print('WORD INDEX: $wordIndex');
 
       builder.write(txt);
 

@@ -248,13 +248,6 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
 
   void onTap(double relativeX, double relativeY)
   {
-    // TODO Test -------------------------------------------------
-    if (document?.paintParameters != null)
-    {
-      final words = document!.getWordsInfo(0, 100, true);
-      print('${words.length}');
-    }
-    //------------------------------------------------------------
     appLog('onTap: relativeX=${relativeX.toStringAsFixed(4)} relativeY=${relativeY.toStringAsFixed(4)}');
 
     if (relativeY >= 0.75)

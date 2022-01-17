@@ -409,7 +409,6 @@ class DBJ
 
     for (final item in dictList)
     {
-      //print('"${item.text}":${item.count}');
       result.add(item.text);
     }
 

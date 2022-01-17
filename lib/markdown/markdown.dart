@@ -1,8 +1,8 @@
 // ignore_for_file: constant_identifier_names
 
-import 'dart:ui';
+import 'dart:math' as math;
 
-import 'package:doc_reader/objects/json_utils.dart';
+import '../objects/json_utils.dart';
 
 import 'patterns.dart';
 import '../objects/applog.dart';
@@ -96,6 +96,9 @@ final _escapedCharRegExp = RegExp(r'[\uE000-\uE0FF]', multiLine: false, unicode:
 /// Vyhledani mezer (vyhleda bloky vice mezer za sebou mezer), hlavne pro split
 final _spacesRegEx = RegExp(r'\s+', multiLine: true, unicode: true);
 
+/// Vyhledani slova
+final _wordRegEx = RegExp(r'\w+', multiLine: true, unicode: true);
+
 /// Escapovane znaky:
 /// \ E0C0
 /// * E02A
@@ -169,6 +172,8 @@ class Markdown
   final classes = <String, Map<String, Object?>>{};
   // Vsechny odstavce odsazene pomoci mezerer
   final _indentParas = <MarkdownParagraph>{};
+  // Vyslovnost slov
+  final _phoneticDictionary = _PhoneticDictionary();
 
   Markdown();
 
@@ -215,9 +220,22 @@ class Markdown
         }
         else
         {
-          // Link
-          //paragraphs.add(MarkdownParagraph.referenceLink(name, data));
-          namedLinks[name] = MarkdownWord.fromMatch(match, _StyleStack.empty);
+          switch (name.toLowerCase())
+          {
+            case '#ipa':
+            {
+              _phoneticDictionary.insertText(data);
+            }
+            break;
+
+            default:
+            {
+              // Link
+              //paragraphs.add(MarkdownParagraph.referenceLink(name, data));
+              namedLinks[name] = MarkdownWord.fromMatch(match, _StyleStack.empty);
+            }
+            break;
+          }
         }
       }
       else if (_hrRegExp.hasMatch(line))
@@ -317,6 +335,8 @@ class Markdown
     }
 
     _doProcess();
+
+    print(toString());
   }
 
   String _textLine(List<String> lines, int index)
@@ -455,7 +475,7 @@ class Markdown
           }
           break;
 
-          // Slovo أين.  أين. المدير؟
+          // Slovo
           case MarkdownWord_Type.word:
           {
             if ((word.ttsBehavior == MarkdownWord.TTS_SPEECH) &&
@@ -523,17 +543,15 @@ class Markdown
       final para = paragraphs[i];
       if (_indentParas.contains(para))
       {
-        //print('indent: $para');
         int j = i + 1;
         if (j < paragraphs.length)
         {
           if (paragraphs[j].isEmpty)
           {
-            //print('empty: ${paragraphs[j]}');
             for (; j < paragraphs.length; j++)
             {
               final nextPara = paragraphs[j];
-              if (!nextPara.isEmpty)
+              if (nextPara.isNotEmpty)
               {
                 if (_indentParas.contains(nextPara))
                 {
@@ -794,6 +812,12 @@ class Markdown
       {
         builder.write("  ${link.key}: '${link.value}'\r\n");
       }
+    }
+
+    if (_phoneticDictionary.dictionary.isNotEmpty)
+    {
+      builder.write('Phonetic:\r\n');
+      builder.write(_phoneticDictionary.toString());
     }
 
     if (insertHr)
@@ -1862,6 +1886,7 @@ class MarkdownWord
   String style = '';
   bool stickToNext = false;
   String text = '';
+  String? ttsPhonetic;
   bool lineBreak = false;
   final attribs = <String, String?>{};
   MarkdownScript script = MarkdownScript.normal;
@@ -1945,6 +1970,11 @@ class MarkdownWord
       builder.write(' tts=$ttsBehavior');
     }
 
+    if (ttsPhonetic != null)
+    {
+      builder.write(' phonetic=$ttsPhonetic');
+    }
+
     for (final attr in attribs.entries)
     {
       builder.write(' ${attr.key}=${attr.value ?? "(null)"}');
@@ -2001,6 +2031,11 @@ class MarkdownWord
       result['ttsBehavior'] = ttsBehavior;
     }
 
+    if (!compress || ttsPhonetic != null)
+    {
+      result['ttsPhonetic'] = ttsBehavior;
+    }
+
     return result;
   }
 
@@ -2039,6 +2074,7 @@ class MarkdownWord
     stickToNext = JsonUtils.getValue(json, 'stickToNext', stickToNext);
     lineBreak = JsonUtils.getValue(json, 'lineBreak', lineBreak);
     ttsBehavior = JsonUtils.getValue(json, 'ttsBehavior', ttsBehavior);
+    ttsPhonetic = JsonUtils.getValue(json, 'ttsPhonetic', ttsPhonetic);
 
     final jsonAttribs = json['attribs'];
     if (jsonAttribs is Map)
@@ -2084,3 +2120,134 @@ class _StyleStack
 
 enum MarkdownScript { normal, subscript, superscript }
 enum MarkdownDecoration { none, striketrough, underline }
+
+class _PhoneticDictionary
+{
+  static final _emptyList = <String>[];
+  var phoneticWords = <String>[];
+  final dictionary = <String, _PhoneticDictionary>{};
+
+  static List<String> toWordList(String text)
+  {
+    final matches = _wordRegEx.allMatches(text);
+
+    if (matches.isEmpty)
+    {
+      return _emptyList;
+    }
+    else
+    {
+      final result = <String>[];
+
+      for (final match in matches)
+      {
+        result.add((match[0] ?? '').toLowerCase());
+      }
+
+      return result;
+    }
+  }
+
+  static String toWord(String text)
+  {
+    final match = _wordRegEx.firstMatch(text);
+    return (match != null) ? (match[0] ?? '').toLowerCase() : '';
+  }
+
+  insertText(String param)
+  {
+    final phtx = param.split('=');
+
+    if (phtx.length >= 2)
+    {
+      final phonetic = toWordList(phtx[1]);
+      final text = toWordList(phtx[0]);
+      var dict = this;
+
+      for (final txtWord in text)
+      {
+        var nextDict = dict.dictionary[txtWord];
+        if (nextDict == null)
+        {
+          nextDict = _PhoneticDictionary();
+          dict.dictionary[txtWord] = nextDict;
+        }
+        dict = nextDict;
+        if (txtWord == text.last)
+        {
+          dict.phoneticWords = phonetic;
+        }
+      }
+    }
+  }
+
+  translatePhonetic(List<MarkdownWord> words)
+  {
+    for (var wordIndex = 0; wordIndex < words.length; wordIndex++)
+    {
+      var dict = this;
+      final startIndex = wordIndex;
+      var index = wordIndex;
+      bool repeat = true;
+
+      while (repeat && index < words.length)
+      {
+        repeat = false;
+        final word = words[index];
+
+        if (word.type == MarkdownWord_Type.word)
+        {
+          final nextDict = dict.dictionary[toWord(word.text)];
+          if (nextDict != null)
+          {
+            dict = nextDict;
+            index++;
+            repeat = true;
+          }
+        }
+      }
+
+      if (index > startIndex)
+      {
+        /*final maxIndex = math.max(index-startIndex,dict.phoneticWords.length);
+
+        for (var i=0;i<maxIndex;i++)
+        {
+
+        }*/
+      }
+    }
+  }
+
+  _toString(StringBuffer buffer, String indent)
+  {
+    if (phoneticWords.isNotEmpty)
+    {
+      buffer.write("$indent'");
+      for (final word in phoneticWords)
+      {
+        buffer.write(word);
+        if (word != phoneticWords.last)
+        {
+          buffer.write(' ');
+        }
+      }
+      buffer.write("'\r\n");
+    }
+
+    for (final childDict in dictionary.entries)
+    {
+      buffer.write('$indent${childDict.key}:\r\n');
+      childDict.value._toString(buffer, indent + '  ');
+    }
+  }
+
+  @override
+  String toString()
+  {
+    final builder = StringBuffer();
+    _toString(builder, '');
+
+    return builder.toString();
+  }
+}

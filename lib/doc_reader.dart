@@ -369,24 +369,24 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
     switch (newState)
     {
       case SpeechState.stopped:
-      print('TTS STOP *****************************************');
-      document?.playNextSentence();
-      setState(() {});
-      break;
+        print('TTS STOP *****************************************');
+        document?.playNextSentence();
+        setState(() {});
+        break;
 
       case SpeechState.playing:
-      if (document != null)
-      {
-        final document = this.document!;
-        final position = document.ttsWordPosition[start];
-        if (position != null && word.isNotEmpty)
+        if (document != null)
         {
-          figner = position;
-          print('Word position: $position *****************************************');
-          setState(() {});
+          final document = this.document!;
+          final position = document.ttsWordPosition[start];
+          if (position != null && word.isNotEmpty)
+          {
+            figner = position;
+            print('Word position: $position *****************************************');
+            setState(() {});
+          }
         }
-      }
-      break;
+        break;
     }
   }
 }

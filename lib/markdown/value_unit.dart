@@ -32,13 +32,13 @@ class ValueUnit
       switch (unit)
       {
         case 'em':
-        return emSize * value!;
+          return emSize * value!;
 
         case '%':
-        return 0.01 * screenSize * value!;
+          return 0.01 * screenSize * value!;
 
         default:
-        return value;
+          return value;
       }
     }
     else

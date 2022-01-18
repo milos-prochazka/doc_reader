@@ -128,7 +128,7 @@ void appLog_debug([Object? msg])
 void appLog_verbose([Object? msg])
 {
 //#if -DISABLE_LOG
-  if ((logLevel & LOG_VERBOSE)!=0)
+  if ((logLevel & LOG_VERBOSE) != 0)
   {
     log(msg?.toString() ?? '', name: getLocation());
   }

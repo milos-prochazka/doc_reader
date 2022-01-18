@@ -9,7 +9,7 @@ abstract class IDocumentSpan
   void paint(PaintParameters parameters, double xOffset, double yOffset);
   void calcSize(PaintParameters parameters);
   double correctYPosition(double yPosition, bool alignTop);
-  void getSpanWords(List<DocumentWordInfo> words, PaintParameters parameters, int id, bool textOnly);
+  void getSpanWords(List<DocumentWordInfo> words, PaintParameters parameters, int id, bool speech);
 }
 
 class DocumentSpanContainer

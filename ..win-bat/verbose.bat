@@ -1,2 +1,2 @@
 cd ..
-dart-prep +VERBOSE +DEBUG .\ 
+dart-prep +VERBOSE +DEBUG +DESKTOP .\ 

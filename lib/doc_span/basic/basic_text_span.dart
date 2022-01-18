@@ -127,7 +127,7 @@ class BasicTextSpan implements IDocumentSpan
   }
 
   @override
-  void getSpanWords(List<DocumentWordInfo> words, PaintParameters parameters, int id, bool textOnly)
+  void getSpanWords(List<DocumentWordInfo> words, PaintParameters parameters, int id, bool speech)
   {
     // TODO: implement getSpanWords
   }

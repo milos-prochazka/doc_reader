@@ -248,7 +248,9 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
 
   void onTap(double relativeX, double relativeY)
   {
-    appLog('onTap: relativeX=${relativeX.toStringAsFixed(4)} relativeY=${relativeY.toStringAsFixed(4)}');
+//#verbose
+    appLog_verbose('onTap: relativeX=${relativeX.toStringAsFixed(4)} relativeY=${relativeY.toStringAsFixed(4)}');
+//#end VERBOSE line:251
 
     if (relativeY >= 0.75)
     {
@@ -281,7 +283,9 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
       (
         ()
         {
-          appLog('onTouchMove: deltaX=$deltaX deltaY=$deltaY');
+//#verbose
+          appLog_verbose('onTouchMove: deltaX=$deltaX deltaY=$deltaY');
+//#end VERBOSE line:286
           if (document?.markPosition.isFinite ?? false)
           {
             document?.markPosition += deltaY;
@@ -369,24 +373,30 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
     switch (newState)
     {
       case SpeechState.stopped:
-        print('TTS STOP *****************************************');
-        document?.playNextSentence();
-        setState(() {});
-        break;
+      print('TTS STOP *****************************************');
+
+      document?.playNextSentence();
+      figner = -1;
+      setState(() {});
+      break;
 
       case SpeechState.playing:
-        if (document != null)
+      if (document != null)
+      {
+        final document = this.document!;
+        final position = document.ttsWordPosition[start];
+        if (position != null && word.isNotEmpty)
         {
-          final document = this.document!;
-          final position = document.ttsWordPosition[start];
-          if (position != null && word.isNotEmpty)
-          {
-            figner = position;
-            print('Word position: $position *****************************************');
-            setState(() {});
-          }
+          figner = position;
+          print('Word position: $position *****************************************');
+          setState(() {});
         }
-        break;
+        else
+        {
+          print('Word err pos: $start ');
+        }
+      }
+      break;
     }
   }
 }
@@ -449,16 +459,16 @@ class DocumentPainter extends CustomPainter
 
             if (spanIndex == document.ttsSpanIndex)
             {
-              if (document.ttsPlaySpanLines.isNotEmpty)
+              // Zobrayeni vety - jako zvyrazenne radky
+              /*if (document.ttsPlaySpanLines.isNotEmpty)
               {
                 ttsTop = document.ttsPlaySpanLines.first.top + offset;
                 ttsBottom = document.ttsPlaySpanLines.last.bottom + offset;
-                // Zobrayeni vety - jako zvyrazenne radky
                 for (var line in document.ttsPlaySpanLines)
                 {
                   canvas.drawRect(line.translate(0, offset), markPaint);
                 }
-              }
+              }*/
 
               // Zobrazeni vety - jako zvyraznena slova
               /*for (var i in document.ttsWordPosition.values)
@@ -476,8 +486,11 @@ class DocumentPainter extends CustomPainter
                 // Ukazatel na slovo
                 final info = document.ttsPlaySpanWords[state.figner];
                 final rect = info.rect.translate(0, offset);
-                //ttsTop = rect.top;
-                //ttsBottom = rect.bottom + 32;
+                if (ttsTop.isInfinite)
+                {
+                  ttsTop = rect.top;
+                  ttsBottom = rect.bottom + 32;
+                }
 
                 canvas.drawRect(Rect.fromLTWH(rect.left, rect.bottom - 10, rect.width, 10), markPaint);
               }

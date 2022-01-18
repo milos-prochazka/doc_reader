@@ -31,7 +31,7 @@ final _defaultConfig =
   {
     'p':
     {
-      'fontSize': 60,
+      'fontSize': 20,
       'fontStyle': 'normal', // normal, bold, bold_italic
     },
     'qaqa': {'color': 'cyan', 'borderColor': 'blue'},
@@ -281,17 +281,17 @@ class MarkdownTextConfig
         switch (word?.style.length)
         {
           case 1:
-            styleInfo.fontStyle = FontStyle.italic;
-            break;
+          styleInfo.fontStyle = FontStyle.italic;
+          break;
 
           case 2:
-            styleInfo.fontWeight = FontWeight.bold;
-            break;
+          styleInfo.fontWeight = FontWeight.bold;
+          break;
 
           case 3:
-            styleInfo.fontStyle = FontStyle.italic;
-            styleInfo.fontWeight = FontWeight.bold;
-            break;
+          styleInfo.fontStyle = FontStyle.italic;
+          styleInfo.fontWeight = FontWeight.bold;
+          break;
         }
       }
 
@@ -307,25 +307,25 @@ class MarkdownTextConfig
         {
           case MarkdownScript.subscript:
           case MarkdownScript.superscript:
-            styleInfo.fontSize *= 0.58;
-            break;
+          styleInfo.fontSize *= 0.58;
+          break;
 
           default:
-            break;
+          break;
         }
 
         switch (word?.decoration)
         {
           case MarkdownDecoration.striketrough:
-            styleInfo.textDecoration = TextDecoration.lineThrough;
-            break;
+          styleInfo.textDecoration = TextDecoration.lineThrough;
+          break;
 
           case MarkdownDecoration.underline:
-            styleInfo.textDecoration = TextDecoration.underline;
-            break;
+          styleInfo.textDecoration = TextDecoration.underline;
+          break;
 
           default:
-            break;
+          break;
         }
 
         if (linkStyle)

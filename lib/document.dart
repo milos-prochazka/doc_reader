@@ -63,7 +63,7 @@ class Document
   /// Index slova prvniho slova ktere bude preteno
   int ttsSpanWordIndex = 0;
 
-  /// Index spanu ktery je cten prehravan
+  /// Index spanu ktery je prehravan
   int ttsPlaySpanIndex = -1;
 
   /// Slova spanu ktery se prehrava
@@ -298,9 +298,17 @@ class Document
       final txt = word.text ?? '';
 
       selectedWords.add(word);
-      ttsWordPosition[builder.length] = wordIndex;
 
-      builder.write(txt);
+      if (txt.isNotEmpty)
+      {
+        if (builder.isNotEmpty)
+        {
+          builder.write(' ');
+        }
+
+        ttsWordPosition[builder.length] = wordIndex;
+        builder.write(txt);
+      }
 
       if (builder.length > 300)
       {
@@ -321,10 +329,6 @@ class Document
       if (word.isTssEnd)
       {
         break;
-      }
-      else
-      {
-        builder.write(' ');
       }
     }
 

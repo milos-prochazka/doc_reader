@@ -415,7 +415,7 @@ class MarkdownTextSpan implements IDocumentSpan
     markdown.writeMarkdownString(text);
 
     final textConfig = document.config as MarkdownTextConfig;
-    //print(markdown.toString());
+    print('#############################\r\n${markdown.toString()}\r\n#####################');
 
     // TODO Test smazat
 //#if 0

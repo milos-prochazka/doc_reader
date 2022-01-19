@@ -684,7 +684,7 @@ class Markdown
       }
     }
 
-    // Spocitani urvni odsazeni a poradi v seznamech ¡¡
+    // Spocitani urovni odsazeni a poradi v seznamech ¡¡
     MarkdownListIndentation.create(paragraphs);
   }
 
@@ -1865,9 +1865,11 @@ class MarkdownListIndentation
     final MarkdownListIndentation? result;
 
     final matches = _headRegExp.allMatches(text);
-    if (matches.length > 0)
+    if (matches.isNotEmpty)
     {
-      result = MarkdownListIndentation(text, matches.last.start);
+      final m = matches.last.group(0) ?? '';
+
+      result = MarkdownListIndentation(text, matches.last.start + m.length - (m.trimLeft().length));
     }
     else
     {

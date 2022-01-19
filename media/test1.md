@@ -77,3 +77,16 @@ a. Pismeno 7
 
 > S čarou na začátku
 Další řádek s čarou na začátku
+
+-----
+
+=====
+
+*****
+
+### 19.1.2022 
+* Zobrazení přošlo
+* Zakrývání označení přehrávaného TTS textu rámečkem textu. 
+* Zvážit umístění a velikost odrážek
+* 19.1.2022 - Tečky překládá jako jednoduché apostrofy
+  

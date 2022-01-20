@@ -475,6 +475,11 @@ class Markdown
               if (image != null)
               {
                 word.attribs.addAll(image.attribs);
+                final imgSrc = image.attribs['link'];
+                if (imgSrc != null)
+                {
+                  word.attribs['image'] = imgSrc;
+                }
               }
               else
               {

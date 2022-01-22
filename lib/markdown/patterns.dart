@@ -56,7 +56,7 @@ class LinkPattern with AllMatches implements Pattern
   /// Dekodovani parametru obrazku
   /// 10emx20em left .myclass   => gr1=10 gr3=em gr4=20 gr6=em gr7=left gr8=.myclass
   static final _imageParamsRegExp =
-  RegExp(r'\s*(\-?\d+(\.\d+)?)?\s*([\w\%]*)\s*x\s*(\-?\d+(\.\d+)?)?\s*([\w*\%]*)\s*([\.\w]*)\s*([\.\w]*)?');
+  RegExp(r'\s*(\-?\d+(\.\d+)?)?\s*([\w\%]*)\s*x\s*(\-?\d+(\.\d+)?)?\s*([\w*\%]*)\s*([\.\w\-]*)\s*([\.\w\-]*)?');
   final int type;
 
   LinkPattern(this.type);

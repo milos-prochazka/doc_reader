@@ -61,12 +61,12 @@ class DocTouch
   void onPanDown(DragDownDetails details)
   {
 //#verbose
-    appLog_verbose
-    (
-      'onPanDown:'
-      'lx=${details.localPosition.dx.toStringAsFixed(1)} ly=${details.localPosition.dy.toStringAsFixed(1)} '
-      'gx=${details.globalPosition.dx.toStringAsFixed(1)} gy=${details.globalPosition.dy.toStringAsFixed(1)}'
-    );
+//##    appLog_verbose
+//##    (
+//##      'onPanDown:'
+//##      'lx=${details.localPosition.dx.toStringAsFixed(1)} ly=${details.localPosition.dy.toStringAsFixed(1)} '
+//##      'gx=${details.globalPosition.dx.toStringAsFixed(1)} gy=${details.globalPosition.dy.toStringAsFixed(1)}'
+//##    );
 //#end VERBOSE line:63
 
     _down(details.localPosition);
@@ -75,13 +75,13 @@ class DocTouch
   void onPanStart(DragStartDetails details)
   {
 //#verbose
-    appLog_verbose
-    (
-      'onPanStart:'
-      'lx=${details.localPosition.dx.toStringAsFixed(1)} ly=${details.localPosition.dy.toStringAsFixed(1)} '
-      'gx=${details.globalPosition.dx.toStringAsFixed(1)} gy=${details.globalPosition.dy.toStringAsFixed(1)} '
-      'kind=${details.kind ?? 'no kind'} timestamp=${details.sourceTimeStamp}'
-    );
+//##    appLog_verbose
+//##    (
+//##      'onPanStart:'
+//##      'lx=${details.localPosition.dx.toStringAsFixed(1)} ly=${details.localPosition.dy.toStringAsFixed(1)} '
+//##      'gx=${details.globalPosition.dx.toStringAsFixed(1)} gy=${details.globalPosition.dy.toStringAsFixed(1)} '
+//##      'kind=${details.kind ?? 'no kind'} timestamp=${details.sourceTimeStamp}'
+//##    );
 //#end VERBOSE line:77
     _down(details.localPosition);
   }
@@ -89,14 +89,14 @@ class DocTouch
   void onPanUpdate(DragUpdateDetails details)
   {
 //#verbose
-    appLog_verbose
-    (
-      'onPanUpdate:'
-      'lx=${details.localPosition.dx.toStringAsFixed(1)} ly=${details.localPosition.dy.toStringAsFixed(1)} '
-      'gx=${details.globalPosition.dx.toStringAsFixed(1)} gy=${details.globalPosition.dy.toStringAsFixed(1)} '
-      'dx=${details.delta.dx.toStringAsFixed(1)} dy=${details.delta.dy.toStringAsFixed(1)} '
-      'time=${details.sourceTimeStamp}'
-    );
+//##    appLog_verbose
+//##    (
+//##      'onPanUpdate:'
+//##      'lx=${details.localPosition.dx.toStringAsFixed(1)} ly=${details.localPosition.dy.toStringAsFixed(1)} '
+//##      'gx=${details.globalPosition.dx.toStringAsFixed(1)} gy=${details.globalPosition.dy.toStringAsFixed(1)} '
+//##      'dx=${details.delta.dx.toStringAsFixed(1)} dy=${details.delta.dy.toStringAsFixed(1)} '
+//##      'time=${details.sourceTimeStamp}'
+//##    );
 //#end VERBOSE line:91
 
     if (_downPoint.isFinite)
@@ -114,8 +114,8 @@ class DocTouch
   void onPanEnd(DragEndDetails details)
   {
 //#verbose
-    appLog_verbose('onPanEnd: '
-      'velocity=${details.velocity} primaryVelocity=${details.primaryVelocity}');
+//##    appLog_verbose('onPanEnd: '
+//##      'velocity=${details.velocity} primaryVelocity=${details.primaryVelocity}');
 //#end VERBOSE line:116
     _up(Offset.infinite, details.velocity);
   }
@@ -123,7 +123,7 @@ class DocTouch
   void _doTap(double relativeX, double relativeY)
   {
 //#verbose
-    appLog_verbose('doTap: relativeX=${relativeX.toStringAsFixed(4)} relativeY=${relativeY.toStringAsFixed(4)}');
+//##    appLog_verbose('doTap: relativeX=${relativeX.toStringAsFixed(4)} relativeY=${relativeY.toStringAsFixed(4)}');
 //#end VERBOSE line:125
     document.onTap?.call(relativeX, relativeY);
   }
@@ -131,7 +131,7 @@ class DocTouch
   void onTap()
   {
 //#verbose
-    appLog_verbose('onTap:');
+//##    appLog_verbose('onTap:');
 //#end VERBOSE line:133
     if (_downPoint.isFinite && document.actualWidgetSize.isFinite)
     {
@@ -143,12 +143,12 @@ class DocTouch
   void onTapDown(TapDownDetails details)
   {
 //#verbose
-    appLog_verbose
-    (
-      'onTapDown:'
-      'lx=${details.localPosition.dx.toStringAsFixed(1)} ly=${details.localPosition.dy.toStringAsFixed(1)} '
-      'gx=${details.globalPosition.dx.toStringAsFixed(1)} gy=${details.globalPosition.dy.toStringAsFixed(1)}'
-    );
+//##    appLog_verbose
+//##    (
+//##      'onTapDown:'
+//##      'lx=${details.localPosition.dx.toStringAsFixed(1)} ly=${details.localPosition.dy.toStringAsFixed(1)} '
+//##      'gx=${details.globalPosition.dx.toStringAsFixed(1)} gy=${details.globalPosition.dy.toStringAsFixed(1)}'
+//##    );
 //#end VERBOSE line:145
 
     _down(details.localPosition);
@@ -163,13 +163,13 @@ class DocTouch
   void onTapUp(TapUpDetails details)
   {
 //#verbose
-    appLog_verbose
-    (
-      'onTapUp:'
-      'lx=${details.localPosition.dx.toStringAsFixed(1)} ly=${details.localPosition.dy.toStringAsFixed(1)} '
-      'gx=${details.globalPosition.dx.toStringAsFixed(1)} gy=${details.globalPosition.dy.toStringAsFixed(1)} '
-      'kind=${details.kind} '
-    );
+//##    appLog_verbose
+//##    (
+//##      'onTapUp:'
+//##      'lx=${details.localPosition.dx.toStringAsFixed(1)} ly=${details.localPosition.dy.toStringAsFixed(1)} '
+//##      'gx=${details.globalPosition.dx.toStringAsFixed(1)} gy=${details.globalPosition.dy.toStringAsFixed(1)} '
+//##      'kind=${details.kind} '
+//##    );
 //#end VERBOSE line:165
 
     if (_downPoint.isFinite && document.actualWidgetSize.isFinite)

@@ -211,7 +211,7 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
     animationValue = document.actualWidgetSize.height - document.markPosition.abs();
     if (direction > 0)
     {
-      if (-touchDownCorrect+8 < document.actualWidgetSize.height)
+      if (-touchDownCorrect + 8 < document.actualWidgetSize.height)
       {
         animationValue += touchDownCorrect;
       }
@@ -252,7 +252,7 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
   void onTap(double relativeX, double relativeY)
   {
 //#verbose
-//##    appLog_verbose('onTap: relativeX=${relativeX.toStringAsFixed(4)} relativeY=${relativeY.toStringAsFixed(4)}');
+    appLog_verbose('onTap: relativeX=${relativeX.toStringAsFixed(4)} relativeY=${relativeY.toStringAsFixed(4)}');
 //#end VERBOSE line:251
 
     if (relativeY >= 0.75)
@@ -287,7 +287,7 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
         ()
         {
 //#verbose
-//##          appLog_verbose('onTouchMove: deltaX=$deltaX deltaY=$deltaY');
+          appLog_verbose('onTouchMove: deltaX=$deltaX deltaY=$deltaY');
 //#end VERBOSE line:286
           if (document?.markPosition.isFinite ?? false)
           {

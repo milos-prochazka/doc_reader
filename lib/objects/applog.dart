@@ -22,32 +22,32 @@ String getLocation()
   final stack = StackTrace.current.toString();
 
 //#if WEB
-//##  {
-//##    int start = 0;
-//##    int end = 0;
-//##
-//##    for (int c = 0; c < 4; c++)
-//##    {
-//##      end = stack.indexOf('\n', start);
-//##      if (end == -1)
-//##      {
-//##        end = stack.length;
-//##        break;
-//##      }
-//##      else
-//##      {
-//##        if (c < 3)
-//##        {
-//##          start = end + 1;
-//##        }
-//##      }
-//##    }
-//##
-//##    final stackLine = stack.substring(start, end);
-//##
-//##    return stackLine;
-//##  }
-//##//#else
+  {
+    int start = 0;
+    int end = 0;
+
+    for (int c = 0; c < 4; c++)
+    {
+      end = stack.indexOf('\n', start);
+      if (end == -1)
+      {
+        end = stack.length;
+        break;
+      }
+      else
+      {
+        if (c < 3)
+        {
+          start = end + 1;
+        }
+      }
+    }
+
+    final stackLine = stack.substring(start, end);
+
+    return stackLine;
+  }
+//#else
   {
     final m1 = _stackRegEx1.firstMatch(stack);
     String? name;
@@ -59,8 +59,8 @@ String getLocation()
       if (m2 != null)
       {
 //#if FULL_NAME
-//##        name = m2[0];
-//##//#else
+        name = m2[0];
+//#else
         final s = m2.input.substring(m2.start, m2.end);
         final p = s.lastIndexOf('/');
         name = (p > 0) ? s.substring(p + 1) : s;
@@ -125,15 +125,15 @@ void appLog_debug([Object? msg])
 }
 
 //#if VERBOSE
-//##void appLog_verbose([Object? msg])
-//##{
-//##//#if -DISABLE_LOG
-//##  if ((logLevel & LOG_VERBOSE) != 0)
-//##  {
-//##    log(msg?.toString() ?? '', name: getLocation());
-//##  }
-//##//#end if line:123
-//##}
+void appLog_verbose([Object? msg])
+{
+//#if -DISABLE_LOG
+  if ((logLevel & LOG_VERBOSE) != 0)
+  {
+    log(msg?.toString() ?? '', name: getLocation());
+  }
+//#end if line:123
+}
 //#end if line:127
 
 void appLogEx(Object ex, {String? msg, Object? stackTrace})

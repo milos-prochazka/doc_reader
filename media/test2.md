@@ -38,3 +38,22 @@
 
 **\!\[radka\](pngegg.png ( x 3em fill-line))**
 ![radka](pngegg.png ( x 3em fill-line))
+
+Tohle je obrázek ![vykres](pngegg.png ( x 1em )) uložený  v textu a vysoký 1em.
+
+Tohle je obrázek ![vykres](pngegg.png ( x 2em )) uložený  v textu a vysoký 2em.
+
+# Řádek obrázků
+
+![radka](pngegg.png ( x 3em fill-line))
+![radka](pngegg.png ( x 3em line))
+![radka](pngegg.png ( x 3em center-line))
+![radka](pngegg.png ( x 3em tight-line))
+![radka](pngegg.png ( x 3em tight-center-line))
+
+![radka](vector.svg ( x 3em fill-line))
+![radka](vector.svg ( x 3em line))
+![radka](vector.svg ( x 3em center-line))
+![radka](vector.svg ( x 3em tight-line))
+![radka](vector.svg ( x 3em tight-center-line))
+

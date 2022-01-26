@@ -253,7 +253,7 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
   {
 //#verbose
     appLog_verbose('onTap: relativeX=${relativeX.toStringAsFixed(4)} relativeY=${relativeY.toStringAsFixed(4)}');
-//#end VERBOSE line:251
+//#end VERBOSE line:254
 
     if (relativeY >= 0.75)
     {
@@ -288,7 +288,7 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
         {
 //#verbose
           appLog_verbose('onTouchMove: deltaX=$deltaX deltaY=$deltaY');
-//#end VERBOSE line:286
+//#end VERBOSE line:289
           if (document?.markPosition.isFinite ?? false)
           {
             document?.markPosition += deltaY;
@@ -376,24 +376,24 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
     switch (newState)
     {
       case SpeechState.stopped:
-        print('TTS STOP *****************************************');
+      print('TTS STOP *****************************************');
 
-        document?.playNextSentence();
-        figner = -1;
-        setState(() {});
-        break;
+      document?.playNextSentence();
+      figner = -1;
+      setState(() {});
+      break;
 
       case SpeechState.playing:
-        if (document != null)
+      if (document != null)
+      {
+        final document = this.document!;
+        final position = document.ttsWordPosition[start];
+        if (position != null && word.isNotEmpty)
         {
-          final document = this.document!;
-          final position = document.ttsWordPosition[start];
-          if (position != null && word.isNotEmpty)
-          {
-            figner = position;
-            print('Word position: $position *****************************************');
-            setState(() {});
-          }
+          figner = position;
+          print('Word position: $position *****************************************');
+          setState(() {});
+        }
         else
         {
           print('Word err pos: $start ');

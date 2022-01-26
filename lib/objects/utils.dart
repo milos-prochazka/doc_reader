@@ -121,3 +121,74 @@ dynamic clone(dynamic value)
 
   return result;
 }
+
+/// Nastaveni dynamic objektu
+/// - Provede nastaveni [dest] objektu ze [source].
+/// - Pokud je [dest] i [source] typu Map provede kopirovani objektu.
+///   Pokud [dest] i [source] obsahuji objekt se stejnym klicem provade se vnorene kopirovani do tohoto objektu
+/// - Pokud je [dest] i [source] typu List provede se pridani dalsi polozek do List.
+/// - V jinych pripadech se vraci [source]
+/// - [dest] se zmeni (v pripade kopirovani Map, nebo List)
+/// - [source] se nemeni
+/// - Vraci se vyseledek (puvodni [dest] nebo [soure] podle typu)
+dynamic setDynamic(dynamic dest, dynamic source)
+{
+  dynamic result;
+  if (dest is Map)
+  {
+    if (source is Map)
+    {
+      if (dest.isEmpty)
+      {
+        result = source;
+      }
+      else
+      {
+        result = dest;
+        for (var item in source.entries)
+        {
+          if (dest.containsKey(item.key))
+          {
+            setDynamic(dest[item.key], item.value);
+          }
+          else
+          {
+            dest[item.key] = item.value;
+          }
+        }
+      }
+    }
+    else
+    {
+      result = source;
+    }
+  }
+  else if (dest is List)
+  {
+    if (source is List)
+    {
+      if (dest.isEmpty)
+      {
+        result = source;
+      }
+      else
+      {
+        result = dest;
+        for (var item in source)
+        {
+          dest.add(item);
+        }
+      }
+    }
+    else
+    {
+      result = source;
+    }
+  }
+  else
+  {
+    result = source;
+  }
+
+  return result;
+}

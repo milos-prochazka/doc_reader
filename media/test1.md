@@ -11,6 +11,7 @@ Head1 uderline
 Head2 underline
 ---------------
 
+
 # Nadpis
 A text za ním.
 Další řádek s mezerami na konci.   
@@ -39,7 +40,7 @@ Text na konci test1.md
 - odrážka.
 odrážka druhy radek
 - dalsi odrářka
-    - vyšší úroveň
+    - vyšší úroveň 
     - další řádek vyšší úrovně
         - třetí úroveň
     - návrat na dvojku

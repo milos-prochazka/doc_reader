@@ -1,1 +1,1 @@
-{"para":[{"class":"p","words":[{"lineBreak":true,"ttsBehavior":0}],"lastInClass":false},{"class":"p","words":[{"text":"Text"},{"text":"dokumentu","ttsBehavior":0}],"firstInClass":false,"lastInClass":false},{"class":"p","firstInClass":false}],"metadata":{"test":"qaqa","dalsi_klic":"haha maha","vice znaku v klici":["polozka 1","polozka 2","polozka 3"]}}
+{"para":[{"class":"p","words":[{"text":"Text"},{"text":"dokumentu","ttsBehavior":0}],"lastInClass":false},{"class":"p","firstInClass":false}],"metadata":{"klic1":"hodnota 1","klic2":"hodnota 2"}}

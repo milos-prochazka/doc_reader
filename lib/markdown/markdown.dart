@@ -11,6 +11,7 @@ import '../objects/applog.dart';
 import '../objects/text_load_provider.dart';
 import '../objects/utils.dart';
 import 'package:tuple/tuple.dart';
+import 'package:path/path.dart' as path;
 
 /// Deleni textu na radky
 final _newLineRegex = RegExp(r'\r\n|\n|\r]', multiLine: true);
@@ -100,6 +101,7 @@ final _spacesRegEx = RegExp(r'\s+', multiLine: true, unicode: true);
 
 /// Yaml metadata zacatek/konec yaml metadat (radek --- nebo ...)
 final _yamlMetaRegEx = RegExp(r'^(\-{3}|\.{3})\s*$');
+final _yamlMetaRegExMultiline = RegExp(r'^(\-{3}|\.{3})\s*$', multiLine: true);
 
 /// Vyhledani slova
 final _wordRegEx = RegExp
@@ -191,6 +193,7 @@ class Markdown
 
   writeMarkdownString(String text)
   {
+    var freeLines = true;
     var blockClass = '';
     final lines = detab(MarkdownParagraph.escape(text), 4).split(_newLineRegex);
     //final lines = textToLines(text);
@@ -198,183 +201,198 @@ class Markdown
     for (int lineIndex = 0; lineIndex < lines.length; lineIndex++)
     {
       String line = lines[lineIndex].trimRight();
-      print(line);
 
       appLog_debug('line:"$line"');
 
       Match? match;
 
-      if ((match = _refLinkLinkRegExp.firstMatch(line)) != null)
+      if (!freeLines || line.isNotEmpty)
       {
-        // Pojmenovany link nebo definice tridy
-        var name = match![LinkPattern.GR_ALT] ?? '';
-        final data = (match[LinkPattern.GR_URL_PART] ?? '').trim();
-        if (name.startsWith('.'))
+        freeLines = false;
+
+        if ((match = _refLinkLinkRegExp.firstMatch(line)) != null)
         {
-          // Trida
-          name = name.substring(1);
-          final clsData = ' ' + data;
-          final attributes = _namedAttributeRegExp.allMatches(clsData).toList();
-          final clsAttr = classes[name] ?? <String, Object?>{};
-
-          for (var i = 0; i < attributes.length; i++)
+          // Pojmenovany link nebo definice tridy
+          var name = match![LinkPattern.GR_ALT] ?? '';
+          final data = (match[LinkPattern.GR_URL_PART] ?? '').trim();
+          if (name.startsWith('.'))
           {
-            final attr = attributes[i];
-            final end = (i + 1) < attributes.length ? attributes[i + 1].start : clsData.length;
-            //print ((attr.group(1)??'<>') + '=' + (attr.group(2)??'<>'));
-            final attrName = MarkdownParagraph.unescape(attr.group(1) ?? '');
-            final attrValue = MarkdownParagraph.unescape(attr.input.substring(attr.end, end).trim());
+            // Trida
+            name = name.substring(1);
+            final clsData = ' ' + data;
+            final attributes = _namedAttributeRegExp.allMatches(clsData).toList();
+            final clsAttr = classes[name] ?? <String, Object?>{};
 
-            clsAttr[attrName] = attrValue;
+            for (var i = 0; i < attributes.length; i++)
+            {
+              final attr = attributes[i];
+              final end = (i + 1) < attributes.length ? attributes[i + 1].start : clsData.length;
+              //print ((attr.group(1)??'<>') + '=' + (attr.group(2)??'<>'));
+              final attrName = MarkdownParagraph.unescape(attr.group(1) ?? '');
+              final attrValue = MarkdownParagraph.unescape(attr.input.substring(attr.end, end).trim());
+
+              clsAttr[attrName] = attrValue;
+            }
+
+            classes[name] = clsAttr;
+          }
+          else
+          {
+            switch (name.toLowerCase())
+            {
+              case '#ipa':
+              {
+                _phoneticDictionary.insertText(data);
+              }
+              break;
+
+              default:
+              {
+                // Link
+                //paragraphs.add(MarkdownParagraph.referenceLink(name, data));
+                namedLinks[name] = MarkdownWord.fromMatch(match, _StyleStack.empty);
+              }
+              break;
+            }
+          }
+        }
+        else if ((match = _yamlMetaRegEx.firstMatch(line))?.group(0) == '---' &&
+          (lineIndex == 0 || lines[lineIndex - 1].trim().isEmpty))
+        {
+          // yaml metadata
+          int lastYaml = lineIndex + 1;
+
+          for (; lastYaml < lines.length; lastYaml++)
+          {
+            if ((match = _yamlMetaRegEx.firstMatch(lines[lastYaml])) != null)
+            {
+              break;
+            }
           }
 
-          classes[name] = clsAttr;
-        }
-        else
-        {
-          switch (name.toLowerCase())
+          var builder = StringBuffer();
+          for (int i = lineIndex + 1; i < lastYaml; i++)
           {
-            case '#ipa':
+            builder.writeln(lines[i]);
+//#if VERBOSE
+            appLog_verbose('yaml line:${lines[i]}');
+//#end if line:271
+          }
+
+          lineIndex = lastYaml;
+          try
+          {
+            var yamlString = builder.toString();
+            var yaml = loadYaml
+            (
+              yamlString,
+              recover: true,
+            );
+            if (yaml is Map)
             {
-              _phoneticDictionary.insertText(data);
+              metadata = setDynamic(metadata, yaml);
+              freeLines = true;
+            }
+          }
+          catch (ex, stackTrace)
+          {
+            appLogEx(ex, stackTrace: stackTrace);
+          }
+        }
+        else if (_hrRegExp.hasMatch(line))
+        {
+          final ch = line.trim()[0];
+          switch (ch)
+          {
+            case '=':
+            case '-':
+            if (paragraphs.isNotEmpty && paragraphs.last.isNotEmpty)
+            {
+              paragraphs.last.masterClass = ch == '=' ? 'h1' : 'h2';
+            }
+            else
+            {
+              paragraphs.add(MarkdownParagraph(text: '', pargraphClass: ''.padLeft(3, ch)));
             }
             break;
 
             default:
-            {
-              // Link
-              //paragraphs.add(MarkdownParagraph.referenceLink(name, data));
-              namedLinks[name] = MarkdownWord.fromMatch(match, _StyleStack.empty);
-            }
+            paragraphs.add(MarkdownParagraph(text: '', pargraphClass: ''.padLeft(3, ch)));
             break;
           }
         }
-      }
-      else if ((match = _yamlMetaRegEx.firstMatch(line))?.group(0) == '---' &&
-        (lineIndex == 0 || lines[lineIndex].trim().isEmpty))
-      {
-        // yaml metadata
-        int lastYaml = lineIndex + 1;
-
-        for (; lastYaml < lines.length; lastYaml++)
+        else if ((match = _blockRegExp.firstMatch(line)) != null)
         {
-          if ((match = _yamlMetaRegEx.firstMatch(lines[lastYaml])) != null)
+          final cls = match?.group(2) ?? '';
+
+          if (cls.isEmpty)
           {
-            break;
-          }
-        }
-
-        var builder = StringBuffer();
-        for (int i = lineIndex + 1; i < lastYaml; i++)
-        {
-          builder.writeln(lines[i]);
-//#if VERBOSE
-            appLog_verbose('yaml line:${lines[i]}');
-//#end if line:269
-        }
-
-        lineIndex = (match == null || match.group(0) == '...') ? lastYaml : lastYaml - 1;
-
-        var yamlString = builder.toString();
-        var yaml = loadYaml(yamlString, recover: true);
-        if (yaml is Map)
-        {
-          metadata = setDynamic(metadata, yaml);
-        }
-      }
-      else if (_hrRegExp.hasMatch(line))
-      {
-        final ch = line.trim()[0];
-        switch (ch)
-        {
-          case '=':
-          case '-':
-          if (paragraphs.isNotEmpty && paragraphs.last.isNotEmpty)
-          {
-            paragraphs.last.masterClass = ch == '=' ? 'h1' : 'h2';
+            blockClass = (blockClass.isEmpty) ? 'indent' : '';
           }
           else
           {
-            paragraphs.add(MarkdownParagraph(text: '', pargraphClass: ''.padLeft(3, ch)));
+            blockClass = cls;
           }
-          break;
-
-          default:
-          paragraphs.add(MarkdownParagraph(text: '', pargraphClass: ''.padLeft(3, ch)));
-          break;
-        }
-      }
-      else if ((match = _blockRegExp.firstMatch(line)) != null)
-      {
-        final cls = match?.group(2) ?? '';
-
-        if (cls.isEmpty)
-        {
-          blockClass = (blockClass.isEmpty) ? 'indent' : '';
         }
         else
         {
-          blockClass = cls;
-        }
-      }
-      else
-      {
-        var pStart = '';
-        var hClass = '';
+          var pStart = '';
+          var hClass = '';
 
-        int headEnd = 0;
-        Match? head;
-        do
-        {
-          head = _headRegExp.matchAsPrefix(line, headEnd);
-
-          if (head != null && head.start == headEnd)
+          int headEnd = 0;
+          Match? head;
+          do
           {
-            final t = head.input.substring(head.start, head.end).trim();
+            head = _headRegExp.matchAsPrefix(line, headEnd);
 
-            if (t.startsWith('#'))
+            if (head != null && head.start == headEnd)
             {
-              hClass = 'h${t.length}';
-              pStart = line.substring(0, headEnd);
-              if (!_headEcapeEndRegExp.hasMatch(line))
+              final t = head.input.substring(head.start, head.end).trim();
+
+              if (t.startsWith('#'))
               {
-                line = line.replaceAll(_headEndRegExp, '');
+                hClass = 'h${t.length}';
+                pStart = line.substring(0, headEnd);
+                if (!_headEcapeEndRegExp.hasMatch(line))
+                {
+                  line = line.replaceAll(_headEndRegExp, '');
+                }
+                headEnd = head.end;
+                head = null;
               }
-              headEnd = head.end;
-              head = null;
+              else
+              {
+                headEnd = head.end;
+              }
             }
             else
             {
-              headEnd = head.end;
+              pStart = line.substring(0, headEnd);
             }
           }
-          else
+          while (head != null);
+
+          final indent = _indentBlockRegExp.firstMatch(line);
+          final indentPara = indent != null && blockClass.isEmpty;
+          if (indentPara && pStart.isEmpty)
           {
-            pStart = line.substring(0, headEnd);
+            hClass = 'indent';
           }
-        }
-        while (head != null);
+          else if (blockClass.isNotEmpty)
+          {
+            hClass = blockClass;
+          }
 
-        final indent = _indentBlockRegExp.firstMatch(line);
-        final indentPara = indent != null && blockClass.isEmpty;
-        if (indentPara && pStart.isEmpty)
-        {
-          hClass = 'indent';
-        }
-        else if (blockClass.isNotEmpty)
-        {
-          hClass = blockClass;
-        }
+          line = line.substring(headEnd);
+          appLog_debug('[$pStart] [$hClass] "$line"');
 
-        line = line.substring(headEnd);
-        appLog_debug('[$pStart] [$hClass] "$line"');
-
-        final newPara = MarkdownParagraph(text: line, lineDecoration: pStart, pargraphClass: hClass);
-        if (indentPara)
-        {
-          _indentParas.add(newPara);
+          final newPara = MarkdownParagraph(text: line, lineDecoration: pStart, pargraphClass: hClass);
+          if (indentPara)
+          {
+            _indentParas.add(newPara);
+          }
+          paragraphs.add(newPara);
         }
-        paragraphs.add(newPara);
       }
     }
 
@@ -776,7 +794,7 @@ class Markdown
       throw TextLoadException(name);
     }
 
-    final includeRegEx = RegExp(r'^\s{0,3}\[#include\]:\s*(\S+).*$', multiLine: true, caseSensitive: false);
+    final includeRegEx = RegExp(r'^\s{0,3}\[#include\]:\s*\(?([^\s\)]+).*$', multiLine: true, caseSensitive: false);
     final matches = includeRegEx.allMatches(text);
 
     if (matches.isNotEmpty)
@@ -789,8 +807,34 @@ class Markdown
         builder.write(text.substring(index, match.start));
         if (level < 5)
         {
-          final include = await loadText(match[1] ?? '', provider, level + 1);
-          builder.write(include);
+          var fname = match[1] ?? '';
+          if (fname.isNotEmpty)
+          {
+            final extension = path.extension(fname).toLowerCase();
+            switch (extension)
+            {
+              case '.yaml':
+              {
+                final yamlStr = (await provider.loadText(fname, true)).replaceAll(_yamlMetaRegExMultiline, '');
+                builder.writeln();
+                builder.writeln('---');
+                builder.writeln(yamlStr);
+                builder.writeln('...');
+              }
+              break;
+
+              default:
+              {
+                final include = await loadText(fname, provider, level + 1);
+                if (builder.isNotEmpty)
+                {
+                  builder.writeln();
+                }
+                builder.writeln(include);
+              }
+              break;
+            }
+          }
         }
         index = match.end;
       }

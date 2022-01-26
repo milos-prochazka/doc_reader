@@ -96,6 +96,9 @@ final _escapedCharRegExp = RegExp(r'[\uE000-\uE0FF]', multiLine: false, unicode:
 /// Vyhledani mezer (vyhleda bloky vice mezer za sebou mezer), hlavne pro split
 final _spacesRegEx = RegExp(r'\s+', multiLine: true, unicode: true);
 
+/// Yaml metadata zacatek/konec yaml metadat (radek --- nebo ...)
+final _yamlMetaRegEx = RegExp(r'^(\-{3}|\.{3})\s*$');
+
 /// Vyhledani slova
 final _wordRegEx = RegExp
 (
@@ -228,18 +231,18 @@ class Markdown
           switch (name.toLowerCase())
           {
             case '#ipa':
-            {
-              _phoneticDictionary.insertText(data);
-            }
-            break;
+              {
+                _phoneticDictionary.insertText(data);
+              }
+              break;
 
             default:
-            {
-              // Link
-              //paragraphs.add(MarkdownParagraph.referenceLink(name, data));
-              namedLinks[name] = MarkdownWord.fromMatch(match, _StyleStack.empty);
-            }
-            break;
+              {
+                // Link
+                //paragraphs.add(MarkdownParagraph.referenceLink(name, data));
+                namedLinks[name] = MarkdownWord.fromMatch(match, _StyleStack.empty);
+              }
+              break;
           }
         }
       }
@@ -250,10 +253,10 @@ class Markdown
         {
           case '=':
           case '-':
-          if (paragraphs.isNotEmpty && paragraphs.last.isNotEmpty)
-          {
-            paragraphs.last.masterClass = ch == '=' ? 'h1' : 'h2';
-          }
+            if (paragraphs.isNotEmpty && paragraphs.last.isNotEmpty)
+            {
+              paragraphs.last.masterClass = ch == '=' ? 'h1' : 'h2';
+            }
           else
           {
             paragraphs.add(MarkdownParagraph(text: '', pargraphClass: ''.padLeft(3, ch)));
@@ -261,8 +264,8 @@ class Markdown
           break;
 
           default:
-          paragraphs.add(MarkdownParagraph(text: '', pargraphClass: ''.padLeft(3, ch)));
-          break;
+            paragraphs.add(MarkdownParagraph(text: '', pargraphClass: ''.padLeft(3, ch)));
+            break;
         }
       }
       else if ((match = _blockRegExp.firstMatch(line)) != null)
@@ -429,7 +432,7 @@ class Markdown
     compileLinksAndTTS();
 
     // Nalezeni uvozovek
-    // TODO Bude podl jazyka
+    // TODO Bude podle jazyka
     makeQuatotions('„', '“', '‚', '‘');
 
     // Prelozeni vyslovnosti tts
@@ -450,14 +453,14 @@ class Markdown
         {
           // Odkaz
           case MarkdownWord_Type.link:
-          {
-            if (!word.attribs.containsKey('link'))
             {
-              final link = namedLinks[word.text]?.attribs['link'];
-              if (link != null)
+              if (!word.attribs.containsKey('link'))
               {
-                word.attribs.addAll({'link': MarkdownParagraph.unescape(link)});
-              }
+                final link = namedLinks[word.text]?.attribs['link'];
+                if (link != null)
+                {
+                  word.attribs.addAll({'link': MarkdownParagraph.unescape(link)});
+                }
               else
               {
                 remove.add(word);
@@ -468,19 +471,19 @@ class Markdown
 
           // Obrazek
           case MarkdownWord_Type.image:
-          {
-            if (!word.attribs.containsKey('image'))
             {
-              final image = namedLinks[word.text];
-              if (image != null)
+              if (!word.attribs.containsKey('image'))
               {
-                word.attribs.addAll(image.attribs);
-                final imgSrc = image.attribs['link'];
-                if (imgSrc != null)
+                final image = namedLinks[word.text];
+                if (image != null)
                 {
-                  word.attribs['image'] = imgSrc;
+                  word.attribs.addAll(image.attribs);
+                  final imgSrc = image.attribs['link'];
+                  if (imgSrc != null)
+                  {
+                    word.attribs['image'] = imgSrc;
+                  }
                 }
-              }
               else
               {
                 remove.add(word);
@@ -491,17 +494,17 @@ class Markdown
 
           // Slovo
           case MarkdownWord_Type.word:
-          {
-            if ((word.ttsBehavior == MarkdownWord.TTS_SPEECH) &&
-              (_ttsSentenceEnd.hasMatch(word.text) || word == para.words.last))
             {
-              word.ttsBehavior = MarkdownWord.TTS_SPEECH_END;
+              if ((word.ttsBehavior == MarkdownWord.TTS_SPEECH) &&
+                (_ttsSentenceEnd.hasMatch(word.text) || word == para.words.last))
+              {
+                word.ttsBehavior = MarkdownWord.TTS_SPEECH_END;
+              }
             }
-          }
-          break;
+            break;
 
           default:
-          break;
+            break;
         }
       }
 
@@ -981,28 +984,28 @@ class MarkdownParagraph
       switch (word?.script)
       {
         case MarkdownScript.subscript:
-        builder.write('~');
-        break;
+          builder.write('~');
+          break;
 
         case MarkdownScript.superscript:
-        builder.write('^');
-        break;
+          builder.write('^');
+          break;
 
         default:
-        break;
+          break;
       }
       switch (word?.decoration)
       {
         case MarkdownDecoration.striketrough:
-        builder.write('-');
-        break;
+          builder.write('-');
+          break;
 
         case MarkdownDecoration.underline:
-        builder.write('_');
-        break;
+          builder.write('_');
+          break;
 
         default:
-        break;
+          break;
       }
       if (link)
       {
@@ -1249,28 +1252,28 @@ class MarkdownParagraph
         switch (type)
         {
           case LONG_LINK:
-          {
-            final match = lineMatches[readIndex]!;
+            {
+              final match = lineMatches[readIndex]!;
 
-            final word = linkWordsFromMatch(match, styleStack);
-            word.stickToNext = charAt(text, match.end) != ' ';
-          }
-          break;
+              final word = linkWordsFromMatch(match, styleStack);
+              word.stickToNext = charAt(text, match.end) != ' ';
+            }
+            break;
 
           case SHORT_LINK:
-          {
-            final match = lineMatches[readIndex]!;
-            MarkdownWord? word;
-
-            if (match.groupCount >= 2)
             {
-              final type = match.group(1) ?? '';
-              final name = match.group(2) ?? '!';
-              if (type == '!')
+              final match = lineMatches[readIndex]!;
+              MarkdownWord? word;
+
+              if (match.groupCount >= 2)
               {
-                word = makeWord(name, styleStack, type: MarkdownWord_Type.image);
-                word.attribs['alt'] = MarkdownParagraph.unescape(name);
-              }
+                final type = match.group(1) ?? '';
+                final name = match.group(2) ?? '!';
+                if (type == '!')
+                {
+                  word = makeWord(name, styleStack, type: MarkdownWord_Type.image);
+                  word.attribs['alt'] = MarkdownParagraph.unescape(name);
+                }
               else
               {
                 word = makeWord(name, styleStack, type: MarkdownWord_Type.link);
@@ -1283,35 +1286,35 @@ class MarkdownParagraph
           break;
 
           case ID_IMAGE:
-          {
-            final match = lineMatches[readIndex]!;
-            MarkdownWord? word;
-
-            if (match.groupCount >= 2)
             {
-              final altText = match.group(1) ?? '';
-              final id = match.group(2) ?? '!';
+              final match = lineMatches[readIndex]!;
+              MarkdownWord? word;
 
-              word = makeWord(id, styleStack, type: MarkdownWord_Type.image);
-              word.attribs['alt'] = MarkdownParagraph.unescape(altText);
+              if (match.groupCount >= 2)
+              {
+                final altText = match.group(1) ?? '';
+                final id = match.group(2) ?? '!';
 
-              word.stickToNext = charAt(text, match.end) != ' ';
-              add(word);
+                word = makeWord(id, styleStack, type: MarkdownWord_Type.image);
+                word.attribs['alt'] = MarkdownParagraph.unescape(altText);
+
+                word.stickToNext = charAt(text, match.end) != ' ';
+                add(word);
+              }
             }
-          }
-          break;
+            break;
 
           case EMAIL_LINK:
           case URL_LINK:
-          {
-            final match = lineMatches[readIndex]!;
-            final text = match[2] ?? '';
-            final MarkdownWord word;
-
-            if (match[1] == '`' && match[3] == '`')
             {
-              word = makeWord(text, styleStack);
-            }
+              final match = lineMatches[readIndex]!;
+              final text = match[2] ?? '';
+              final MarkdownWord word;
+
+              if (match[1] == '`' && match[3] == '`')
+              {
+                word = makeWord(text, styleStack);
+              }
             else
             {
               word = makeWord(text, styleStack, type: MarkdownWord_Type.link, attr: {'link': text});
@@ -1323,29 +1326,29 @@ class MarkdownParagraph
           break;
 
           case ATTRIBUTE:
-          {
-            final match = lineMatches[readIndex]!;
-            if (match.groupCount >= 2)
             {
-              final type = match.group(1) ?? '';
-              final text = unescape(match.group(2) ?? '');
-              switch (type)
+              final match = lineMatches[readIndex]!;
+              if (match.groupCount >= 2)
               {
-                case '.':
-                subClass = text;
-                break;
-
-                case '#':
-                anchors.add(text);
-                break;
-
-                case '*':
+                final type = match.group(1) ?? '';
+                final text = unescape(match.group(2) ?? '');
+                switch (type)
                 {
-                  if (text.contains('='))
-                  {
-                    final kvi = text.indexOf('=');
-                    attributes[text.substring(0, kvi).trim()] = text.substring(kvi + 1).trim();
-                  }
+                  case '.':
+                    subClass = text;
+                    break;
+
+                  case '#':
+                    anchors.add(text);
+                    break;
+
+                  case '*':
+                    {
+                      if (text.contains('='))
+                      {
+                        final kvi = text.indexOf('=');
+                        attributes[text.substring(0, kvi).trim()] = text.substring(kvi + 1).trim();
+                      }
                   else
                   {
                     final t = text.trim().toLowerCase();
@@ -1372,8 +1375,8 @@ class MarkdownParagraph
           break;
 
           case TTS_ONLY:
-          {
-            /*final text = lineMatches[readIndex]!.group(1)!.trim();
+            {
+              /*final text = lineMatches[readIndex]!.group(1)!.trim();
               final word = MarkdownWord()
               ..text = text
               ..type = MarkdownWord_Type.speech_only
@@ -1394,55 +1397,55 @@ class MarkdownParagraph
               }
 
               add(word);*/
-          }
-          {
-            final pwords = _PhoneticDictionary.translateToList(lineMatches[readIndex]!.group(1)!.trim(), styleStack);
-            _words.addAll(pwords);
-          }
-          break;
+            }
+            {
+              final pwords = _PhoneticDictionary.translateToList(lineMatches[readIndex]!.group(1)!.trim(), styleStack);
+              _words.addAll(pwords);
+            }
+            break;
 
           case TTS_ENABLE:
-          ttsEnabled = true;
-          break;
+            ttsEnabled = true;
+            break;
 
           case TTS_DISABLE:
-          ttsEnabled = false;
-          break;
+            ttsEnabled = false;
+            break;
 
           default: // MATCH_NONE
-          {
-            switch (ch)
             {
-              case '': // konec textu
-              break;
-
-              case ' ': // mezera
+              switch (ch)
               {
-                writeWord(wordBuffer, styleStack, false, ttsEnabled);
-                readIndex++;
-              }
-              break;
+                case '': // konec textu
+                  break;
 
-              case '\n': // Novy radek
-              {
-                writeWord(wordBuffer, styleStack, false, ttsEnabled);
-                add(MarkdownWord.newLine());
-                readIndex++;
-              }
-              break;
-
-              case '~':
-              {
-                writeWord(wordBuffer, styleStack, !text.hasSpaceAtIndex(readIndex + 1), ttsEnabled);
-                if (charAt(text, readIndex + 1) == '~')
-                {
-                  if (charAt(text, readIndex + 2) == '~')
+                case ' ': // mezera
                   {
-                    styleStack.decoration = (styleStack.decoration == MarkdownDecoration.underline)
-                    ? MarkdownDecoration.none
-                    : MarkdownDecoration.underline;
-                    readIndex += 3;
+                    writeWord(wordBuffer, styleStack, false, ttsEnabled);
+                    readIndex++;
                   }
+                  break;
+
+                case '\n': // Novy radek
+                  {
+                    writeWord(wordBuffer, styleStack, false, ttsEnabled);
+                    add(MarkdownWord.newLine());
+                    readIndex++;
+                  }
+                  break;
+
+                case '~':
+                  {
+                    writeWord(wordBuffer, styleStack, !text.hasSpaceAtIndex(readIndex + 1), ttsEnabled);
+                    if (charAt(text, readIndex + 1) == '~')
+                    {
+                      if (charAt(text, readIndex + 2) == '~')
+                      {
+                        styleStack.decoration = (styleStack.decoration == MarkdownDecoration.underline)
+                        ? MarkdownDecoration.none
+                        : MarkdownDecoration.underline;
+                        readIndex += 3;
+                      }
                   else
                   {
                     styleStack.decoration = (styleStack.decoration == MarkdownDecoration.striketrough)
@@ -1462,32 +1465,32 @@ class MarkdownParagraph
               break;
 
               case '^':
-              {
-                writeWord(wordBuffer, styleStack, !text.hasSpaceAtIndex(readIndex + 1), ttsEnabled);
-                styleStack.script = (styleStack.script == MarkdownScript.superscript)
-                ? MarkdownScript.normal
-                : MarkdownScript.superscript;
-                readIndex++;
-              }
-              break;
+                {
+                  writeWord(wordBuffer, styleStack, !text.hasSpaceAtIndex(readIndex + 1), ttsEnabled);
+                  styleStack.script = (styleStack.script == MarkdownScript.superscript)
+                  ? MarkdownScript.normal
+                  : MarkdownScript.superscript;
+                  readIndex++;
+                }
+                break;
 
               default: // Jiny znak
-              {
-                final match = _charClassRegExp.matchAsPrefix(text, readIndex);
-
-                if (match != null && match.start == readIndex)
                 {
-                  // styl
-                  readIndex += match.end - match.start;
-                  final mValue = matchVal(match);
+                  final match = _charClassRegExp.matchAsPrefix(text, readIndex);
 
-                  if (styleStack.stack.isNotEmpty && compareClass(styleStack.stack.last, mValue))
+                  if (match != null && match.start == readIndex)
                   {
-                    // konec stylu
-                    final ch = charAt(text, readIndex);
-                    writeWord(wordBuffer, styleStack, ch != ' ' && ch != '', ttsEnabled);
-                    styleStack.stack.removeLast();
-                  }
+                    // styl
+                    readIndex += match.end - match.start;
+                    final mValue = matchVal(match);
+
+                    if (styleStack.stack.isNotEmpty && compareClass(styleStack.stack.last, mValue))
+                    {
+                      // konec stylu
+                      final ch = charAt(text, readIndex);
+                      writeWord(wordBuffer, styleStack, ch != ' ' && ch != '', ttsEnabled);
+                      styleStack.stack.removeLast();
+                    }
                   else
                   {
                     // zacatek stylu

@@ -1,1 +1,1 @@
-{"para":[{"class":"p","words":[{"text":"Tohle"},{"text":"je"},{"text":"před"},{"text":"pauzou"},{"type":"speech_pause","ttsBehavior":5000},{"text":"tohle"},{"text":"je"},{"text":"po.","ttsBehavior":0},{"type":"speech_pause","ttsBehavior":5000}],"lastInClass":false},{"class":"p","firstInClass":false}]}
+{"para":[{"class":"---","words":[{"lineBreak":true,"ttsBehavior":0}]},{"class":"h2","words":[{"text":"test","ttsBehavior":0}]}]}

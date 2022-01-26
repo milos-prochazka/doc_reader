@@ -173,15 +173,15 @@ int intColorFromText(String text, [int defColor = 0xff000000])
     switch (text.length)
     {
       case 4:
-      return int.parse('ff' + text[1] + text[1] + text[2] + text[2] + text[3] + text[3], radix: 16);
+        return int.parse('ff' + text[1] + text[1] + text[2] + text[2] + text[3] + text[3], radix: 16);
       case 5:
-      return int.parse(text[1] + text[1] + text[2] + text[2] + text[3] + text[3] + text[4] + text[4], radix: 16);
+        return int.parse(text[1] + text[1] + text[2] + text[2] + text[3] + text[3] + text[4] + text[4], radix: 16);
       case 7:
-      return int.parse('ff' + text.substring(1), radix: 16);
+        return int.parse('ff' + text.substring(1), radix: 16);
       case 9:
-      return int.parse(text.substring(1), radix: 16);
+        return int.parse(text.substring(1), radix: 16);
       default:
-      return defColor;
+        return defColor;
     }
   }
   else

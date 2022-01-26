@@ -48,7 +48,7 @@ class MyApp extends StatelessWidget
     (
       () async
       {
-        await document.openFile('media/test2.md');
+        await document.openFile('media/test-mini.md');
       }
     );
   }

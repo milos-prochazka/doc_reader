@@ -109,7 +109,7 @@ class MarkdownTextSpan implements IDocumentSpan
       right -= borderPadding;
     }
 
-    double y = paragraph.firstInClass ? borderPadding : 0;
+    double y = paragraph.firstInClass ? math.max(borderPadding, paraStyle.spaceBefore) : 0;
 
     if (_Hr.hrStyle(paragraph.masterClass))
     {
@@ -317,7 +317,7 @@ class MarkdownTextSpan implements IDocumentSpan
 
     if (paragraph.lastInClass)
     {
-      _height += math.max(10, borderPadding);
+      _height += math.max(paraStyle.spaceAfter, borderPadding);
     }
   }
 
@@ -418,7 +418,7 @@ class MarkdownTextSpan implements IDocumentSpan
     print('#############################\r\n${markdown.toString()}\r\n#####################');
 
     // TODO Test smazat
-//#if 1
+//#if 0
     final json = markdown.toJson(true);
     final s = jsonEncode(json);
     //final directory = await getApplicationDocumentsDirectory();

@@ -49,7 +49,9 @@ final _defaultConfig =
     {
       'fontSize': 45,
       'fontStyle': 'italic', // normal, bold, bold_italic
-      'color': 'Blue'
+      'color': 'Blue',
+      'spaceAfter': 45,
+      'spaceBefore': 70
     },
     'h2':
     {
@@ -224,6 +226,8 @@ class MarkdownTextConfig
         get<String?>(['borderColor'], defValue: textFromColor(styleInfo.borderColor), config: cfg) ?? 'Silver'
       );
       styleInfo.borderRadius = get<double>(['borderRadius'], defValue: styleInfo.borderRadius, config: cfg);
+      styleInfo.spaceAfter = get<double>(['spaceAfter'], defValue: styleInfo.spaceAfter, config: cfg);
+      styleInfo.spaceBefore = get<double>(['spaceBefore'], defValue: styleInfo.spaceBefore, config: cfg);
 
       const alignCases =
       {
@@ -369,6 +373,8 @@ class _WordStyleInfo
   double borderRadius = 0.0;
   int align = WordStyle.ALIGN_DEFAULT;
   double bulletIntent = 60.0;
+  double spaceBefore = 0.0;
+  double spaceAfter = 0.0;
 }
 
 class WordStyle
@@ -388,6 +394,8 @@ class WordStyle
   double borderRadius;
   int align;
   double bulletIntent;
+  double spaceBefore;
+  double spaceAfter;
 
   WordStyle(_WordStyleInfo wsInfo)
   : leftMargin = wsInfo.leftMargin,
@@ -398,6 +406,8 @@ class WordStyle
   yOffseet = wsInfo.yOffset,
   align = wsInfo.align,
   bulletIntent = wsInfo.bulletIntent,
+  spaceAfter = wsInfo.spaceAfter,
+  spaceBefore = wsInfo.spaceBefore,
   textStyle = TextStyle
   (
     color: wsInfo.color,

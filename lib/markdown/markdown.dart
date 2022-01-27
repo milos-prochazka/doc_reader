@@ -103,6 +103,9 @@ final _spacesRegEx = RegExp(r'\s+', multiLine: true, unicode: true);
 final _yamlMetaRegEx = RegExp(r'^(\-{3}|\.{3})\s*$');
 final _yamlMetaRegExMultiline = RegExp(r'^(\-{3}|\.{3})\s*$', multiLine: true);
 
+/// Include markdown, nebo yaml souboru {file.md} nebo {file.yaml} => g1 = file.yaml , g2 = yaml
+final _includeFileRegEx = RegExp(r'\{(\S+\.(md|yaml))\}', multiLine: true, caseSensitive: false);
+
 /// Vyhledani slova
 final _wordRegEx = RegExp
 (
@@ -276,7 +279,7 @@ class Markdown
             builder.writeln(lines[i]);
 //#if VERBOSE
             appLog_verbose('yaml line:${lines[i]}');
-//#end if line:271
+//#end if line:280
           }
 
           lineIndex = lastYaml;
@@ -774,11 +777,13 @@ class Markdown
 
   /// Načtení markdown textu
   /// - Podporuje TextLoadProvider pro načítání textu
-  /// - Podporuje direktivu:
+  /// - Podporuje direktivy pro icnludovani markdown a yaml souboru:
   /// ```
-  /// [#include] file.md
+  /// {file.md}
   /// ```
   /// Tato direktiva se píše na samostatném řádku a vloží text souboru **file.md** do načteného textu.
+  /// Soubory musi mít rozšíření md a yaml jinak nebudou rozeznány.
+  /// - yaml soubory se používají ke vložení metadat
   ///
   static Future<String> loadText(String name, TextLoadProvider provider, [int level = 0]) async
   {
@@ -794,8 +799,9 @@ class Markdown
       throw TextLoadException(name);
     }
 
-    final includeRegEx = RegExp(r'^\s{0,3}\[#include\]:\s*\(?([^\s\)]+).*$', multiLine: true, caseSensitive: false);
-    final matches = includeRegEx.allMatches(text);
+    //final includeRegEx = RegExp(r'^\s{0,3}\[#include\]:\s*\(?([^\s\)]+).*$', multiLine: true, caseSensitive: false);
+    //final matches = includeRegEx.allMatches(text);
+    final matches = _includeFileRegEx.allMatches(text);
 
     if (matches.isNotEmpty)
     {
@@ -810,7 +816,7 @@ class Markdown
           var fname = match[1] ?? '';
           if (fname.isNotEmpty)
           {
-            final extension = path.extension(fname).toLowerCase();
+            final extension = (match[2] ?? '').toLowerCase();
             switch (extension)
             {
               case '.yaml':
@@ -820,23 +826,20 @@ class Markdown
                 builder.writeln('---');
                 builder.writeln(yamlStr);
                 builder.writeln('...');
+                index = match.end;
               }
               break;
 
-              default:
+              case 'md':
               {
                 final include = await loadText(fname, provider, level + 1);
-                if (builder.isNotEmpty)
-                {
-                  builder.writeln();
-                }
-                builder.writeln(include);
+                builder.write(include);
+                index = match.end;
               }
               break;
             }
           }
         }
-        index = match.end;
       }
 
       if (index < text.length)

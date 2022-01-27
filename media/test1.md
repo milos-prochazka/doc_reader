@@ -5,7 +5,7 @@
 ##### Head 5
 ###### Head 6
 
-Head1 uderline
+Head1 underline
 =============
 
 Head2 underline

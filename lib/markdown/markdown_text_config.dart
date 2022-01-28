@@ -3,18 +3,9 @@
 import 'dart:ui' as ui;
 
 import '../doc_span/color_text.dart';
-import '../doc_span/doc_span_interface.dart';
-import 'value_unit.dart';
-import '../objects/applog.dart';
-import '../objects/picture_cache.dart';
-import '../objects/text_load_provider.dart';
 import '../objects/utils.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import '../document.dart';
 import 'markdown.dart';
-import 'package:path/path.dart' as path;
-import 'dart:math' as math;
 
 final _defaultConfig =
 {
@@ -51,7 +42,8 @@ final _defaultConfig =
       'fontStyle': 'italic', // normal, bold, bold_italic
       'color': 'Blue',
       'spaceAfter': 45,
-      'spaceBefore': 70
+      'spaceBefore': 70,
+      'paragraphUnderline': 4
     },
     'h2':
     {
@@ -228,6 +220,8 @@ class MarkdownTextConfig
       styleInfo.borderRadius = get<double>(['borderRadius'], defValue: styleInfo.borderRadius, config: cfg);
       styleInfo.spaceAfter = get<double>(['spaceAfter'], defValue: styleInfo.spaceAfter, config: cfg);
       styleInfo.spaceBefore = get<double>(['spaceBefore'], defValue: styleInfo.spaceBefore, config: cfg);
+      styleInfo.paragraphUnderline =
+      get<double>(['paragraphUnderline'], defValue: styleInfo.paragraphUnderline, config: cfg);
 
       const alignCases =
       {
@@ -375,6 +369,7 @@ class _WordStyleInfo
   double bulletIntent = 60.0;
   double spaceBefore = 0.0;
   double spaceAfter = 0.0;
+  double paragraphUnderline = 0.0;
 }
 
 class WordStyle
@@ -396,6 +391,7 @@ class WordStyle
   double bulletIntent;
   double spaceBefore;
   double spaceAfter;
+  double paragraphUnderline;
 
   WordStyle(_WordStyleInfo wsInfo)
   : leftMargin = wsInfo.leftMargin,
@@ -408,6 +404,7 @@ class WordStyle
   bulletIntent = wsInfo.bulletIntent,
   spaceAfter = wsInfo.spaceAfter,
   spaceBefore = wsInfo.spaceBefore,
+  paragraphUnderline = wsInfo.paragraphUnderline,
   textStyle = TextStyle
   (
     color: wsInfo.color,

@@ -1,6 +1,6 @@
 # doc_reader
 
-## Úkoly
+# Úkoly
 
 - [x] Atribut stylu - Mezera před odstavcem.  
 - [x] Atribut stylu - Mezera za odstavcem.
@@ -12,5 +12,5 @@
 - [ ] Zvážit umístění a velikost odrážek
 
 
----
+----
 

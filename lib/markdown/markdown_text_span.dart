@@ -292,6 +292,15 @@ class MarkdownTextSpan implements IDocumentSpan
 
     _height = math.max(leftHeight, math.max(_height, rightHeight));
 
+    if (paraStyle.paragraphUnderline > 0)
+    {
+      final hr = _Hr.fromHeight(paraStyle.paragraphUnderline, lineWidth);
+      hr.xOffset = leftLeft;
+      hr.yOffset = _height;
+      _height += hr.height;
+      this._spans.add(hr);
+    }
+
     if (borderPadding > 0.0)
     {
       var topRadius = 0.0, bottomRadius = 0.0;
@@ -438,7 +447,7 @@ class MarkdownTextSpan implements IDocumentSpan
     final File file2 = File('my_file2.json');
     final js2 = jsonEncode(md1.toJson(true));
     await file2.writeAsString(js2);
-//#end if line:421
+//#end if line:430
     //////////////////////////////////////////
 
     final ms = MarkdownTextSpan.create(markdown, textConfig, document);
@@ -632,6 +641,12 @@ class _Hr extends _Span
     left = 4;
   }
 
+  _Hr.fromHeight(double height, double width) : this.style = '---'
+  {
+    this.height = 2 * height;
+    this.width = width;
+  }
+
   @override
   _Hr calcMetrics(PaintParameters parameters)
   {
@@ -645,7 +660,7 @@ class _Hr extends _Span
     ..color = Colors.grey
     ..strokeWidth = height * 0.5;
 
-    double y = yoffset + height * 0.5;
+    double y = yoffset + this.yOffset + height * 0.25;
 
     params.canvas.drawLine(Offset(xoffset + left, y), Offset(xoffset + width - 2 * left, y), paint);
   }

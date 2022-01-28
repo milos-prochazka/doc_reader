@@ -105,66 +105,69 @@ class Document
       {
         changePosition = true;
         final spanIndex = position.floor();
-        final height = docSpans[spanIndex].span.height(paintParameters!);
-        final relativeMove = absoluteMove / height;
-        final fpos = position.frac();
-
-        if (relativeMove < 0)
+        if (spanIndex >= 0 && spanIndex < docSpans.length)
         {
-          if (-relativeMove > fpos)
+          final height = docSpans[spanIndex].span.height(paintParameters!);
+          final relativeMove = absoluteMove / height;
+          final fpos = position.frac();
+
+          if (relativeMove < 0)
           {
-            if (position <= 0)
+            if (-relativeMove > fpos)
             {
-              changePosition = false;
-              break;
-            }
-            else
-            {
-              if (fpos > 1e-6)
+              if (position <= 0)
               {
-                absoluteMove += fpos * height;
-                position = position.floorToDouble();
+                changePosition = false;
+                break;
               }
               else
               {
-                if (position <= 1.0)
+                if (fpos > 1e-6)
                 {
-                  position = 0;
-                  absoluteMove = 0;
+                  absoluteMove += fpos * height;
+                  position = position.floorToDouble();
                 }
                 else
                 {
-                  position -= 1.0;
-                  absoluteMove += docSpans[position.floor()].span.height(paintParameters!);
+                  if (position <= 1.0)
+                  {
+                    position = 0;
+                    absoluteMove = 0;
+                  }
+                  else
+                  {
+                    position -= 1.0;
+                    absoluteMove += docSpans[position.floor()].span.height(paintParameters!);
+                  }
                 }
               }
             }
+            else
+            {
+              position += relativeMove;
+              absoluteMove = 0.0;
+            }
           }
           else
           {
-            position += relativeMove;
-            absoluteMove = 0.0;
-          }
-        }
-        else
-        {
-          if ((fpos + relativeMove) >= 1.0)
-          {
-            if ((position + 1.99) >= docSpans.length)
+            if ((fpos + relativeMove) >= 1.0)
             {
-              changePosition = false;
-              break;
+              if ((position + 1.99) >= docSpans.length)
+              {
+                changePosition = false;
+                break;
+              }
+              else
+              {
+                absoluteMove -= (1.0 - fpos) * height;
+                position = position.floorToDouble() + 1.0;
+              }
             }
             else
             {
-              absoluteMove -= (1.0 - fpos) * height;
-              position = position.floorToDouble() + 1.0;
+              position += relativeMove;
+              absoluteMove = 0.0;
             }
-          }
-          else
-          {
-            position += relativeMove;
-            absoluteMove = 0.0;
           }
         }
       }

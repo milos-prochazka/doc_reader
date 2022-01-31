@@ -568,6 +568,10 @@ class _Text extends _Span
         //width = metrics.width; // Mereni bez mezer
         left = metrics.left;
       }
+      else
+      {
+        height = style.fontSize ?? 0.0;
+      }
 
       return p;
     }

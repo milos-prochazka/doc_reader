@@ -192,8 +192,12 @@ class Markdown
   // Vyslovnost slov
   final _phoneticDictionary = _PhoneticDictionary();
 
+  /// Konstruktor
   Markdown();
 
+  /// Zapis markdown textu
+  /// - Zakladni metoda slouzi pro vlozeni obsahu celeho souboru do objektu [Markdown]
+  /// - Metoda nepodporuje nacitani souboru k tomu sluzi staticka metoda [loadText]
   writeMarkdownString(String text)
   {
     var freeLines = true;
@@ -279,7 +283,7 @@ class Markdown
             builder.writeln(lines[i]);
 //#if VERBOSE
             appLog_verbose('yaml line:${lines[i]}');
-//#end if line:280
+//#end if line:284
           }
 
           lineIndex = lastYaml;
@@ -409,6 +413,9 @@ class Markdown
     return (index >= 0 && index < lines.length) ? lines[index].trimRight() : '';
   }
 
+  /// Rozdeleni vstupniho textu na seznam radek
+  /// - Rozdeluje radky uknocene \n, \r nebo \r\n
+  /// - Slucuje odstavce ktere je mozno sloucit do jedne polozky ve vysledenm seznamu
   List<String> textToLines(String text)
   {
     final lines = detab(MarkdownParagraph.escape(text), 4).split(_newLineRegex);

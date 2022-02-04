@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 
-import 'package:doc_reader/objects/json_utils.dart';
+import '../objects/json_utils.dart';
 
 import '../doc_span/document_word.dart';
 
@@ -427,7 +427,7 @@ class MarkdownTextSpan implements IDocumentSpan
     print('#############################\r\n${markdown.toString()}\r\n#####################');
 
     // TODO Test smazat
-//#if 0
+//#if 1
     final json = markdown.toJson(true);
     final s = jsonEncode(json);
     //final directory = await getApplicationDocumentsDirectory();

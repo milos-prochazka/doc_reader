@@ -99,6 +99,10 @@ final _escapedCharRegExp = RegExp(r'[\uE000-\uE0FF]', multiLine: false, unicode:
 /// Vyhledani mezer (vyhleda bloky vice mezer za sebou mezer), hlavne pro split
 final _spacesRegEx = RegExp(r'\s+', multiLine: true, unicode: true);
 
+/// Trida odstavce typu nadpis
+final _headerClassRegEx =
+RegExp(r'^h1$|^h2$|^h3$|^h4$|^h5$|^h6$|^title1$|^title2$|^title3$|^title4$|^title5$|^title6$|^title$');
+
 /// Yaml metadata zacatek/konec yaml metadat (radek --- nebo ...)
 final _yamlMetaRegEx = RegExp(r'^(\-{3}|\.{3})\s*$');
 final _yamlMetaRegExMultiline = RegExp(r'^(\-{3}|\.{3})\s*$', multiLine: true);
@@ -181,14 +185,22 @@ class Markdown
 {
   // Vsechny odstavce dokumentu
   final paragraphs = <MarkdownParagraph>[];
+
   // Pojmenovane linky
   final namedLinks = <String, MarkdownWord>{};
+
   // Tridy
   final classes = <String, Map<String, Object?>>{};
+
   // Metadata
   var metadata = <dynamic, dynamic>{};
+
+  // Seznam nadpisu "pro obsah"
+  var headers = <MarkdownHeader>[];
+
   // Vsechny odstavce odsazene pomoci mezerer
   final _indentParas = <MarkdownParagraph>{};
+
   // Vyslovnost slov
   final _phoneticDictionary = _PhoneticDictionary();
 
@@ -501,6 +513,9 @@ class Markdown
 
     // Prelozeni vyslovnosti tts
     _translateTTS();
+
+    // Vytvoreni seznamu nadpisu (pro obsah)
+    headers = MarkdownHeader.fromMarkdown(this);
   }
 
   /// Nalezeni odkazu na kratke linky (liny uvnitr dokumentu) a nalzeni parametru TTS
@@ -985,6 +1000,16 @@ class Markdown
       result['metadata'] = metadata;
     }
 
+    if (!compress || headers.isNotEmpty)
+    {
+      final hdrList = <dynamic>[];
+      for (final head in headers)
+      {
+        hdrList.add(head.toJson(compress));
+      }
+      result['headers'] = hdrList;
+    }
+
     return result;
   }
 
@@ -1016,6 +1041,15 @@ class Markdown
         this.metadata[item.key.toString()] = item.value;
       }
     }
+
+    final hdrList = json['headers'];
+    if (hdrList is List)
+    {
+      for (final header in hdrList)
+      {
+        headers.add(MarkdownHeader.fromJson(header));
+      }
+    }
   }
 }
 
@@ -1033,10 +1067,16 @@ class MarkdownParagraph
   bool lastInClass = true;
   bool firstInClass = true;
   int blockquoteLevel = 0;
+  int id;
+
+  static int _nextId = 0;
+
+  static getId() => _nextId++;
 
   MarkdownParagraph({required String text, this.lineDecoration = '', pargraphClass = ''})
   : masterClass = pargraphClass.isEmpty ? 'p' : pargraphClass,
-  subClass = ''
+  subClass = '',
+  id = getId()
   {
     writeText(text);
   }
@@ -1767,6 +1807,32 @@ class MarkdownParagraph
     }
   }
 
+  String toBasicText()
+  {
+    final builder = StringBuffer();
+    for (final word in words)
+    {
+      switch (word.type)
+      {
+        case MarkdownWord_Type.word:
+        case MarkdownWord_Type.link:
+        if (builder.isNotEmpty)
+        {
+          builder.write(' ');
+        }
+        builder.write(word.text.trim());
+        if (word.lineBreak)
+        {
+          builder.write('\r\n');
+        }
+        break;
+        default:
+        break;
+      }
+    }
+    return builder.toString();
+  }
+
   dynamic toJson([bool compress = false])
   {
     final result = <String, dynamic>
@@ -1826,12 +1892,15 @@ class MarkdownParagraph
       result['listIndent'] = listIndent?.toJson();
     }
 
+    result['id'] = id;
+
     return result;
   }
 
   MarkdownParagraph.fromJson(dynamic json)
   : masterClass = JsonUtils.getValue(json, 'class', ''),
-  subClass = JsonUtils.getValue(json, 'subClass', '')
+  subClass = JsonUtils.getValue(json, 'subClass', ''),
+  id = JsonUtils.getValue(json, 'id', 0)
   {
     final jsonWords = json['words'];
     if (jsonWords != null)
@@ -2228,6 +2297,57 @@ class MarkdownWord
 }
 
 enum MarkdownWord_Type { word, link, image, link_image, reference_definition, speech_pause, speech_only }
+
+class MarkdownHeader
+{
+  final String text;
+  final int position;
+  final int level;
+  final bool title;
+
+  MarkdownHeader._internal(this.text, this.position, this.level, this.title);
+
+  static List<MarkdownHeader> fromMarkdown(Markdown markdown)
+  {
+    final result = <MarkdownHeader>[];
+
+    for (var para in markdown.paragraphs)
+    {
+      final match = _headerClassRegEx.firstMatch(para.masterClass);
+      if (match?.start == 0)
+      {
+        final s = match!.group(0) ?? '0';
+        final level = int.tryParse(s.substring(s.length - 1)) ?? 0;
+        result.add(MarkdownHeader._internal(para.toBasicText(), para.id, level, s.substring(1, 1) == 't'));
+      }
+    }
+
+    return result;
+  }
+
+  dynamic toJson([bool compress = false])
+  {
+    final result = {'text': text, 'position': position, 'level': level};
+
+    if (!compress || title)
+    {
+      result['title'] = title;
+    }
+
+    return result;
+  }
+
+  factory MarkdownHeader.fromJson(dynamic json)
+  {
+    return MarkdownHeader._internal
+    (
+      JsonUtils.getValue(json, 'text', ''),
+      JsonUtils.getValue(json, 'position', 0),
+      JsonUtils.getValue(json, 'level', 0),
+      JsonUtils.getValue(json, 'title', false),
+    );
+  }
+}
 
 class _StyleStack
 {

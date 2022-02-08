@@ -81,6 +81,7 @@ class MarkdownTextConfig
   final _MarkdownTextConfigState _state = clone(_MarkdownTextConfigState());
   //Key? _layoutKey;
 
+  // TODO vnitrne pouzivat JsonUtils.getValueByPath
   T get<T>(List<dynamic> path, {dynamic config, dynamic defValue, bool lastInArray = true})
   {
     try

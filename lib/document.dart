@@ -36,6 +36,9 @@ class Document
   /// Handler otevreni souboru
   OnOpenHandler? onOpenFile;
 
+  /// Handler zobrazeni menu
+  OnShowMenu? onShowMenu;
+
   /// Konfigurace otevreni douboru
   dynamic onOpenFileConfig;
 
@@ -455,8 +458,31 @@ class DocumentSentence
   double pause = 0;
 }
 
+class DocumentContent
+{
+  var lines = <DocumentContentLine>[];
+  String caption = '';
+
+  bool get isEmpty => lines.isEmpty && caption.isEmpty;
+}
+
+class DocumentContentLine
+{
+  int level;
+  String text;
+  bool title;
+
+  DocumentContentLine(this.text, this.level, this.title);
+}
+
+abstract class IDocumentContentSource
+{
+  DocumentContent getContent();
+}
+
 typedef OnTapHandler = Function(double relativeX, double relativeY);
 typedef OnTouchUpDownHandler = Function(bool down, double widgetX, double widgetY, double velocityX, double velocityY);
 typedef OnTouchMoveHandler = Function(double deltaX, double deltaY);
 typedef OnRepaintHandler = Function();
 typedef OnOpenHandler = Future<bool> Function(String name, Document document, dynamic config);
+typedef OnShowMenu = Function(Document document);

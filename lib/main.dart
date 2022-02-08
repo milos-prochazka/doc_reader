@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:doc_reader/objects/applog.dart';
-import 'package:doc_reader/objects/speech.dart';
-import 'package:yaml/yaml.dart';
+import 'objects/applog.dart';
+import 'top_button/top_buttons.dart';
+import 'top_button/topbutton.dart';
 
 import 'markdown/markdown_text_config.dart';
 import 'objects/asset_text_load.dart';
@@ -84,6 +84,7 @@ class MyHomePage extends StatefulWidget
 class _MyHomePageState extends State<MyHomePage>
 {
   static const documentProperty = 'document';
+  TopButtons? topButtons;
 
   @override
   Widget build(BuildContext buildContext)
@@ -101,12 +102,13 @@ class _MyHomePageState extends State<MyHomePage>
             // the App.build method, and use it to set our appbar title.
             title: Text(widget.title),
           ),
-          body: Center(child: DocTouch.build(context: context, documentProperty: documentProperty)),
+          body: Center(child: _buildBody(context)),
         );
       }
     );
 
     binder.setProperty(documentProperty, widget.document);
+    widget.document.onShowMenu = showMenu;
 
     /*for (int i = 1; i < 1000000; i++)
     {
@@ -117,5 +119,61 @@ class _MyHomePageState extends State<MyHomePage>
     }*/
 
     return binder;
+  }
+
+  Widget _buildBody(BuildContext context)
+  {
+    return Stack
+    (
+      children: [DocTouch.build(context: context, documentProperty: documentProperty), _buildButtons(context)]
+    );
+  }
+
+  showMenu(Document document) {}
+
+  Widget _buildButtons(BuildContext context)
+  {
+    topButtons = TopButtons
+    (
+      [
+        TopButtonItem
+        (
+          type: TopButtonType.top,
+          builder: (c, i)
+          {
+            return TopButton();
+          }
+        ),
+        TopButton.createItem(id: 'a', type: TopButtonType.top, relativeWidth: 1.5, text: 'Tlac 2'),
+        TopButton.createItem(id: 'b', type: TopButtonType.bottom, relativeWidth: 1, text: 'Tlac B1'),
+        TopButton.createItem(id: 'c', type: TopButtonType.bottom, relativeWidth: 1, text: 'Tlac B2'),
+        TopButton.createItem(id: 'd', type: TopButtonType.bottom, relativeWidth: 1, text: 'Tlac B3'),
+      ],
+      backgroundColor: Color.fromARGB(0xcc, 0x20, 0x40, 0x40),
+      foregroundColor: Colors.white70,
+      event: (param)
+      {
+        PropertyBinder.doOnProperty
+        (
+          context, 'cnt', (binder, property)
+          {
+            var cnt = property.valueT(0.0);
+            property.setValue(binder, cnt + 1);
+          }
+        );
+
+        /*var i = param.cmdType;
+                PropertyBinder.doOn
+                (
+                  context, (binder)
+                  {
+                    var c = binder.getProperty('cnt', 0.0);
+                    binder.setProperty('cnt', c + 1.0);
+                  }
+                );*/
+      },
+    );
+
+    return topButtons!;
   }
 }

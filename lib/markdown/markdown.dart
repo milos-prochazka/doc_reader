@@ -4,6 +4,7 @@ import 'dart:math' as math;
 
 import 'package:yaml/yaml.dart';
 
+import '../document.dart';
 import '../objects/json_utils.dart';
 
 import 'patterns.dart';
@@ -181,7 +182,7 @@ final rtlLanguageScriptRegEx = RegExp
   multiLine: true
 );
 
-class Markdown
+class Markdown implements IDocumentContentSource
 {
   // Vsechny odstavce dokumentu
   final paragraphs = <MarkdownParagraph>[];
@@ -1050,6 +1051,21 @@ class Markdown
         headers.add(MarkdownHeader.fromJson(header));
       }
     }
+  }
+
+  @override
+  DocumentContent getContent()
+  {
+    final result = DocumentContent();
+
+    result.caption = JsonUtils.getValueByPath(metadata, ['content', 'caption'], defValue: '');
+
+    for (var header in headers)
+    {
+      result.lines.add(DocumentContentLine(header.text, header.level, header.title));
+    }
+
+    return result;
   }
 }
 

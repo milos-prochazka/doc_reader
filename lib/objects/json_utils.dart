@@ -23,6 +23,86 @@ class JsonUtils
     }
   }
 
+  static T getValueByPath<T>(dynamic json, List<dynamic> path, {dynamic defValue, bool lastInArray = true})
+  {
+    try
+    {
+      for (var item in path)
+      {
+        if (item is num)
+        {
+          if (json is List)
+          {
+            final index = item.toInt();
+            final count = json.length;
+
+            if (index >= count)
+            {
+              if (!lastInArray)
+              {
+                return defValue as T;
+              }
+              else
+              {
+                json = json[count - 1];
+              }
+            }
+            else
+            {
+              json = json[index];
+            }
+          }
+          else
+          {
+            return defValue as T;
+          }
+        }
+        else if (item is String)
+        {
+          if (json is Map)
+          {
+            // ignore: unnecessary_cast
+            final key = item as String;
+
+            if (json.containsKey(key))
+            {
+              json = json[key];
+            }
+            else
+            {
+              return defValue as T;
+            }
+          }
+          else
+          {
+            return defValue as T;
+          }
+        }
+      }
+
+      if (json is T)
+      {
+        return json;
+      }
+      else if (T == double)
+      {
+        return json.toDouble() as T;
+      }
+      else if (T == String)
+      {
+        return json.toString() as T;
+      }
+      else
+      {
+        return defValue as T;
+      }
+    }
+    catch ($)
+    {
+      return defValue as T;
+    }
+  }
+
   static T getEnum<T>(dynamic json, String key, Map<String, T> enumMap, T defValue)
   {
     if (json is Map && json.containsKey(key))

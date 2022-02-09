@@ -116,6 +116,7 @@ class _TopButtonState extends State<TopButton>
         {
           final buttonWidth = widget.relativeWidth * (orientation == Orientation.landscape ? 400.0 : 200.0);
           final buttonHeight = 200.0;
+
           return Container
           (
             height: buttonHeight,

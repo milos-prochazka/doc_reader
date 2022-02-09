@@ -9,20 +9,22 @@ class TopButtons extends StatefulWidget
   final TopButtonsControl control = TopButtonsControl();
   final Color foregroundColor;
   final Color backgroundColor;
-  final TopButtonEvent? event;
+  TopButtonEvent? event;
 
-  TopButtons(this.buttons, {this.foregroundColor = Colors.white, this.backgroundColor = Colors.black, this.event})
+  TopButtons(this.buttons,
+    {Key? key, this.foregroundColor = Colors.white, this.backgroundColor = Colors.black, this.event})
+  : super(key: key)
   {
-    for (var item in this.buttons)
+    for (var item in buttons)
     {
-      item.foregroundColor = this.foregroundColor;
-      item.backgroundColor = this.backgroundColor;
-      item.event = this.event;
+      item.foregroundColor = foregroundColor;
+      item.backgroundColor = backgroundColor;
+      item.event = event;
     }
   }
 
   @override
-  State<TopButtons> createState() => _TopButtonsState(this, control);
+  State<TopButtons> createState() => _TopButtonsState();
 }
 
 class TopButtonsControl
@@ -62,13 +64,9 @@ class _TopButtonsState extends State<TopButtons> with SingleTickerProviderStateM
   bool _visible = false;
   late AnimationController menuAnimation;
   _TopButtonsMeasure? measure;
-  TopButtons widget;
   final itemsInfo = <TopButtonItem>[];
 
-  _TopButtonsState(this.widget, TopButtonsControl control)
-  {
-    control.state = this;
-  }
+  _TopButtonsState();
 
   @override
   Widget build(BuildContext context)
@@ -104,6 +102,7 @@ class _TopButtonsState extends State<TopButtons> with SingleTickerProviderStateM
   void initState()
   {
     super.initState();
+    widget.control.state = this;
     menuAnimation = AnimationController
     (
       duration: const Duration(milliseconds: 500),
@@ -132,6 +131,7 @@ class TopButtonItem
 
   TopButtonItem({this.id, required this.type, required this.builder, double? relativeWidth, this.event})
   {
+    // ignore: unnecessary_this
     this.relativewidth = relativeWidth ?? 1;
   }
 }
@@ -230,7 +230,7 @@ class _FlowDelegate extends FlowDelegate
       left += item.viewWidth;
     }
 
-    this.state.measure = result;
+    state.measure = result;
 
     return result;
   }
@@ -291,4 +291,4 @@ class TopButtonCmd
 }
 
 /// Udalost TopButton
-typedef void TopButtonEvent(TopButtonCmd cmd);
+typedef TopButtonEvent = void Function(TopButtonCmd cmd);

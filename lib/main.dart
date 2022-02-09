@@ -129,11 +129,15 @@ class _MyHomePageState extends State<MyHomePage>
     );
   }
 
-  showMenu(Document document) {}
+  showMenu(Document document)
+  {
+    ///
+    topButtons?.control.visible = !(topButtons?.control.visible ?? true);
+  }
 
   Widget _buildButtons(BuildContext context)
   {
-    topButtons = TopButtons
+    final result = TopButtons
     (
       [
         TopButtonItem
@@ -144,7 +148,7 @@ class _MyHomePageState extends State<MyHomePage>
             return TopButton();
           }
         ),
-        TopButton.createItem(id: 'a', type: TopButtonType.top, relativeWidth: 1.5, text: 'Tlac 2'),
+        TopButton.createItem(id: 'a', type: TopButtonType.top, relativeWidth: 1, text: 'Tlac 2'),
         TopButton.createItem(id: 'b', type: TopButtonType.bottom, relativeWidth: 1, text: 'Tlac B1'),
         TopButton.createItem(id: 'c', type: TopButtonType.bottom, relativeWidth: 1, text: 'Tlac B2'),
         TopButton.createItem(id: 'd', type: TopButtonType.bottom, relativeWidth: 1, text: 'Tlac B3'),
@@ -161,6 +165,7 @@ class _MyHomePageState extends State<MyHomePage>
             property.setValue(binder, cnt + 1);
           }
         );
+        topButtons?.control.visible = false;
 
         /*var i = param.cmdType;
                 PropertyBinder.doOn
@@ -174,6 +179,7 @@ class _MyHomePageState extends State<MyHomePage>
       },
     );
 
-    return topButtons!;
+    topButtons = result;
+    return result;
   }
 }

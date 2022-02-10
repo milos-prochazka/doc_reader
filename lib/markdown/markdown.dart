@@ -296,7 +296,7 @@ class Markdown implements IDocumentContentSource
             builder.writeln(lines[i]);
 //#if VERBOSE
             appLog_verbose('yaml line:${lines[i]}');
-//#end if line:284
+//#end if line:297
           }
 
           lineIndex = lastYaml;

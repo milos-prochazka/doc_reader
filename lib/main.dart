@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:doc_reader/doc_menu.dart';
+
 import 'objects/applog.dart';
 import 'top_button/top_buttons.dart';
 import 'top_button/topbutton.dart';
@@ -83,8 +85,8 @@ class MyHomePage extends StatefulWidget
 
 class _MyHomePageState extends State<MyHomePage>
 {
-  static const documentProperty = 'document';
-  TopButtons? topButtons;
+  //TopButtons? topButtons;
+  final menu = DocMenu();
 
   @override
   Widget build(BuildContext buildContext)
@@ -107,7 +109,7 @@ class _MyHomePageState extends State<MyHomePage>
       }
     );
 
-    binder.setProperty(documentProperty, widget.document);
+    binder.setProperty(Document.documentProperty, widget.document);
     widget.document.onShowMenu = showMenu;
 
     /*for (int i = 1; i < 1000000; i++)
@@ -125,16 +127,17 @@ class _MyHomePageState extends State<MyHomePage>
   {
     return Stack
     (
-      children: [DocTouch.build(context: context, documentProperty: documentProperty), _buildButtons(context)]
+      children: [DocTouch.build(context: context, documentProperty: Document.documentProperty), menu.build(context)]
     );
   }
 
   showMenu(Document document)
   {
     ///
-    topButtons?.control.visible = !(topButtons?.control.visible ?? true);
+    menu.topButtons?.control.visible = !(menu.topButtons?.control.visible ?? true);
   }
 
+//#if 0
   Widget _buildButtons(BuildContext context)
   {
     final result = TopButtons
@@ -182,4 +185,5 @@ class _MyHomePageState extends State<MyHomePage>
     topButtons = result;
     return result;
   }
+//#end if line:140
 }

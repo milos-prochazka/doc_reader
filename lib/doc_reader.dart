@@ -293,7 +293,7 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
         {
 //#verbose
           appLog_verbose('onTouchMove: deltaX=$deltaX deltaY=$deltaY');
-//#end VERBOSE line:289
+//#end VERBOSE line:294
           if (document?.markPosition.isFinite ?? false)
           {
             document?.markPosition += deltaY;

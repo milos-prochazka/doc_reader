@@ -9,6 +9,9 @@ import 'dart:math' as math;
 
 class Document
 {
+  /// Property pouzivane pri bindovani dokumentu
+  static const documentProperty = 'document';
+
   /// Konfigurace pouzita pro zobrazeni dokumentu
   dynamic config;
 

@@ -155,7 +155,7 @@ class _TopButtonState extends State<TopButton>
                       Text
                       (
                         widget.text,
-                        style: TextStyle(color: widget.foregroundColor, fontSize: 40),
+                        style: TextStyle(color: widget.foregroundColor, fontSize: 20),
                       ),
                       Padding
                       (

@@ -1,3 +1,4 @@
+import 'package:doc_reader/objects/applog.dart';
 import 'package:flutter/material.dart';
 import 'dart:math' as Math;
 
@@ -31,10 +32,7 @@ class TopButtonsControl
 {
   _TopButtonsState? state;
 
-  TopButtonsControl()
-  {
-    var brk = 1;
-  }
+  TopButtonsControl();
 
   set visible(bool value)
   {
@@ -47,6 +45,7 @@ class TopButtonsControl
         if (value)
         {
           state.menuAnimation.forward();
+          state.hideEvent = null;
         }
         else
         {
@@ -57,6 +56,22 @@ class TopButtonsControl
   }
 
   bool get visible => state?._visible ?? false;
+
+  hideAction(TopButtonCmd cmd, TopButtonEvent hideEvent)
+  {
+    if (state?._visible ?? false)
+    {
+      final state = this.state!;
+      state._visible = false;
+      state.menuAnimation.reverse();
+      state.hideEvent = hideEvent;
+      state.hideCmd = cmd;
+    }
+    else
+    {
+      state?.hideEvent = null;
+    }
+  }
 }
 
 class _TopButtonsState extends State<TopButtons> with SingleTickerProviderStateMixin
@@ -65,6 +80,8 @@ class _TopButtonsState extends State<TopButtons> with SingleTickerProviderStateM
   late AnimationController menuAnimation;
   _TopButtonsMeasure? measure;
   final itemsInfo = <TopButtonItem>[];
+  TopButtonEvent? hideEvent;
+  TopButtonCmd? hideCmd;
 
   _TopButtonsState();
 
@@ -107,6 +124,17 @@ class _TopButtonsState extends State<TopButtons> with SingleTickerProviderStateM
     (
       duration: const Duration(milliseconds: 500),
       vsync: this,
+    );
+    menuAnimation.addStatusListener
+    (
+      (status)
+      {
+        appLog('menuAnimation $status');
+        if (status == AnimationStatus.dismissed)
+        {
+          hideEvent?.call(hideCmd ?? TopButtonCmd());
+        }
+      }
     );
   }
 }
@@ -281,7 +309,7 @@ class _TopButtonsMeasure
 }
 
 /// Typ prikazu top button
-enum TopButtonCmdType { click }
+enum TopButtonCmdType { click, hide }
 
 /// Parametry prikazu Top button
 class TopButtonCmd

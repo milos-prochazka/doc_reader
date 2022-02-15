@@ -1,8 +1,8 @@
-import 'package:doc_reader/document.dart';
-import 'package:doc_reader/objects/applog.dart';
-import 'package:doc_reader/property_binder.dart';
-import 'package:doc_reader/top_button/top_buttons.dart';
-import 'package:doc_reader/top_button/topbutton.dart';
+import 'document.dart';
+import 'objects/applog.dart';
+import 'property_binder.dart';
+import 'top_button/top_buttons.dart';
+import 'top_button/topbutton.dart';
 import 'package:flutter/material.dart';
 
 class DocMenu
@@ -16,8 +16,7 @@ class DocMenu
 
   Widget build(BuildContext context)
   {
-    final binder = PropertyBinder.of(context);
-    final document = binder.getProperty<Document?>(Document.documentProperty, null);
+    final document = Document.of(context);
 
     if (document != null)
     {

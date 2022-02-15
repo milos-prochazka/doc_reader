@@ -14,7 +14,7 @@ class DocTouch
 
   DocTouch._internal(BuildContext context, this.docReader, String documentProperty)
   {
-    document = PropertyBinder.of(context).getProperty<Document?>(documentProperty, null)!;
+    document = Document.of(context);
   }
 
   static Widget build({required BuildContext context, Key? key, required String documentProperty})

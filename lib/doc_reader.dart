@@ -69,8 +69,7 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
     screenSize = media.size;
     textScale = media.textScaleFactor;
 
-    final document =
-    PropertyBinder.of(context).getOrCreateProperty<Document>(widget.documentProperty, (binder) => Document());
+    final document = Document.of(context);
     this.document = document;
 
     document.onTap = onTap;

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:doc_reader/doc_menu.dart';
 
+import 'doc_tbl_contents.dart';
 import 'objects/applog.dart';
 import 'top_button/top_buttons.dart';
 import 'top_button/topbutton.dart';
@@ -91,6 +92,8 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   Widget build(BuildContext buildContext)
   {
+    widget.document.onReload = (document) => setState(() {});
+
     final binder = PropertyBinder
     (
       context: context,
@@ -127,7 +130,12 @@ class _MyHomePageState extends State<MyHomePage>
   {
     return Stack
     (
-      children: [DocTouch.build(context: context, documentProperty: Document.documentProperty), menu.build(context)]
+      children:
+      [
+        DocTouch.build(context: context, documentProperty: Document.documentProperty),
+        const DocTableContents().build(context),
+        menu.build(context)
+      ]
     );
   }
 

@@ -1,3 +1,5 @@
+import 'package:doc_reader/property_binder.dart';
+
 import 'doc_span/document_word.dart';
 import 'objects/applog.dart';
 import 'objects/speech.dart';
@@ -33,6 +35,9 @@ class Document
   /// Handler polozeni a uvoleni prstu na widggetu
   OnTouchUpDownHandler? onTouchUpDown;
 
+  /// Handler zpracovani udalosti "nahran novy soubor"
+  OnReloadHandler? onReload;
+
   /// Handler prekresleni
   OnRepaintHandler? onRepaint;
 
@@ -47,6 +52,9 @@ class Document
 
   /// Jednotlive casti (spany) dokumentu
   final docSpans = <DocumentSpanContainer>[];
+
+  /// Obsah dokumentu
+  DocumentContent? documentContent;
 
   /// Relativni pozice vertikalni znacky v dokumentu
   double markPosition = double.nan;
@@ -186,6 +194,13 @@ class Document
   {
     paintParameters?.newKey();
     onRepaint?.call();
+  }
+
+  reload()
+  {
+    paintParameters?.newKey();
+    onReload?.call(this);
+    repaint();
   }
 
   Future openFile(String name) async
@@ -453,6 +468,11 @@ class Document
     ttsPlaySpanLines.clear();
     ttsPlaySpanWords.clear();
   }
+
+  static doOn(BuildContext context, DoOnDocument caller) => caller(context, of(context));
+
+  static Document of(BuildContext context) =>
+  PropertyBinder.of(context).getOrCreateProperty<Document>(documentProperty, (binder) => Document());
 }
 
 class DocumentSentence
@@ -487,5 +507,7 @@ typedef OnTapHandler = Function(double relativeX, double relativeY);
 typedef OnTouchUpDownHandler = Function(bool down, double widgetX, double widgetY, double velocityX, double velocityY);
 typedef OnTouchMoveHandler = Function(double deltaX, double deltaY);
 typedef OnRepaintHandler = Function();
+typedef OnReloadHandler = Function(Document document);
 typedef OnOpenHandler = Future<bool> Function(String name, Document document, dynamic config);
 typedef OnShowMenu = Function(Document document);
+typedef DoOnDocument(BuildContext context, Document document);

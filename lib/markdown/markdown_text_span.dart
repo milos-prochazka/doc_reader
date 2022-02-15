@@ -71,6 +71,8 @@ class MarkdownTextSpan implements IDocumentSpan
       }
     }
 
+    document.documentContent = markdown.getContent();
+
     for (final para in markdown.paragraphs)
     {
       result.add(MarkdownTextSpan(para, config, document));
@@ -458,7 +460,7 @@ class MarkdownTextSpan implements IDocumentSpan
       document.docSpans.add(DocumentSpanContainer(s));
     }
 
-    document.repaint();
+    document.reload();
 
     result = true;
 

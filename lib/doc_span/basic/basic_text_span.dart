@@ -131,6 +131,9 @@ class BasicTextSpan implements IDocumentSpan
   {
     // TODO: implement getSpanWords
   }
+
+  @override
+  int get id => -1;
 }
 
 class _Word

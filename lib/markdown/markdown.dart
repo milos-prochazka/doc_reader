@@ -1062,7 +1062,7 @@ class Markdown implements IDocumentContentSource
 
     for (var header in headers)
     {
-      result.lines.add(DocumentContentLine(header.text, header.level, header.title));
+      result.lines.add(DocumentContentLine(header.text, header.level, header.title, header.id));
     }
 
     return result;
@@ -2317,11 +2317,11 @@ enum MarkdownWord_Type { word, link, image, link_image, reference_definition, sp
 class MarkdownHeader
 {
   final String text;
-  final int position;
+  final int id;
   final int level;
   final bool title;
 
-  MarkdownHeader._internal(this.text, this.position, this.level, this.title);
+  MarkdownHeader._internal(this.text, this.id, this.level, this.title);
 
   static List<MarkdownHeader> fromMarkdown(Markdown markdown)
   {
@@ -2343,7 +2343,7 @@ class MarkdownHeader
 
   dynamic toJson([bool compress = false])
   {
-    final result = {'text': text, 'position': position, 'level': level};
+    final result = {'text': text, 'position': id, 'level': level};
 
     if (!compress || title)
     {

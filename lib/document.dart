@@ -203,6 +203,20 @@ class Document
     repaint();
   }
 
+  gotoParagraphId(int id)
+  {
+    for (int i = 0; i < docSpans.length; i++)
+    {
+      final span = docSpans[i].span;
+
+      if (span.id == id)
+      {
+        position = i.toDouble();
+        onRepaint?.call();
+      }
+    }
+  }
+
   Future openFile(String name) async
   {
     final success = await onOpenFile?.call(name, this, onOpenFileConfig) ?? false;
@@ -494,8 +508,9 @@ class DocumentContentLine
   int level;
   String text;
   bool title;
+  int id;
 
-  DocumentContentLine(this.text, this.level, this.title);
+  DocumentContentLine(this.text, this.level, this.title, this.id);
 }
 
 abstract class IDocumentContentSource

@@ -4,6 +4,7 @@ import 'package:doc_reader/doc_menu.dart';
 
 import 'doc_tbl_contents.dart';
 import 'objects/applog.dart';
+import 'objects/json_utils.dart';
 import 'top_button/top_buttons.dart';
 import 'top_button/topbutton.dart';
 
@@ -133,7 +134,7 @@ class _MyHomePageState extends State<MyHomePage>
       children:
       [
         DocTouch.build(context: context, documentProperty: Document.documentProperty),
-        const DocTableContents().build(context),
+        DocTableContents(),
         menu.build(context)
       ]
     );

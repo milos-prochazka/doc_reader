@@ -42,6 +42,8 @@ class MarkdownTextSpan implements IDocumentSpan
 
   MarkdownTextSpan(this.paragraph, this.config, this.document);
 
+  int get id => paragraph.id;
+
   static List<MarkdownTextSpan> create(Markdown markdown, MarkdownTextConfig config, Document document)
   {
     final result = <MarkdownTextSpan>[];
@@ -449,7 +451,7 @@ class MarkdownTextSpan implements IDocumentSpan
     final File file2 = File('my_file2.json');
     final js2 = jsonEncode(md1.toJson(true));
     await file2.writeAsString(js2);
-//#end if line:430
+//#end if line:432
     //////////////////////////////////////////
 
     final ms = MarkdownTextSpan.create(markdown, textConfig, document);

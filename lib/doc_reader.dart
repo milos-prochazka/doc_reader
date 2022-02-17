@@ -252,7 +252,7 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
   {
 //#verbose
     appLog_verbose('onTap: relativeX=${relativeX.toStringAsFixed(4)} relativeY=${relativeY.toStringAsFixed(4)}');
-//#end VERBOSE line:254
+//#end VERBOSE line:253
 
     if (relativeY >= 0.75)
     {
@@ -292,7 +292,7 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
         {
 //#verbose
           appLog_verbose('onTouchMove: deltaX=$deltaX deltaY=$deltaY');
-//#end VERBOSE line:294
+//#end VERBOSE line:293
           if (document?.markPosition.isFinite ?? false)
           {
             document?.markPosition += deltaY;

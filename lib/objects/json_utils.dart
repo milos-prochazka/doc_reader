@@ -117,6 +117,53 @@ class JsonUtils
 
     return defValue;
   }
+
+  static dynamic _setValueByPath(dynamic json, List<dynamic> path, int pathIndex, dynamic value)
+  {
+    if (pathIndex >= path.length)
+    {
+      json = value;
+    }
+    else
+    {
+      final item = path[pathIndex];
+      if (item is num)
+      {
+        if (json is! List)
+        {
+          json = <dynamic>[];
+        }
+
+        final index = item.toInt();
+        final count = json.length;
+
+        if (index >= count)
+        {
+          json.add(_setValueByPath(null, path, pathIndex + 1, value));
+        }
+        else
+        {
+          json[index] = _setValueByPath(json[index], path, pathIndex + 1, value);
+        }
+      }
+      else if (item is String)
+      {
+        if (json is! Map)
+        {
+          json = <dynamic, dynamic>{};
+        }
+
+        json[item] = _setValueByPath(json.containsKey(item) ? json[item] : null, path, pathIndex + 1, value);
+      }
+    }
+
+    return json;
+  }
+
+  static dynamic setValueByPath(dynamic json, List<dynamic> path, dynamic value)
+  {
+    return _setValueByPath(json, path, 0, value);
+  }
 }
 
 /// ## Formát CBJ

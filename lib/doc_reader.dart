@@ -267,7 +267,8 @@ class _DocReaderState extends State<DocReader> with SingleTickerProviderStateMix
       // TODO test
       //Future.microtask(() async => await document!.speech.speak('Start předčítání textu.'));
 
-      document?.onShowMenu?.call(document!);
+      //document?.onShowMenu?.call(document!);
+      document?.mode = DocumentShowMode.menu;
 
       ///
 

@@ -44,11 +44,22 @@ class Document
   /// Handler otevreni souboru
   OnOpenHandler? onOpenFile;
 
-  /// Handler zobrazeni menu
-  OnShowMenu? onShowMenu;
-
   /// Konfigurace otevreni douboru
   dynamic onOpenFileConfig;
+
+  /// Rezim zobrazeni
+  DocumentShowMode _mode = DocumentShowMode.normal;
+
+  DocumentShowMode get mode => _mode;
+
+  set mode(DocumentShowMode newMode)
+  {
+    //if (newMode != _mode)
+    {
+      _mode = newMode;
+      reload();
+    }
+  }
 
   /// Jednotlive casti (spany) dokumentu
   final docSpans = <DocumentSpanContainer>[];
@@ -198,9 +209,15 @@ class Document
 
   reload()
   {
-    paintParameters?.newKey();
-    onReload?.call(this);
-    repaint();
+    Future.microtask
+    (
+      ()
+      {
+        paintParameters?.newKey();
+        onReload?.call(this);
+        repaint();
+      }
+    );
   }
 
   gotoParagraphId(int id)
@@ -517,6 +534,8 @@ abstract class IDocumentContentSource
 {
   DocumentContent getContent();
 }
+
+enum DocumentShowMode { normal, menu, content }
 
 typedef OnTapHandler = Function(double relativeX, double relativeY);
 typedef OnTouchUpDownHandler = Function(bool down, double widgetX, double widgetY, double velocityX, double velocityY);

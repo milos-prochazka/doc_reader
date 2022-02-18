@@ -114,7 +114,6 @@ class _MyHomePageState extends State<MyHomePage>
     );
 
     binder.setProperty(Document.documentProperty, widget.document);
-    widget.document.onShowMenu = showMenu;
 
     /*for (int i = 1; i < 1000000; i++)
     {
@@ -129,20 +128,28 @@ class _MyHomePageState extends State<MyHomePage>
 
   Widget _buildBody(BuildContext context)
   {
-    return Stack
-    (
-      children:
-      [
-        DocTouch.build(context: context, documentProperty: Document.documentProperty),
-        DocTableContents(),
-        menu.build(context)
-      ]
-    );
-  }
+    final document = Document.of(context);
 
-  showMenu(Document document)
-  {
-    ///
-    menu.topButtons?.control.visible = !(menu.topButtons?.control.visible ?? true);
+    var children = [DocTouch.build(context: context, documentProperty: Document.documentProperty)];
+
+    switch (document.mode)
+    {
+      case DocumentShowMode.content:
+      {
+        children.add(const DocTableContents());
+      }
+      break;
+
+      case DocumentShowMode.menu:
+      {
+        children.add(menu.build(context));
+      }
+      break;
+
+      default:
+      break;
+    }
+
+    return Stack(children: children);
   }
 }

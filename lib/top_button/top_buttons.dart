@@ -31,6 +31,8 @@ class TopButtons extends StatefulWidget
 class TopButtonsControl
 {
   _TopButtonsState? state;
+  TopButtonCmd? hideCmd;
+  TopButtonEvent? hideEvent;
 
   TopButtonsControl();
 
@@ -45,7 +47,7 @@ class TopButtonsControl
         if (value)
         {
           state.menuAnimation.forward();
-          state.hideEvent = null;
+          hideEvent = null;
         }
         else
         {
@@ -64,12 +66,12 @@ class TopButtonsControl
       final state = this.state!;
       state._visible = false;
       state.menuAnimation.reverse();
-      state.hideEvent = hideEvent;
-      state.hideCmd = cmd;
+      this.hideEvent = hideEvent;
+      hideCmd = cmd;
     }
     else
     {
-      state?.hideEvent = null;
+      this.hideEvent = null;
     }
   }
 }
@@ -80,8 +82,6 @@ class _TopButtonsState extends State<TopButtons> with SingleTickerProviderStateM
   late AnimationController menuAnimation;
   _TopButtonsMeasure? measure;
   final itemsInfo = <TopButtonItem>[];
-  TopButtonEvent? hideEvent;
-  TopButtonCmd? hideCmd;
 
   _TopButtonsState();
 
@@ -106,10 +106,28 @@ class _TopButtonsState extends State<TopButtons> with SingleTickerProviderStateM
         menuAnimation.reset();
         _visible = false;
 
-        return Flow
+        return GestureDetector
         (
-          delegate: _FlowDelegate(menuAnimation: menuAnimation, state: this),
-          children: childList,
+          child: Container
+          (
+            color: Colors.transparent,
+            child: Flow
+            (
+              delegate: _FlowDelegate(menuAnimation: menuAnimation, state: this),
+              children: childList,
+            )
+          ),
+          onTapUp: (_)
+          {
+            if (widget.control.visible)
+            {
+              widget.control.visible = false;
+            }
+            else
+            {
+              widget.control.hideEvent?.call(widget.control.hideCmd ?? TopButtonCmd());
+            }
+          }
         );
       }
     );
@@ -122,7 +140,7 @@ class _TopButtonsState extends State<TopButtons> with SingleTickerProviderStateM
     widget.control.state = this;
     menuAnimation = AnimationController
     (
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 150),
       vsync: this,
     );
     menuAnimation.addStatusListener
@@ -132,10 +150,12 @@ class _TopButtonsState extends State<TopButtons> with SingleTickerProviderStateM
         appLog('menuAnimation $status');
         if (status == AnimationStatus.dismissed)
         {
-          hideEvent?.call(hideCmd ?? TopButtonCmd());
+          widget.control.hideEvent?.call(widget.control.hideCmd ?? TopButtonCmd());
         }
       }
     );
+
+    Future.microtask(() => widget.control.visible = true);
   }
 }
 

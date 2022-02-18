@@ -15,11 +15,49 @@ class _DocTableContentsState extends State<DocTableContents>
 {
   final _styles = <String, TextStyle>{};
   int selectedIndex = -1;
+  double opacity = 0.0;
+  bool init = true;
+  bool clicked = false;
+
+  @override
+  void initState()
+  {
+    super.initState();
+    init = true;
+    clicked = false;
+  }
 
   @override
   Widget build(BuildContext context)
   {
-    return Container(color: const Color.fromARGB(128, 255, 244, 214), child: _buildList(context));
+    final document = Document.of(context);
+
+    if (init)
+    {
+      init = false;
+      Future.microtask
+      (
+        () => setState
+        (
+          ()
+          {
+            opacity = 1.0;
+          }
+        )
+      );
+    }
+    final duration = (opacity > 0.5) ? 250 : 500;
+
+    return AnimatedOpacity
+    (
+      opacity: opacity,
+      duration: Duration(milliseconds: duration),
+      onEnd: ()
+      {
+        if (clicked) document.mode = DocumentShowMode.normal;
+      },
+      child: Container(color: const Color.fromARGB(255, 255, 244, 214), child: _buildList(context))
+    );
   }
 
   Widget _buildList(BuildContext context)
@@ -110,13 +148,27 @@ class _DocTableContentsState extends State<DocTableContents>
 
   onClicked(int index)
   {
-    appLog('clicked: $index');
-    final document = Document.of(context);
-    final content = document.documentContent;
-
-    if (content != null)
+    if (!clicked)
     {
-      document.gotoParagraphId(content.lines[index].id);
+      clicked = true;
+
+      appLog('clicked: $index');
+
+      final document = Document.of(context);
+      final content = document.documentContent;
+
+      setState
+      (
+        ()
+        {
+          opacity = 0.0;
+        }
+      );
+
+      if (content != null)
+      {
+        document.gotoParagraphId(content.lines[index].id);
+      }
     }
   }
 }

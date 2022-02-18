@@ -25,12 +25,13 @@ class DocMenu
         [
           TopButton.createItem(id: 'a', type: TopButtonType.top, relativeWidth: 1, text: 'Tmavý'),
           TopButton.createItem(id: 'a', type: TopButtonType.top, relativeWidth: 1, text: 'Založky'),
-          TopButton.createItem(id: 'b', type: TopButtonType.top, relativeWidth: 1, text: 'Obsah'),
+          TopButton.createItem(id: 'content', type: TopButtonType.top, relativeWidth: 1, text: 'Obsah'),
           TopButton.createItem(id: 'c', type: TopButtonType.top, relativeWidth: 1, text: 'Hledat'),
           TopButton.createItem(id: 'd', type: TopButtonType.top, relativeWidth: 1, text: 'Nastavení'),
           TopButton.createItem(id: 'play', type: TopButtonType.bottom, relativeWidth: 1, text: ' Číst '),
           TopButton.createItem(id: 'e', type: TopButtonType.bottom, relativeWidth: 1, text: 'Tlac B3'),
         ],
+        key: UniqueKey(),
         backgroundColor: Color.fromARGB(0xcc, 0x20, 0x40, 0x40),
         foregroundColor: Colors.white70,
         event: (param)
@@ -53,12 +54,20 @@ class DocMenu
               (
                 param, (param)
                 {
+                  var newMode = DocumentShowMode.normal;
+
                   switch (param.id)
                   {
                     case 'play':
                     playStart();
                     break;
+
+                    case 'content':
+                    newMode = DocumentShowMode.content;
+                    break;
                   }
+
+                  document.mode = newMode;
                 }
               );
             }
@@ -67,7 +76,10 @@ class DocMenu
         },
       );
 
+      result.control.hideEvent = (cmd) => document.mode = DocumentShowMode.normal;
+
       topButtons = result;
+
       return result;
     }
     else

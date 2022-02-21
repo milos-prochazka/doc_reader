@@ -431,7 +431,7 @@ class MarkdownTextSpan implements IDocumentSpan
     print('#############################\r\n${markdown.toString()}\r\n#####################');
 
     // TODO Test smazat
-//#if 1
+//#if 0
     final json = markdown.toJson(true);
     final s = jsonEncode(json);
     //final directory = await getApplicationDocumentsDirectory();
@@ -451,7 +451,7 @@ class MarkdownTextSpan implements IDocumentSpan
     final File file2 = File('my_file2.json');
     final js2 = jsonEncode(md1.toJson(true));
     await file2.writeAsString(js2);
-//#end if line:432
+//#end if line:434
     //////////////////////////////////////////
 
     final ms = MarkdownTextSpan.create(markdown, textConfig, document);

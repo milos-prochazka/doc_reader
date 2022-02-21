@@ -34,7 +34,7 @@ class DocMenu
         key: UniqueKey(),
         backgroundColor: Color.fromARGB(0xcc, 0x20, 0x40, 0x40),
         foregroundColor: Colors.white70,
-        event: (param)
+        event: (cmd)
         {
           /*PropertyBinder.doOnProperty
           (
@@ -45,38 +45,36 @@ class DocMenu
             }
           );*/
           //topButtons?.control.visible = false;
-
-          switch (param.id)
+          switch (cmd.cmdType)
           {
-            default:
+            case TopButtonCmdType.click:
             {
-              topButtons?.control.hideAction
-              (
-                param, (param)
-                {
-                  var newMode = DocumentShowMode.normal;
+              topButtons?.control.visible = false;
+              topButtons?.control.hideCmd = cmd;
+            }
+            break;
 
-                  switch (param.id)
-                  {
-                    case 'play':
-                    playStart();
-                    break;
+            case TopButtonCmdType.hide:
+            {
+              var newMode = DocumentShowMode.normal;
 
-                    case 'content':
-                    newMode = DocumentShowMode.content;
-                    break;
-                  }
+              switch (cmd.id)
+              {
+                case 'play':
+                playStart();
+                break;
 
-                  document.mode = newMode;
-                }
-              );
+                case 'content':
+                newMode = DocumentShowMode.content;
+                break;
+              }
+
+              document.mode = newMode;
             }
             break;
           }
         },
       );
-
-      result.control.hideEvent = (cmd) => document.mode = DocumentShowMode.normal;
 
       topButtons = result;
 

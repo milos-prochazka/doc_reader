@@ -32,7 +32,6 @@ class TopButtonsControl
 {
   _TopButtonsState? state;
   TopButtonCmd? hideCmd;
-  TopButtonEvent? hideEvent;
 
   TopButtonsControl();
 
@@ -47,7 +46,6 @@ class TopButtonsControl
         if (value)
         {
           state.menuAnimation.forward();
-          hideEvent = null;
         }
         else
         {
@@ -58,22 +56,6 @@ class TopButtonsControl
   }
 
   bool get visible => state?._visible ?? false;
-
-  hideAction(TopButtonCmd cmd, TopButtonEvent hideEvent)
-  {
-    if (state?._visible ?? false)
-    {
-      final state = this.state!;
-      state._visible = false;
-      state.menuAnimation.reverse();
-      this.hideEvent = hideEvent;
-      hideCmd = cmd;
-    }
-    else
-    {
-      this.hideEvent = null;
-    }
-  }
 }
 
 class _TopButtonsState extends State<TopButtons> with SingleTickerProviderStateMixin
@@ -123,10 +105,6 @@ class _TopButtonsState extends State<TopButtons> with SingleTickerProviderStateM
             {
               widget.control.visible = false;
             }
-            else
-            {
-              widget.control.hideEvent?.call(widget.control.hideCmd ?? TopButtonCmd());
-            }
           }
         );
       }
@@ -150,7 +128,8 @@ class _TopButtonsState extends State<TopButtons> with SingleTickerProviderStateM
         appLog('menuAnimation $status');
         if (status == AnimationStatus.dismissed)
         {
-          widget.control.hideEvent?.call(widget.control.hideCmd ?? TopButtonCmd());
+          final cmd = (widget.control.hideCmd ?? TopButtonCmd.hideCmd())..cmdType = TopButtonCmdType.hide;
+          widget.event?.call(cmd);
         }
       }
     );
@@ -336,6 +315,13 @@ class TopButtonCmd
 {
   TopButtonCmdType cmdType = TopButtonCmdType.click;
   String id = '?';
+
+  TopButtonCmd();
+
+  factory TopButtonCmd.hideCmd()
+  {
+    return TopButtonCmd()..cmdType = TopButtonCmdType.hide;
+  }
 }
 
 /// Udalost TopButton

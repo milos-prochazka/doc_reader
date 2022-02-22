@@ -4,7 +4,9 @@ import 'package:doc_reader/doc_menu.dart';
 
 import 'doc_tbl_contents.dart';
 import 'objects/applog.dart';
+import 'objects/config.dart';
 import 'objects/json_utils.dart';
+import 'objects/utils.dart';
 import 'top_button/top_buttons.dart';
 import 'top_button/topbutton.dart';
 
@@ -17,8 +19,24 @@ import 'package:flutter/material.dart';
 import 'doc_touch.dart';
 import 'markdown/markdown_text_span.dart';
 
-void main()
+void main() async
 {
+  var cfg = Config.instance;
+  final b1 = await cfg.load();
+
+  var map = cfg.getOrCreateMap([]);
+  var lst = cfg.getOrCreateList(['l']);
+  map['c'] = 'jojo';
+  lst.add('A');
+  lst.add('B');
+  lst.add('C');
+
+  cfg.setValueByPath(['a', 'b', 'c'], 123456);
+  cfg.setValueByPath(['aa'], 123456);
+  var ff = 1;
+  final qqq = cfg.data['aa'];
+  await cfg.save();
+
   runZonedGuarded
   (
     ()

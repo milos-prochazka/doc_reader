@@ -1,6 +1,7 @@
 // ignore_for_file: non_constant_identifier_names, unnecessary_this
 
 import 'i_cloneable.dart';
+import 'package:collection/collection.dart';
 
 String enum_ToString(Object param)
 {
@@ -191,4 +192,90 @@ dynamic setDynamic(dynamic dest, dynamic source)
   }
 
   return result;
+}
+
+/// ### Porovná dva dynamic objekty zda jsou shodné
+///
+/// - Vrací **true** pokud jsou objekty shodné.
+/// - Provádí hloubkové porovnání pokud dynamic obsahuje List nebo Map.
+/// - Pokud objekt implementuje [Comparable] použije rozhraní pro porovnání.
+///
+bool compareDynamic(dynamic a, dynamic b)
+{
+  if (a is bool && b is bool)
+  {
+    return a == b;
+  }
+  else if (a is int && b is int)
+  {
+    return a == b;
+  }
+  else if (a is double && b is double)
+  {
+    return a == b;
+  }
+  else if (a is String && b is String)
+  {
+    return a == b;
+  }
+  else if (a is List && b is List)
+  {
+    if (a.length != b.length)
+    {
+      return false;
+    }
+    else
+    {
+      for (var i = 0; i < a.length; i++)
+      {
+        if (!compareDynamic(a[i], b[i]))
+        {
+          return false;
+        }
+      }
+      return true;
+    }
+  }
+  else if (a is Map && b is Map)
+  {
+    if (a.length != b.length)
+    {
+      return false;
+    }
+    else
+    {
+      for (final item in a.entries)
+      {
+        if (!b.containsKey(item.key))
+        {
+          return false;
+        }
+        else if (!compareDynamic(item.value, b[item.key]))
+        {
+          return false;
+        }
+      }
+
+      return true;
+    }
+  }
+  else if (a == null && b == null)
+  {
+    return true;
+  }
+  else if (a is Comparable && b is Comparable)
+  {
+    try
+    {
+      return a.compareTo(b) == 0;
+    }
+    catch (_)
+    {
+      return false;
+    }
+  }
+  else
+  {
+    return false;
+  }
 }

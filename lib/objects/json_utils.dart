@@ -166,6 +166,7 @@ class JsonUtils
   }
 }
 
+//#if 0
 /// ## Formát CBJ
 /// - Binární formát pro uložení JSON dat (v DARTu zakódovaný do proměnné dynamic)
 /// - Každá data jsou uvedena bytem udávajícím typ dat, jejch délku, nebo index (podle typu) a blokem dalších
@@ -448,6 +449,7 @@ class CBJ
   }
 }
 
+//#end
 //////////////////////////////////////////////////////////////////
 class DBJ
 {

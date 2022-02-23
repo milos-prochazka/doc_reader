@@ -4,6 +4,7 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart' as pathProvider;
 import 'applog.dart';
 import 'json_utils.dart';
+import 'utils.dart';
 
 class Config
 {
@@ -118,7 +119,7 @@ class Config
       if (await cfgFile.exists())
       {
         final contents = await cfgFile.readAsString();
-        data = jsonDecode(contents);
+        data = setDynamic(data, jsonDecode(contents));
         result = true;
       }
     }

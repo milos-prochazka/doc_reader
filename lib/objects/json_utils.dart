@@ -10,7 +10,23 @@ class JsonUtils
     {
       if (json is Map && json.containsKey(key))
       {
-        return json[key];
+        json = json[key];
+        if (json is T)
+        {
+          return json;
+        }
+        else if (defValue is double)
+        {
+          return json.toDouble() as T;
+        }
+        else if (defValue is String)
+        {
+          return json.toString() as T;
+        }
+        else
+        {
+          return defValue;
+        }
       }
       else
       {
@@ -23,7 +39,7 @@ class JsonUtils
     }
   }
 
-  static T getValueByPath<T>(dynamic json, List<dynamic> path, {dynamic defValue, bool lastInArray = true})
+  static T getValueByPath<T>(dynamic json, List<dynamic> path, {T? defValue, bool lastInArray = true})
   {
     try
     {
@@ -84,11 +100,11 @@ class JsonUtils
       {
         return json;
       }
-      else if (T == double)
+      else if (defValue is double)
       {
         return json.toDouble() as T;
       }
-      else if (T == String)
+      else if (defValue is String)
       {
         return json.toString() as T;
       }

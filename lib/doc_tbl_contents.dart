@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'document.dart';
 import 'objects/applog.dart';
+import 'objects/config.dart';
+import 'objects/json_utils.dart';
 
 class DocTableContents extends StatefulWidget
 {
@@ -74,7 +76,7 @@ class _DocTableContentsState extends State<DocTableContents>
 
   TextStyle _style(DocumentContentLine line)
   {
-    final styleName = '${line.level}-${line.title}';
+    final styleName = '${line.title ? 'title' : 'h'}${line.level}';
 
     if (_styles.containsKey(styleName))
     {
@@ -82,7 +84,11 @@ class _DocTableContentsState extends State<DocTableContents>
     }
     else
     {
-      final style = TextStyle(fontSize: (20 - 3 * line.level.toDouble()));
+      final styleCfg = Config.instance.getOrCreateMap(['contents', styleName]);
+      final style = TextStyle
+      (
+        fontSize: JsonUtils.getValue(styleCfg, 'size', 10.0),
+      );
       _styles[styleName] = style;
       return style;
     }

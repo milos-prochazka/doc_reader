@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:doc_reader/doc_menu.dart';
 
+import 'default_config.dart';
 import 'doc_tbl_contents.dart';
 import 'objects/applog.dart';
 import 'objects/config.dart';
@@ -21,37 +22,37 @@ import 'markdown/markdown_text_span.dart';
 
 void main() async
 {
-  var cfg = Config.instance;
-  final b1 = await cfg.load();
-
-  var map = cfg.getOrCreateMap([]);
-  var lst = cfg.getOrCreateList(['l']);
-  map['c'] = 'jojo';
-  lst.add('A');
-  lst.add('B');
-  lst.add('C');
-
-  cfg.setValueByPath(['a', 'b', 'c'], 123456);
-  cfg.setValueByPath(['aa'], 123456);
-  var ff = 1;
-  final qqq = cfg.data['aa'];
-  await cfg.save();
-
   runZonedGuarded
   (
-    ()
+    () async
     {
       WidgetsFlutterBinding.ensureInitialized(); //<= the key is here
       FlutterError.onError = (FlutterErrorDetails errorDetails)
       {
         appLogEx(errorDetails.exception, msg: 'FLUTTER ERROR', stackTrace: errorDetails.stack);
       };
+
+      await initConfig();
       runApp(MyApp()); // starting point of app
     }, (ex, stackTrace)
     {
       appLogEx(ex, msg: 'UNHANDLED EXCEPTION', stackTrace: stackTrace);
     }
   );
+}
+
+initConfig() async
+{
+  var cfg = Config.instance;
+  cfg.data = setDynamic(cfg.data, defaultAppConfig);
+
+  if (!await cfg.load())
+  {
+    // default
+  }
+
+  await cfg.save(true);
+  var brk = 1;
 }
 
 class MyApp extends StatelessWidget

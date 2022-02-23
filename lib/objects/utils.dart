@@ -79,7 +79,7 @@ String numberToCharacters(int param, String charList)
 /// Klonovani dynamic objektu
 /// - Klonuje objekt slozeny z Map,List,Set,String,double,int a bool (odpovida Json)
 /// - Objekty ktere jsou potomkem [ICloneable] jsou kopirovany pomoci metody clone
-/// - Opbejkt ktere nesjou potomkem [ICloneable] se vraci odkazem na puvodni objekt
+/// - Obejkty ktere nejsou potomkem [ICloneable] se vraci odkazem na puvodni objekt
 dynamic clone(dynamic value)
 {
   dynamic result;
@@ -125,65 +125,31 @@ dynamic clone(dynamic value)
 
 /// Nastaveni dynamic objektu
 /// - Provede nastaveni [dest] objektu ze [source].
-/// - Pokud je [dest] i [source] typu Map provede kopirovani objektu.
+/// - Pokud je [source] typu Map provede kopirovani objektu.
+///   Pokud neni [dest] typu Map vytvori se nove Map jako vysledek.
 ///   Pokud [dest] i [source] obsahuji objekt se stejnym klicem provade se vnorene kopirovani do tohoto objektu
-/// - Pokud je [dest] i [source] typu List provede se pridani dalsi polozek do List.
+/// - Pokud je [source] typu List provede se pridani dalsi polozek do List.
+///   Pokud neni [dest] typu List vytvori se nove List jako vysledek.
 /// - V jinych pripadech se vraci [source]
 /// - [dest] se zmeni (v pripade kopirovani Map, nebo List)
 /// - [source] se nemeni
-/// - Vraci se vyseledek (puvodni [dest] nebo [soure] podle typu)
 dynamic setDynamic(dynamic dest, dynamic source)
 {
   dynamic result;
-  if (dest is Map)
+  if (source is Map)
   {
-    if (source is Map)
+    result = dest is Map ? dest : {};
+    for (var item in source.entries)
     {
-      if (dest.isEmpty)
-      {
-        result = source;
-      }
-      else
-      {
-        result = dest;
-        for (var item in source.entries)
-        {
-          if (dest.containsKey(item.key))
-          {
-            setDynamic(dest[item.key], item.value);
-          }
-          else
-          {
-            dest[item.key] = item.value;
-          }
-        }
-      }
-    }
-    else
-    {
-      result = source;
+      result[item.key] = setDynamic(result[item.key], item.value);
     }
   }
-  else if (dest is List)
+  else if (source is List)
   {
-    if (source is List)
+    result = dest is List ? dest : [];
+    for (var item in source)
     {
-      if (dest.isEmpty)
-      {
-        result = source;
-      }
-      else
-      {
-        result = dest;
-        for (var item in source)
-        {
-          dest.add(item);
-        }
-      }
-    }
-    else
-    {
-      result = source;
+      dest.add(setDynamic(null, item.value));
     }
   }
   else

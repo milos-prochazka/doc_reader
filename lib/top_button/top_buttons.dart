@@ -196,15 +196,15 @@ class _FlowDelegate extends FlowDelegate
       switch (item.type)
       {
         case TopButtonType.top:
-        topList.add(item);
-        break;
+          topList.add(item);
+          break;
 
         case TopButtonType.bottom:
-        bottomList.add(item);
-        break;
+          bottomList.add(item);
+          break;
 
         default:
-        break;
+          break;
       }
     }
 

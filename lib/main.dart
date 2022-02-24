@@ -154,19 +154,19 @@ class _MyHomePageState extends State<MyHomePage>
     switch (document.mode)
     {
       case DocumentShowMode.content:
-      {
-        children.add(const DocTableContents());
-      }
-      break;
+        {
+          children.add(const DocTableContents());
+        }
+        break;
 
       case DocumentShowMode.menu:
-      {
-        children.add(menu.build(context));
-      }
-      break;
+        {
+          children.add(menu.build(context));
+        }
+        break;
 
       default:
-      break;
+        break;
     }
 
     return Stack(children: children);

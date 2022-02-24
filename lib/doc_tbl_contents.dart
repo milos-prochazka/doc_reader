@@ -85,9 +85,20 @@ class _DocTableContentsState extends State<DocTableContents>
     else
     {
       final styleCfg = Config.instance.getOrCreateMap(['contents', styleName]);
+
+      final size = JsonUtils.getValue(styleCfg, 'size', 10.0);
+      final italic = JsonUtils.getValue(styleCfg, 'italic', false) ? FontStyle.italic : FontStyle.normal;
+      final weight = JsonUtils.getValue(styleCfg, 'bold', false) ? FontWeight.bold : FontWeight.normal;
+      final decor = JsonUtils.getValue(styleCfg, 'underline', false) ? TextDecoration.underline : TextDecoration.none;
+
       final style = TextStyle
       (
-        fontSize: JsonUtils.getValue(styleCfg, 'size', 10.0),
+        fontSize: size,
+        fontStyle: italic,
+        fontWeight: weight,
+        decoration: decor,
+        height: 3.0,
+        textBaseline: TextBaseline.alphabetic
       );
       _styles[styleName] = style;
       return style;

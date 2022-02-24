@@ -48,30 +48,30 @@ class DocMenu
           switch (cmd.cmdType)
           {
             case TopButtonCmdType.click:
-            {
-              topButtons?.control.visible = false;
-              topButtons?.control.hideCmd = cmd;
-            }
-            break;
+              {
+                topButtons?.control.visible = false;
+                topButtons?.control.hideCmd = cmd;
+              }
+              break;
 
             case TopButtonCmdType.hide:
-            {
-              var newMode = DocumentShowMode.normal;
-
-              switch (cmd.id)
               {
-                case 'play':
-                playStart();
-                break;
+                var newMode = DocumentShowMode.normal;
 
-                case 'content':
-                newMode = DocumentShowMode.content;
-                break;
+                switch (cmd.id)
+                {
+                  case 'play':
+                    playStart();
+                    break;
+
+                  case 'content':
+                    newMode = DocumentShowMode.content;
+                    break;
+                }
+
+                document.mode = newMode;
               }
-
-              document.mode = newMode;
-            }
-            break;
+              break;
           }
         },
       );
